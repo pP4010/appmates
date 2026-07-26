@@ -297,10 +297,10 @@ anything you build against it now keeps working later.
 
 ## Web checker (no install, no upload)
 
-`web/` is a zero-backend version of the screenshot checks: drag files in, get
-the same finding codes, download repaired copies. Nothing is uploaded and no
-server does any work — every rule LaunchPilot applies reads the file's *header*,
-not its pixels, so a few hundred bytes answer the question locally.
+`web/` is a zero-backend version of two of these tools: drag screenshots in for
+the same finding codes and repaired copies, or audit the keyword field as you
+type. Nothing is uploaded and no server does any work — the screenshot rules read
+the file's *header* rather than its pixels, and the keyword rules are pure text.
 
 ```bash
 python3 -m http.server 8000 --directory web
@@ -367,6 +367,7 @@ binary fixtures cannot be diffed in review, and they hide the very properties
 - [x] Zero-backend web checker with browser-side repair
 - [x] `niche` — pre-build market assessment from the public catalogue
 - [x] `keywords` — 100-character field audit, coverage map and builder
+- [x] Keyword field in the browser, conformance-tested against the CLI
 - [ ] `launchpilot init` — scaffold a `launchpilot.toml` per project
 - [ ] Play graphic assets (icon, feature graphic) as first-class checks
 - [ ] Device-frame screenshot generation

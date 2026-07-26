@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 from launchpilot.core.models.report import Store
-from launchpilot.core.specs.registry import load_spec
+from launchpilot.core.specs.registry import load_aso_spec, load_spec
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = REPO_ROOT / "web" / "lib" / "specs.json"
@@ -35,7 +35,14 @@ def build() -> dict[str, object]:
         payload = spec.model_dump(mode="json")
         payload.pop("store", None)
         stores[store.value] = payload
-    return {"_comment": BANNER, "stores": stores}
+
+    aso = load_aso_spec().model_dump(mode="json")
+    # Sets serialise in arbitrary order; sort so the generated file is stable
+    # and `--check` does not fail on a reordering that changes nothing.
+    for key in ("noise_words", "category_words", "trademark_words"):
+        aso[key] = sorted(aso[key])
+
+    return {"_comment": BANNER, "stores": stores, "aso": aso}
 
 
 def render() -> str:

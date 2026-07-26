@@ -18384,5 +18384,497 @@
         "GOOGLE_TOO_MANY"
       ]
     }
+  ],
+  "keywordCases": [
+    {
+      "name": "clean field",
+      "field": "streak,focus,routine",
+      "title": "Kaizen",
+      "subtitle": "",
+      "targets": [
+        "streak focus"
+      ],
+      "expectedCodes": [],
+      "expectedWasted": 0,
+      "expectedLength": 20,
+      "expectedIndexedWords": [
+        "focus",
+        "kaizen",
+        "routine",
+        "streak"
+      ],
+      "expectedUncovered": [],
+      "expectedCoverage": [
+        {
+          "phrase": "streak focus",
+          "covered": true,
+          "missing": []
+        }
+      ],
+      "expectedSuggestion": null
+    },
+    {
+      "name": "spaces after commas",
+      "field": "habit, streak, focus",
+      "title": "",
+      "subtitle": "",
+      "targets": [],
+      "expectedCodes": [
+        "ASO_KEYWORD_SPACES"
+      ],
+      "expectedWasted": 2,
+      "expectedLength": 20,
+      "expectedIndexedWords": [
+        "focus",
+        "habit",
+        "streak"
+      ],
+      "expectedUncovered": [],
+      "expectedCoverage": [],
+      "expectedSuggestion": "habit,streak,focus"
+    },
+    {
+      "name": "duplicate within the field",
+      "field": "habit,streak,habit",
+      "title": "",
+      "subtitle": "",
+      "targets": [],
+      "expectedCodes": [
+        "ASO_DUPLICATE_IN_FIELD"
+      ],
+      "expectedWasted": 6,
+      "expectedLength": 18,
+      "expectedIndexedWords": [
+        "habit",
+        "streak"
+      ],
+      "expectedUncovered": [],
+      "expectedCoverage": [],
+      "expectedSuggestion": "habit,streak"
+    },
+    {
+      "name": "duplicate of the title",
+      "field": "habit,streak",
+      "title": "Habit Tracker",
+      "subtitle": "",
+      "targets": [],
+      "expectedCodes": [
+        "ASO_DUPLICATE_OF_TITLE"
+      ],
+      "expectedWasted": 6,
+      "expectedLength": 12,
+      "expectedIndexedWords": [
+        "habit",
+        "streak",
+        "tracker"
+      ],
+      "expectedUncovered": [],
+      "expectedCoverage": [],
+      "expectedSuggestion": "streak"
+    },
+    {
+      "name": "duplicate of the subtitle",
+      "field": "routine,focus",
+      "title": "Kaizen",
+      "subtitle": "Daily routine builder",
+      "targets": [],
+      "expectedCodes": [
+        "ASO_DUPLICATE_OF_TITLE"
+      ],
+      "expectedWasted": 8,
+      "expectedLength": 13,
+      "expectedIndexedWords": [
+        "builder",
+        "daily",
+        "focus",
+        "kaizen",
+        "routine"
+      ],
+      "expectedUncovered": [],
+      "expectedCoverage": [],
+      "expectedSuggestion": "focus"
+    },
+    {
+      "name": "noise and category words",
+      "field": "app,free,productivity,habit",
+      "title": "",
+      "subtitle": "",
+      "targets": [],
+      "expectedCodes": [
+        "ASO_CATEGORY_WORD",
+        "ASO_NOISE_WORD",
+        "ASO_NOISE_WORD"
+      ],
+      "expectedWasted": 22,
+      "expectedLength": 27,
+      "expectedIndexedWords": [
+        "app",
+        "free",
+        "habit",
+        "productivity"
+      ],
+      "expectedUncovered": [],
+      "expectedCoverage": [],
+      "expectedSuggestion": "habit"
+    },
+    {
+      "name": "trademark risk",
+      "field": "habit,instagram",
+      "title": "",
+      "subtitle": "",
+      "targets": [],
+      "expectedCodes": [
+        "ASO_TRADEMARK_RISK"
+      ],
+      "expectedWasted": 0,
+      "expectedLength": 15,
+      "expectedIndexedWords": [
+        "habit",
+        "instagram"
+      ],
+      "expectedUncovered": [],
+      "expectedCoverage": [],
+      "expectedSuggestion": null
+    },
+    {
+      "name": "singular and plural pair",
+      "field": "habit,habits",
+      "title": "",
+      "subtitle": "",
+      "targets": [],
+      "expectedCodes": [
+        "ASO_PLURAL_PAIR"
+      ],
+      "expectedWasted": 7,
+      "expectedLength": 12,
+      "expectedIndexedWords": [
+        "habit",
+        "habits"
+      ],
+      "expectedUncovered": [],
+      "expectedCoverage": [],
+      "expectedSuggestion": null
+    },
+    {
+      "name": "over the character limit",
+      "field": "word0,word1,word2,word3,word4,word5,word6,word7,word8,word9,word10,word11,word12,word13,word14,word15,word16,word17,word18,word19",
+      "title": "",
+      "subtitle": "",
+      "targets": [],
+      "expectedCodes": [
+        "ASO_KEYWORD_FIELD_TOO_LONG"
+      ],
+      "expectedWasted": 0,
+      "expectedLength": 129,
+      "expectedIndexedWords": [
+        "word0",
+        "word1",
+        "word10",
+        "word11",
+        "word12",
+        "word13",
+        "word14",
+        "word15",
+        "word16",
+        "word17",
+        "word18",
+        "word19",
+        "word2",
+        "word3",
+        "word4",
+        "word5",
+        "word6",
+        "word7",
+        "word8",
+        "word9"
+      ],
+      "expectedUncovered": [],
+      "expectedCoverage": [],
+      "expectedSuggestion": "word0,word1,word2,word3,word4,word5,word6,word7,word8,word9,word10,word11,word12,word13,word14"
+    },
+    {
+      "name": "uncovered targets",
+      "field": "streak",
+      "title": "Kaizen",
+      "subtitle": "",
+      "targets": [
+        "morning streak",
+        "gratitude journal"
+      ],
+      "expectedCodes": [
+        "ASO_UNCOVERED_TARGET",
+        "ASO_UNCOVERED_TARGET"
+      ],
+      "expectedWasted": 0,
+      "expectedLength": 6,
+      "expectedIndexedWords": [
+        "kaizen",
+        "streak"
+      ],
+      "expectedUncovered": [
+        "morning streak",
+        "gratitude journal"
+      ],
+      "expectedCoverage": [
+        {
+          "phrase": "morning streak",
+          "covered": false,
+          "missing": [
+            "morning"
+          ]
+        },
+        {
+          "phrase": "gratitude journal",
+          "covered": false,
+          "missing": [
+            "gratitude",
+            "journal"
+          ]
+        }
+      ],
+      "expectedSuggestion": "morning,streak,gratitude,journal"
+    },
+    {
+      "name": "coverage split across title and field",
+      "field": "tracker",
+      "title": "Habit",
+      "subtitle": "",
+      "targets": [
+        "habit tracker"
+      ],
+      "expectedCodes": [],
+      "expectedWasted": 0,
+      "expectedLength": 7,
+      "expectedIndexedWords": [
+        "habit",
+        "tracker"
+      ],
+      "expectedUncovered": [],
+      "expectedCoverage": [
+        {
+          "phrase": "habit tracker",
+          "covered": true,
+          "missing": []
+        }
+      ],
+      "expectedSuggestion": null
+    },
+    {
+      "name": "accented words are not folded",
+      "field": "café,météo",
+      "title": "Cafés",
+      "subtitle": "",
+      "targets": [
+        "café météo"
+      ],
+      "expectedCodes": [],
+      "expectedWasted": 0,
+      "expectedLength": 10,
+      "expectedIndexedWords": [
+        "café",
+        "cafés",
+        "météo"
+      ],
+      "expectedUncovered": [],
+      "expectedCoverage": [
+        {
+          "phrase": "café météo",
+          "covered": true,
+          "missing": []
+        }
+      ],
+      "expectedSuggestion": null
+    },
+    {
+      "name": "everything wrong at once",
+      "field": "habit, habits, habit tracker, daily, routine, app, free, productivity, streak",
+      "title": "Kaizen: Habit Tracker",
+      "subtitle": "Build daily routines",
+      "targets": [
+        "habit tracker",
+        "daily routine",
+        "morning streak",
+        "gratitude journal"
+      ],
+      "expectedCodes": [
+        "ASO_CATEGORY_WORD",
+        "ASO_DUPLICATE_IN_FIELD",
+        "ASO_DUPLICATE_OF_TITLE",
+        "ASO_DUPLICATE_OF_TITLE",
+        "ASO_DUPLICATE_OF_TITLE",
+        "ASO_KEYWORD_SPACES",
+        "ASO_NOISE_WORD",
+        "ASO_NOISE_WORD",
+        "ASO_PLURAL_PAIR",
+        "ASO_UNCOVERED_TARGET",
+        "ASO_UNCOVERED_TARGET"
+      ],
+      "expectedWasted": 58,
+      "expectedLength": 77,
+      "expectedIndexedWords": [
+        "app",
+        "build",
+        "daily",
+        "free",
+        "habit",
+        "habits",
+        "kaizen",
+        "productivity",
+        "routine",
+        "routines",
+        "streak",
+        "tracker"
+      ],
+      "expectedUncovered": [
+        "morning streak",
+        "gratitude journal"
+      ],
+      "expectedCoverage": [
+        {
+          "phrase": "habit tracker",
+          "covered": true,
+          "missing": []
+        },
+        {
+          "phrase": "daily routine",
+          "covered": true,
+          "missing": []
+        },
+        {
+          "phrase": "morning streak",
+          "covered": false,
+          "missing": [
+            "morning"
+          ]
+        },
+        {
+          "phrase": "gratitude journal",
+          "covered": false,
+          "missing": [
+            "gratitude",
+            "journal"
+          ]
+        }
+      ],
+      "expectedSuggestion": "routine,morning,streak,gratitude,journal,habits"
+    },
+    {
+      "name": "empty field with targets",
+      "field": "",
+      "title": "Kaizen",
+      "subtitle": "",
+      "targets": [
+        "habit tracker"
+      ],
+      "expectedCodes": [
+        "ASO_UNCOVERED_TARGET"
+      ],
+      "expectedWasted": 0,
+      "expectedLength": 0,
+      "expectedIndexedWords": [
+        "kaizen"
+      ],
+      "expectedUncovered": [
+        "habit tracker"
+      ],
+      "expectedCoverage": [
+        {
+          "phrase": "habit tracker",
+          "covered": false,
+          "missing": [
+            "habit",
+            "tracker"
+          ]
+        }
+      ],
+      "expectedSuggestion": "habit,tracker"
+    }
+  ],
+  "keywordBuildCases": [
+    {
+      "name": "drops title words",
+      "targets": [
+        "habit tracker",
+        "morning streak"
+      ],
+      "title": "Habit Tracker",
+      "subtitle": "",
+      "expectedField": "morning,streak"
+    },
+    {
+      "name": "drops noise and category",
+      "targets": [
+        "free habit app",
+        "productivity streak"
+      ],
+      "title": "",
+      "subtitle": "",
+      "expectedField": "habit,streak"
+    },
+    {
+      "name": "deduplicates across phrases",
+      "targets": [
+        "habit streak",
+        "habit routine"
+      ],
+      "title": "",
+      "subtitle": "",
+      "expectedField": "habit,streak,routine"
+    },
+    {
+      "name": "respects the budget",
+      "targets": [
+        "unique0 phrase0",
+        "unique1 phrase1",
+        "unique2 phrase2",
+        "unique3 phrase3",
+        "unique4 phrase4",
+        "unique5 phrase5",
+        "unique6 phrase6",
+        "unique7 phrase7",
+        "unique8 phrase8",
+        "unique9 phrase9",
+        "unique10 phrase10",
+        "unique11 phrase11",
+        "unique12 phrase12",
+        "unique13 phrase13",
+        "unique14 phrase14",
+        "unique15 phrase15",
+        "unique16 phrase16",
+        "unique17 phrase17",
+        "unique18 phrase18",
+        "unique19 phrase19",
+        "unique20 phrase20",
+        "unique21 phrase21",
+        "unique22 phrase22",
+        "unique23 phrase23",
+        "unique24 phrase24",
+        "unique25 phrase25",
+        "unique26 phrase26",
+        "unique27 phrase27",
+        "unique28 phrase28",
+        "unique29 phrase29",
+        "unique30 phrase30",
+        "unique31 phrase31",
+        "unique32 phrase32",
+        "unique33 phrase33",
+        "unique34 phrase34",
+        "unique35 phrase35",
+        "unique36 phrase36",
+        "unique37 phrase37",
+        "unique38 phrase38",
+        "unique39 phrase39"
+      ],
+      "title": "",
+      "subtitle": "",
+      "expectedField": "unique0,phrase0,unique1,phrase1,unique2,phrase2,unique3,phrase3,unique4,phrase4,unique5,phrase5"
+    },
+    {
+      "name": "nothing to build",
+      "targets": [],
+      "title": "",
+      "subtitle": "",
+      "expectedField": ""
+    }
   ]
 }

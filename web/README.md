@@ -1,8 +1,12 @@
 # LaunchPilot web checker
 
-A zero-backend screenshot checker. Drag screenshots in, get the same findings
-the CLI produces, and download repaired copies — with nothing uploaded, no
-account, and no server doing any work.
+A zero-backend version of the CLI. Two tools, both with nothing uploaded, no
+account, and no server doing any work:
+
+* **Screenshots** — drag files in, get the same findings the CLI produces, and
+  download repaired copies.
+* **Keyword field** — audit the 100-character App Store field as you type, see
+  which phrases you can actually rank for, and get a rebuilt field.
 
 ## Why there is no backend
 
@@ -37,9 +41,11 @@ implementations of the same rules drift, so the drift is made to fail loudly.
 that actually change when a store updates its rules exist in exactly one place.
 
 **Rule logic is tested against Python.** `scripts/export_conformance.py` runs the
-Python validator across a grid of inputs and records what it produced;
-`test/conformance.test.js` asserts the JavaScript engine returns identical
-finding codes, statuses and device classes for all 925 cases.
+Python implementations across a grid of inputs and records what they produced;
+`test/conformance.test.js` asserts the JavaScript engines return identical
+results for all 939 cases — finding codes, statuses and device classes for
+screenshots, and codes, character costs, coverage and rebuilt fields for the
+keyword engine.
 
 **Header parsing is tested against Pillow.** Rules are only as correct as the
 facts they run on. `scripts/export_parser_fixtures.py` writes tiny real images
@@ -76,7 +82,8 @@ web/
 ├── app.js              # UI wiring only — no rules live here
 ├── lib/
 │   ├── image-facts.js  # PNG/JPEG header parsing (mirrors read_facts)
-│   ├── validator.js    # rule engine (mirrors ScreenshotValidator)
+│   ├── validator.js    # screenshot rules (mirrors ScreenshotValidator)
+│   ├── keywords.js     # keyword field engine (mirrors KeywordBuilder)
 │   ├── fixer.js        # canvas repair (mirrors ScreenshotFixer)
 │   ├── zip.js          # stored-entry ZIP writer for batch download
 │   └── specs.json      # GENERATED — do not edit
@@ -87,3 +94,20 @@ web/
     ├── conformance-cases.json  # GENERATED
     └── fixtures/               # GENERATED
 ```
+
+## A note on porting the keyword engine
+
+Two things bit during the port and are worth knowing before editing
+`lib/keywords.js`:
+
+**JavaScript's `\w` is ASCII-only.** Python's `re.UNICODE` keeps "café" whole;
+a literal port splits it into "caf" and "é", which silently changes which
+phrases count as covered on any non-English storefront. The tokeniser uses
+`\p{L}\p{N}` with the `u` flag instead, and a conformance case exists purely
+to hold that line.
+
+**Finding order comes from insertion order.** The Python side iterates a dict
+built by walking the field left to right, so the JS side uses a `Map` rather
+than a plain object — object key ordering would reorder numeric-looking
+keywords and break the comparison for reasons that have nothing to do with the
+rules.

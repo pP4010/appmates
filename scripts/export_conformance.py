@@ -25,6 +25,7 @@ from typing import Any
 
 from launchpilot.core.models.report import ImageFacts, Store
 from launchpilot.core.services.image_validator import ScreenshotValidator
+from launchpilot.core.services.keyword_builder import KeywordBuilder
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = REPO_ROOT / "web" / "test" / "conformance-cases.json"
@@ -153,6 +154,184 @@ def build_set_cases() -> list[dict[str, Any]]:
     return cases
 
 
+KEYWORD_SCENARIOS: list[dict[str, Any]] = [
+    {
+        "name": "clean field",
+        "field": "streak,focus,routine",
+        "title": "Kaizen",
+        "subtitle": "",
+        "targets": ["streak focus"],
+    },
+    {
+        "name": "spaces after commas",
+        "field": "habit, streak, focus",
+        "title": "",
+        "subtitle": "",
+        "targets": [],
+    },
+    {
+        "name": "duplicate within the field",
+        "field": "habit,streak,habit",
+        "title": "",
+        "subtitle": "",
+        "targets": [],
+    },
+    {
+        "name": "duplicate of the title",
+        "field": "habit,streak",
+        "title": "Habit Tracker",
+        "subtitle": "",
+        "targets": [],
+    },
+    {
+        "name": "duplicate of the subtitle",
+        "field": "routine,focus",
+        "title": "Kaizen",
+        "subtitle": "Daily routine builder",
+        "targets": [],
+    },
+    {
+        "name": "noise and category words",
+        "field": "app,free,productivity,habit",
+        "title": "",
+        "subtitle": "",
+        "targets": [],
+    },
+    {
+        "name": "trademark risk",
+        "field": "habit,instagram",
+        "title": "",
+        "subtitle": "",
+        "targets": [],
+    },
+    {
+        "name": "singular and plural pair",
+        "field": "habit,habits",
+        "title": "",
+        "subtitle": "",
+        "targets": [],
+    },
+    {
+        "name": "over the character limit",
+        "field": ",".join(f"word{i}" for i in range(20)),
+        "title": "",
+        "subtitle": "",
+        "targets": [],
+    },
+    {
+        "name": "uncovered targets",
+        "field": "streak",
+        "title": "Kaizen",
+        "subtitle": "",
+        "targets": ["morning streak", "gratitude journal"],
+    },
+    {
+        "name": "coverage split across title and field",
+        "field": "tracker",
+        "title": "Habit",
+        "subtitle": "",
+        "targets": ["habit tracker"],
+    },
+    {
+        "name": "accented words are not folded",
+        "field": "café,météo",
+        "title": "Cafés",
+        "subtitle": "",
+        "targets": ["café météo"],
+    },
+    {
+        "name": "everything wrong at once",
+        "field": "habit, habits, habit tracker, daily, routine, app, free, productivity, streak",
+        "title": "Kaizen: Habit Tracker",
+        "subtitle": "Build daily routines",
+        "targets": ["habit tracker", "daily routine", "morning streak", "gratitude journal"],
+    },
+    {
+        "name": "empty field with targets",
+        "field": "",
+        "title": "Kaizen",
+        "subtitle": "",
+        "targets": ["habit tracker"],
+    },
+]
+
+BUILD_SCENARIOS: list[dict[str, Any]] = [
+    {
+        "name": "drops title words",
+        "targets": ["habit tracker", "morning streak"],
+        "title": "Habit Tracker",
+        "subtitle": "",
+    },
+    {
+        "name": "drops noise and category",
+        "targets": ["free habit app", "productivity streak"],
+        "title": "",
+        "subtitle": "",
+    },
+    {
+        "name": "deduplicates across phrases",
+        "targets": ["habit streak", "habit routine"],
+        "title": "",
+        "subtitle": "",
+    },
+    {
+        "name": "respects the budget",
+        "targets": [f"unique{i} phrase{i}" for i in range(40)],
+        "title": "",
+        "subtitle": "",
+    },
+    {"name": "nothing to build", "targets": [], "title": "", "subtitle": ""},
+]
+
+
+def build_keyword_cases() -> list[dict[str, Any]]:
+    """Keyword-field scenarios, scored by the Python builder.
+
+    The browser reimplements this engine so the tool works with no backend; the
+    JS side must produce identical codes, costs, coverage and suggestions.
+    """
+    builder = KeywordBuilder()
+    cases = []
+    for scenario in KEYWORD_SCENARIOS:
+        report = builder.audit(
+            scenario["field"],
+            title=scenario["title"] or None,
+            subtitle=scenario["subtitle"] or None,
+            targets=scenario["targets"],
+        )
+        cases.append(
+            {
+                **scenario,
+                "expectedCodes": sorted(f.code for f in report.findings),
+                "expectedWasted": report.wasted_characters,
+                "expectedLength": report.length,
+                "expectedIndexedWords": report.indexed_words,
+                "expectedUncovered": report.uncovered_targets,
+                "expectedCoverage": [
+                    {"phrase": c.phrase, "covered": c.covered, "missing": c.missing_words}
+                    for c in report.coverage
+                ],
+                "expectedSuggestion": report.suggested_field,
+            }
+        )
+    return cases
+
+
+def build_build_cases() -> list[dict[str, Any]]:
+    builder = KeywordBuilder()
+    return [
+        {
+            **scenario,
+            "expectedField": builder.build(
+                scenario["targets"],
+                title=scenario["title"] or None,
+                subtitle=scenario["subtitle"] or None,
+            ),
+        }
+        for scenario in BUILD_SCENARIOS
+    ]
+
+
 def render() -> str:
     payload = {
         "_comment": (
@@ -161,6 +340,8 @@ def render() -> str:
         ),
         "cases": build_cases(),
         "setCases": build_set_cases(),
+        "keywordCases": build_keyword_cases(),
+        "keywordBuildCases": build_build_cases(),
     }
     return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
 

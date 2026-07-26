@@ -14,6 +14,7 @@ import {
 } from './lib/validator.js';
 import { applyFix, planFix } from './lib/fixer.js';
 import { createZip, safeName, uniqueNames } from './lib/zip.js';
+import { auditField, loadAso } from './lib/keywords.js';
 
 const els = {
   drop: document.getElementById('drop'),
@@ -41,6 +42,7 @@ async function boot() {
   const response = await fetch('./lib/specs.json');
   specsData = await response.json();
   loadSpecs(specsData);
+  loadAso(specsData);
 
   const apple = specsData.stores.apple;
   const google = specsData.stores.google;
@@ -316,3 +318,123 @@ function download(blob, filename) {
 }
 
 boot();
+
+// --- tabs ----------------------------------------------------------------
+
+for (const tab of document.querySelectorAll('.tab')) {
+  tab.addEventListener('click', () => {
+    for (const other of document.querySelectorAll('.tab')) {
+      const selected = other === tab;
+      other.classList.toggle('active', selected);
+      other.setAttribute('aria-selected', String(selected));
+      document.getElementById(other.dataset.panel).hidden = !selected;
+    }
+  });
+}
+
+// --- keyword field -------------------------------------------------------
+
+const kw = {
+  title: document.getElementById('kwTitle'),
+  subtitle: document.getElementById('kwSubtitle'),
+  field: document.getElementById('kwField'),
+  targets: document.getElementById('kwTargets'),
+  budget: document.getElementById('kwBudget'),
+  findings: document.getElementById('kwFindings'),
+  coverage: document.getElementById('kwCoverage'),
+  suggestion: document.getElementById('kwSuggestion'),
+};
+
+function renderKeywords() {
+  const targets = kw.targets.value
+    .split('\n')
+    .map((t) => t.trim())
+    .filter(Boolean);
+
+  const field = kw.field.value;
+  if (!field && targets.length === 0) {
+    for (const el of [kw.budget, kw.findings, kw.coverage, kw.suggestion]) el.innerHTML = '';
+    return;
+  }
+
+  const report = auditField(field, {
+    title: kw.title.value,
+    subtitle: kw.subtitle.value,
+    targets,
+  });
+
+  const width = 30;
+  const filled = Math.round((width * Math.min(report.length, report.maxLength)) / report.maxLength);
+  const over = report.length > report.maxLength;
+  // Colour by waste, not by fill. A field sitting comfortably under 100
+  // characters while throwing half of them away is not a green state, and a
+  // green bar is exactly what stops someone reading the findings underneath.
+  const tone = over ? 'over' : report.wastedCharacters ? 'warn' : 'ok';
+  kw.budget.innerHTML = `
+    <div class="budget-line">
+      <span class="budget-bar ${tone}">${'█'.repeat(filled)}${'░'.repeat(width - filled)}</span>
+      <span class="${over ? '' : 'muted'}"><strong>${report.length}</strong>/${report.maxLength} characters</span>
+      ${
+        report.wastedCharacters
+          ? `<span style="color:var(--warning)">${report.wastedCharacters} wasted</span>`
+          : '<span style="color:var(--success)">nothing wasted</span>'
+      }
+    </div>`;
+
+  kw.findings.innerHTML = report.findings.length
+    ? `<div class="card"><div class="findings">${report.findings
+        .map(
+          (f) => `
+          <div class="finding ${f.severity}">
+            <span class="code">${f.code}</span>
+            ${f.metadata.cost ? `<span class="meta mono"> −${f.metadata.cost}c</span>` : ''}
+            <span class="msg">${escapeHtml(f.message)}</span>
+            ${f.fixHint ? `<div class="hint">→ ${escapeHtml(f.fixHint)}</div>` : ''}
+          </div>`,
+        )
+        .join('')}</div></div>`
+    : '';
+
+  kw.coverage.innerHTML = report.coverage.length
+    ? `<h2>Can you rank for these?</h2>
+       <div class="card"><div class="findings">${report.coverage
+         .map((c) =>
+           c.covered
+             ? `<div class="finding info">
+                  <span class="msg"><strong>${escapeHtml(c.phrase)}</strong> — reachable</span>
+                  <div class="hint">indexed from ${Object.entries(c.coveredBy)
+                    .map(([k, v]) => `${k} (${v.join(', ')})`)
+                    .join(', ')}</div>
+                </div>`
+             : `<div class="finding error">
+                  <span class="msg"><strong>${escapeHtml(c.phrase)}</strong> — not reachable</span>
+                  <div class="hint">missing: ${c.missingWords.map(escapeHtml).join(', ')}</div>
+                </div>`,
+         )
+         .join('')}</div></div>`
+    : '';
+
+  if (report.suggestedField && report.suggestedField !== field) {
+    const saved = report.length - report.suggestedField.length;
+    kw.suggestion.innerHTML = `
+      <div class="suggestion">
+        <strong>Suggested field</strong>
+        <code>${escapeHtml(report.suggestedField)}</code>
+        <span class="meta mono">${report.suggestedField.length}/${report.maxLength} characters${
+          saved > 0 ? ` · ${saved} reclaimed` : ''
+        }</span>
+        <button id="kwCopy" style="margin-left:.75rem">Copy</button>
+      </div>`;
+    document.getElementById('kwCopy').addEventListener('click', async (e) => {
+      await navigator.clipboard.writeText(report.suggestedField);
+      e.target.textContent = 'Copied';
+      setTimeout(() => (e.target.textContent = 'Copy'), 1500);
+    });
+  } else {
+    kw.suggestion.innerHTML = '';
+  }
+}
+
+for (const el of [kw.title, kw.subtitle, kw.field, kw.targets]) {
+  el.addEventListener('input', renderKeywords);
+}

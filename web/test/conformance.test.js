@@ -16,12 +16,14 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 import { loadSpecs, validateFacts, validateSet } from '../lib/validator.js';
+import { loadAso, auditField, buildField, tokenize } from '../lib/keywords.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const specs = JSON.parse(readFileSync(join(here, '..', 'lib', 'specs.json'), 'utf8'));
 const corpus = JSON.parse(readFileSync(join(here, 'conformance-cases.json'), 'utf8'));
 
 loadSpecs(specs);
+loadAso(specs);
 
 function describeCase(c) {
   const f = c.facts;
@@ -116,4 +118,101 @@ test('the corpus actually exercises every rule the engine can emit', () => {
 
   const missing = expected.filter((code) => !covered.has(code));
   assert.deepEqual(missing, [], `corpus no longer covers: ${missing.join(', ')}`);
+});
+
+// --- keyword field -------------------------------------------------------
+
+
+test('keyword findings match the Python builder', () => {
+  for (const c of corpus.keywordCases) {
+    const report = auditField(c.field, {
+      title: c.title,
+      subtitle: c.subtitle,
+      targets: c.targets,
+    });
+    assert.deepEqual(
+      [...report.findings.map((f) => f.code)].sort(),
+      c.expectedCodes,
+      `${c.name}: finding codes`,
+    );
+  }
+});
+
+test('keyword waste accounting matches the Python builder', () => {
+  for (const c of corpus.keywordCases) {
+    const report = auditField(c.field, {
+      title: c.title,
+      subtitle: c.subtitle,
+      targets: c.targets,
+    });
+    assert.equal(report.wastedCharacters, c.expectedWasted, `${c.name}: wasted characters`);
+    assert.equal(report.length, c.expectedLength, `${c.name}: length`);
+  }
+});
+
+test('coverage analysis matches the Python builder', () => {
+  for (const c of corpus.keywordCases) {
+    const report = auditField(c.field, {
+      title: c.title,
+      subtitle: c.subtitle,
+      targets: c.targets,
+    });
+    assert.deepEqual(
+      report.coverage.map((x) => ({
+        phrase: x.phrase,
+        covered: x.covered,
+        missing: x.missingWords,
+      })),
+      c.expectedCoverage,
+      `${c.name}: coverage`,
+    );
+    assert.deepEqual(report.uncoveredTargets, c.expectedUncovered, `${c.name}: uncovered`);
+  }
+});
+
+test('the indexed word pool matches the Python builder', () => {
+  for (const c of corpus.keywordCases) {
+    const report = auditField(c.field, {
+      title: c.title,
+      subtitle: c.subtitle,
+      targets: c.targets,
+    });
+    assert.deepEqual(report.indexedWords, c.expectedIndexedWords, `${c.name}: indexed words`);
+  }
+});
+
+test('suggested rebuilds match the Python builder', () => {
+  for (const c of corpus.keywordCases) {
+    const report = auditField(c.field, {
+      title: c.title,
+      subtitle: c.subtitle,
+      targets: c.targets,
+    });
+    assert.equal(report.suggestedField, c.expectedSuggestion, `${c.name}: suggestion`);
+  }
+});
+
+test('field construction matches the Python builder', () => {
+  for (const c of corpus.keywordBuildCases) {
+    assert.equal(
+      buildField(c.targets, { title: c.title, subtitle: c.subtitle }),
+      c.expectedField,
+      `${c.name}`,
+    );
+  }
+});
+
+test('tokenisation keeps accented words whole', () => {
+  // JavaScript's \w is ASCII-only, so a naive port splits "café" into
+  // "caf" + "é" where Python's re.UNICODE keeps it intact.
+  assert.deepEqual(tokenize('Café Météo'), ['café', 'météo']);
+  assert.deepEqual(tokenize('Kaizen: Habits & Streaks'), ['kaizen', 'habits', 'streaks']);
+});
+
+test('the keyword corpus exercises every rule the engine can emit', () => {
+  const emitted = new Set(corpus.keywordCases.flatMap((c) => c.expectedCodes));
+  for (const code of Object.keys(specs.aso.findings)) {
+    if (code === 'ASO_WASTED_BUDGET') continue; // informational, not emitted as a finding
+    assert.ok(emitted.has(code), `no conformance case covers ${code}`);
+  }
 });

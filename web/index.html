@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LaunchPilot — check App Store &amp; Play screenshots</title>
-<meta name="description" content="Check your App Store and Google Play screenshots against the stores' rules. Runs entirely in your browser — nothing is uploaded.">
+<title>LaunchPilot — App Store &amp; Play pre-flight checks</title>
+<meta name="description" content="Check your App Store and Google Play screenshots and keyword field against the stores' rules. Runs entirely in your browser — nothing is uploaded.">
 <style>
   :root {
     color-scheme: light dark;
@@ -167,17 +167,90 @@
     color: var(--muted); font-size: .84rem;
   }
   .hidden { display: none !important; }
+
+  /* --- tabs --- */
+  .tabs {
+    display: flex; gap: .35rem; margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    border: none; background: none; color: var(--muted);
+    padding: .55rem .9rem; border-radius: 0;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    font-size: .93rem; font-weight: 600;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* --- keyword form --- */
+  .lead { font-size: .95rem; max-width: 62ch; }
+  .muted-note { color: var(--muted); font-size: .88rem; }
+  .form-grid {
+    display: grid; grid-template-columns: 10rem 1fr; gap: .7rem 1rem;
+    align-items: center; margin: 1.5rem 0;
+  }
+  .form-grid label { color: var(--muted); font-size: .88rem; }
+  .form-grid input, .form-grid textarea {
+    font: inherit; font-size: .92rem;
+    padding: .5rem .7rem; width: 100%;
+    border: 1px solid var(--border); border-radius: 7px;
+    background: var(--surface); color: var(--text);
+  }
+  .form-grid textarea {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .85rem; resize: vertical;
+  }
+  .form-grid input:focus, .form-grid textarea:focus {
+    outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    outline-offset: 1px; border-color: var(--accent);
+  }
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; gap: .3rem; }
+    .form-grid label { margin-top: .5rem; }
+  }
+
+  .budget-line {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: .75rem;
+    font-size: .9rem; margin: 1.25rem 0 .5rem;
+  }
+  .budget-bar {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: -1px;
+  }
+  .budget-bar.ok { color: var(--success); }
+  .budget-bar.warn { color: var(--warning); }
+  .budget-bar.over { color: var(--error); }
+
+  .suggestion {
+    margin-top: 1.5rem; padding: .9rem 1.1rem;
+    border: 1px solid var(--border); border-left: 4px solid var(--accent);
+    border-radius: var(--radius); background: var(--surface);
+  }
+  .suggestion code {
+    display: block; margin: .4rem 0 .3rem;
+    font-size: .88rem; word-break: break-all;
+  }
 </style>
 </head>
 <body>
 <main>
   <h1>LaunchPilot</h1>
-  <p class="tagline">Catch App Store and Google Play screenshot rejections before the stores do.</p>
+  <p class="tagline">Catch App Store and Google Play rejections before the stores do.</p>
   <div class="privacy">
     <span aria-hidden="true">🔒</span>
     Runs entirely in your browser — no upload, no account, no server
   </div>
 
+  <div class="tabs" role="tablist">
+    <button class="tab active" role="tab" data-panel="panel-screenshots" aria-selected="true">
+      Screenshots
+    </button>
+    <button class="tab" role="tab" data-panel="panel-keywords" aria-selected="false">
+      Keyword field
+    </button>
+  </div>
+
+  <section id="panel-screenshots" role="tabpanel">
   <div id="drop" tabindex="0" role="button" aria-label="Choose screenshots to check">
     <strong>Drop your screenshots here</strong>
     <span>or click to choose files · PNG and JPEG · nothing leaves your machine</span>
@@ -225,6 +298,37 @@
       writes real alpha-free PNGs if you need PNG specifically.
     </p>
   </div>
+  </section>
+
+  <section id="panel-keywords" role="tabpanel" hidden>
+    <p class="lead">
+      Apple indexes your app name, subtitle and the 100-character keyword field
+      as one pool of <strong>words</strong>, then combines them to form matches.
+      So a phrase is reachable when each of its words is somewhere in the pool —
+      the phrase itself never has to appear — a word already in your title is
+      already indexed, and every space is overhead.
+    </p>
+    <p class="lead muted-note">
+      The field is never shown to a user, so none of this is self-correcting:
+      a listing wasting a third of its budget looks exactly like a perfect one.
+    </p>
+
+    <div class="form-grid">
+      <label for="kwTitle">App name</label>
+      <input id="kwTitle" type="text" maxlength="30" placeholder="Kaizen: Habit Tracker">
+      <label for="kwSubtitle">Subtitle</label>
+      <input id="kwSubtitle" type="text" maxlength="30" placeholder="Build daily routines">
+      <label for="kwField">Keyword field</label>
+      <input id="kwField" type="text" placeholder="habit,streak,focus,routine">
+      <label for="kwTargets">Phrases to rank for</label>
+      <textarea id="kwTargets" rows="4" placeholder="habit tracker&#10;morning streak&#10;gratitude journal"></textarea>
+    </div>
+
+    <div id="kwBudget"></div>
+    <div id="kwFindings"></div>
+    <div id="kwCoverage"></div>
+    <div id="kwSuggestion"></div>
+  </section>
 
   <footer>
     <p id="provenance"></p>
