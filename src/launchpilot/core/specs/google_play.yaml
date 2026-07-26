@@ -1,0 +1,74 @@
+# Google Play Console asset specifications.
+#
+# Play does not publish a fixed table of accepted resolutions the way Apple does.
+# It publishes *constraints*, so this file is constraint-shaped rather than
+# size-shaped, with a small set of recommended targets used by `fix-screenshots`.
+source_url: https://support.google.com/googleplay/android-developer/answer/9866151
+last_verified: 2026-07-26
+
+rules:
+  formats: [PNG, JPEG]
+  allow_alpha: false          # 24-bit PNG (no alpha) or JPEG
+  required_color_spaces: [RGB, L]
+  max_bytes: 8388608          # 8 MB per screenshot
+  min_side: 320
+  max_side: 3840
+  # The binding documented constraint: the long side may not exceed twice the
+  # short side. This is what actually rejects tall modern phone screenshots
+  # (e.g. 1242x2688 -> 2688 > 2484) even though they "look" fine.
+  max_side_ratio: 2.0
+  # Play documents 16:9 / 9:16. Real uploads outside that but within
+  # max_side_ratio are accepted in practice -> warn rather than fail.
+  preferred_aspect_ratio: 1.7777778
+  aspect_ratio_tolerance: 0.05
+  min_count: 2
+  max_count: 8
+  recommended_min_width: 1080
+  recommended_min_height: 1920
+
+sizes:
+  - id: play-phone-fhd
+    device_class: Phone
+    width: 1080
+    height: 1920
+    status: required
+    notes: 9:16 portrait. Minimum for Play promotional eligibility.
+
+  - id: play-phone-qhd
+    device_class: Phone (high-res)
+    width: 1440
+    height: 2560
+    status: accepted
+
+  - id: play-tablet-7
+    device_class: 7" tablet
+    width: 1080
+    height: 1920
+    status: accepted
+
+  - id: play-tablet-10
+    device_class: 10" tablet
+    width: 1440
+    height: 2560
+    status: accepted
+
+# Non-screenshot assets, validated by `validate-screenshots --store google`
+# when a matching filename is present in the directory.
+graphic_assets:
+  - id: play-icon
+    name: App icon
+    width: 512
+    height: 512
+    formats: [PNG]
+    allow_alpha: true         # the one Play asset that REQUIRES 32-bit PNG w/ alpha
+    max_bytes: 1048576        # 1024 KB
+    filename_patterns: ['icon', 'app-icon', 'ic_launcher']
+
+  - id: play-feature-graphic
+    name: Feature graphic
+    width: 1024
+    height: 500
+    formats: [PNG, JPEG]
+    allow_alpha: false
+    max_bytes: 1048576
+    filename_patterns: ['feature-graphic', 'feature_graphic', 'featuregraphic']

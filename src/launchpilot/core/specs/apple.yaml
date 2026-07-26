@@ -1,0 +1,117 @@
+# Apple App Store Connect asset specifications.
+#
+# This file is DATA, not code. Store rules drift constantly; updating a size or
+# promoting a status should never require a code change or a release.
+#
+# status:
+#   required   - Apple requires this display size (or a documented fallback)
+#   accepted   - listed in the current specification table
+#   legacy     - historically accepted, absent from the current table -> WARNING
+#   deprecated - no longer accepted -> ERROR
+source_url: https://developer.apple.com/help/app-store-connect/reference/screenshot-specifications/
+last_verified: 2026-07-26
+
+rules:
+  formats: [PNG, JPEG]
+  allow_alpha: false
+  # App Store Connect requires the RGB color space. CMYK/LAB are rejected outright.
+  required_color_spaces: [RGB, L]
+  min_count_per_class: 1
+  max_count_per_class: 10
+
+sizes:
+  # --- iPhone -------------------------------------------------------------
+  - id: apple-iphone-6.9
+    device_class: 'iPhone 6.9"'
+    width: 1320
+    height: 2868
+    status: required
+    notes: iPhone 17/16/15/14 Pro Max. Primary required iPhone size.
+
+  - id: apple-iphone-6.5
+    device_class: 'iPhone 6.5"'
+    width: 1284
+    height: 2778
+    status: accepted
+    notes: iPhone 14 Plus, 13/12/11 Pro Max, XS Max, XR.
+
+  - id: apple-iphone-6.3
+    device_class: 'iPhone 6.3"'
+    width: 1206
+    height: 2622
+    status: accepted
+    notes: iPhone 17/16/15/14 Pro.
+
+  - id: apple-iphone-6.1
+    device_class: 'iPhone 6.1"'
+    width: 1170
+    height: 2532
+    status: accepted
+    notes: iPhone 17e, 16e, 14, 13/13 Pro, 12/12 Pro.
+
+  - id: apple-iphone-5.5
+    device_class: 'iPhone 5.5"'
+    width: 1242
+    height: 2208
+    status: accepted
+    notes: iPhone 8 Plus, 7 Plus, 6S Plus.
+
+  # --- iPad ---------------------------------------------------------------
+  - id: apple-ipad-13
+    device_class: 'iPad 13"'
+    width: 2064
+    height: 2752
+    status: required
+    notes: Required if the app runs on iPad.
+
+  - id: apple-ipad-12.9
+    device_class: 'iPad 12.9"'
+    width: 2048
+    height: 2732
+    status: accepted
+
+  - id: apple-ipad-11
+    device_class: 'iPad 11"'
+    width: 1668
+    height: 2420
+    status: accepted
+
+  - id: apple-ipad-10.5
+    device_class: 'iPad 10.5"'
+    width: 1668
+    height: 2224
+    status: accepted
+
+  # --- Legacy -------------------------------------------------------------
+  # Still frequently produced by older design templates and screenshot tools.
+  # App Store Connect has historically tolerated these in the matching slot,
+  # but they are absent from the current specification table -> warn, don't fail.
+  - id: apple-iphone-6.5-legacy
+    device_class: 'iPhone 6.5" (legacy)'
+    width: 1242
+    height: 2688
+    status: legacy
+    supersedes: apple-iphone-6.5
+    notes: iPhone XS Max / 11 Pro Max native. Current 6.5" spec is 1284x2778.
+
+  - id: apple-iphone-5.8-legacy
+    device_class: 'iPhone 5.8" (legacy)'
+    width: 1125
+    height: 2436
+    status: legacy
+    supersedes: apple-iphone-6.1
+    notes: iPhone X / XS / 11 Pro native.
+
+  - id: apple-iphone-4.7-legacy
+    device_class: 'iPhone 4.7" (legacy)'
+    width: 750
+    height: 1334
+    status: legacy
+    supersedes: apple-iphone-5.5
+
+  - id: apple-iphone-4-legacy
+    device_class: 'iPhone 4" (legacy)'
+    width: 640
+    height: 1136
+    status: deprecated
+    notes: No longer accepted by App Store Connect.

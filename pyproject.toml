@@ -1,0 +1,99 @@
+[project]
+name = "launchpilot"
+version = "0.1.0"
+description = "Pre-flight checks for App Store and Google Play releases: validate and repair store assets before the stores reject them."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+keywords = ["app-store", "google-play", "screenshots", "aso", "mobile", "ci"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Quality Assurance",
+    "Typing :: Typed",
+]
+dependencies = [
+    "typer>=0.15",
+    "rich>=13.9",
+    "pydantic>=2.10",
+    "pydantic-settings>=2.7",
+    "httpx>=0.28",
+    "pillow>=11.0",
+    "pyyaml>=6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/pP4010/launchpilot"
+Issues = "https://github.com/pP4010/launchpilot/issues"
+
+[project.scripts]
+launchpilot = "launchpilot.cli.main:app"
+
+[project.optional-dependencies]
+# An extra rather than a PEP 735 dependency-group: extras are understood by
+# pip, Poetry and every uv version, so `pip install -e ".[dev]"` just works.
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "pytest-asyncio>=0.25",
+    "ruff>=0.9",
+    "mypy>=1.14",
+    "types-pyyaml>=6.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/launchpilot"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+    "--cov=launchpilot",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+    "--cov-fail-under=85",
+    "--strict-markers",
+]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+branch = true
+source = ["src/launchpilot"]
+
+[tool.coverage.report]
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "\\.\\.\\.",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM", "RUF", "PTH", "C4"]
+ignore = [
+    "B008",    # typer uses function calls in argument defaults by design
+    "RUF001",  # "1320×2868" uses a real multiplication sign on purpose
+]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src"]
+strict = true
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = "launchpilot.cli.*"
+# Typer decorators are dynamically typed; commands return None and are covered by CLI tests.
+disallow_untyped_decorators = false
