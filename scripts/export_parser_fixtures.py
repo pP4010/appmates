@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import shutil
 import sys
 from pathlib import Path
 
@@ -101,30 +100,66 @@ def render(manifest: list[dict[str, object]]) -> str:
     return json.dumps(payload, indent=2) + "\n"
 
 
+def read_committed() -> list[dict[str, object]]:
+    """Re-read the committed fixture images and report what Pillow sees.
+
+    ``--check`` compares against this rather than against freshly encoded images.
+    Pillow compresses PNGs through zlib, whose output differs between platforms,
+    so re-encoding on Linux produces different bytes — and different file sizes —
+    from the macOS run that generated the committed fixtures. Those differences
+    are not drift.
+
+    The invariant worth enforcing is narrower and platform-independent: the facts
+    recorded in the manifest still describe the files actually committed.
+    """
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    out = []
+    for entry in manifest["fixtures"]:
+        facts = read_facts(FIXTURE_DIR / str(entry["file"]))
+        out.append(
+            {
+                "file": entry["file"],
+                "width": facts.width,
+                "height": facts.height,
+                "imageFormat": facts.image_format,
+                "mode": facts.mode,
+                "hasAlpha": facts.has_alpha,
+                "sizeBytes": facts.size_bytes,
+            }
+        )
+    return out
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true", help="Fail if fixtures are stale.")
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Verify the manifest still describes the committed fixture images.",
+    )
     args = parser.parse_args()
 
     if args.check:
         if not MANIFEST.exists():
             print("error: fixtures manifest is missing", file=sys.stderr)
             return 1
-        previous = MANIFEST.read_text(encoding="utf-8")
-        # Rebuild into a scratch copy so --check never mutates the tree.
-        backup = shutil.copytree(FIXTURE_DIR, FIXTURE_DIR.with_name("fixtures.check"))
-        try:
-            generated = render(build_fixtures())
-            if generated != previous:
-                print(
-                    "error: web/test/fixtures is out of date.\n"
-                    "       Run: uv run python scripts/export_parser_fixtures.py",
-                    file=sys.stderr,
-                )
-                return 1
-        finally:
-            shutil.rmtree(backup, ignore_errors=True)
-        print("web/test/fixtures is up to date")
+
+        expected = json.loads(MANIFEST.read_text(encoding="utf-8"))["fixtures"]
+        actual = read_committed()
+
+        if expected != actual:
+            print(
+                "error: web/test/fixtures/fixtures.json no longer matches the "
+                "committed images.\n"
+                "       Run: uv run python scripts/export_parser_fixtures.py",
+                file=sys.stderr,
+            )
+            for want, got in zip(expected, actual, strict=True):
+                if want != got:
+                    print(f"       {want['file']}: {want} != {got}", file=sys.stderr)
+            return 1
+
+        print(f"web/test/fixtures is consistent ({len(actual)} images)")
         return 0
 
     MANIFEST.write_text(render(build_fixtures()), encoding="utf-8")
