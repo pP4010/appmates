@@ -581,3 +581,134 @@ def test_keywords_rejects_an_unknown_locale(tmp_path: Path) -> None:
 
 def test_keywords_rejects_a_missing_file(tmp_path: Path) -> None:
     assert run("keywords", str(tmp_path / "nope.toml")).exit_code == int(ExitCode.USAGE)
+
+
+# --- competitors / rank --------------------------------------------------
+
+
+def _competitor_entries(n: int = 5, *, with_shots: bool = True) -> list[dict[str, Any]]:
+    return [
+        {
+            "trackId": i,
+            "trackName": f"Rival {i}",
+            "sellerName": f"Studio {i}",
+            "userRatingCount": 500 * (i + 1),
+            "averageUserRating": 4.5,
+            "price": 0.0,
+            "currentVersionReleaseDate": "2026-06-01T00:00:00Z",
+            "screenshotUrls": (
+                [f"https://cdn/{i}-{k}.png/392x696bb.png" for k in range(5)] if with_shots else []
+            ),
+            "ipadScreenshotUrls": [],
+        }
+        for i in range(n)
+    ]
+
+
+class _FakeCompetitorSource:
+    def __init__(self, entries: list[dict[str, Any]], app: dict[str, Any] | None = None) -> None:
+        self.entries = entries
+        self.app = app
+
+    def search(self, term: str, *, country: str, limit: int) -> tuple[int, list[dict[str, Any]]]:
+        return len(self.entries), self.entries
+
+    def lookup(self, app_id: str, *, country: str) -> dict[str, Any] | None:
+        return self.app
+
+
+@pytest.fixture
+def offline_competitors(monkeypatch: pytest.MonkeyPatch) -> None:
+    import launchpilot.cli.commands.competitors as module
+
+    monkeypatch.setattr(
+        module,
+        "ITunesSearchClient",
+        lambda **kwargs: _FakeCompetitorSource(
+            _competitor_entries(), app={"trackId": 2, "trackName": "Mine"}
+        ),
+    )
+
+
+def test_competitors_lists_the_field(offline_competitors: None) -> None:
+    result = run("competitors", "habit tracker", "--top", "3")
+    assert result.exit_code == int(ExitCode.OK)
+    assert "Rival 0" in plain(result)
+
+
+def test_competitors_json_separates_iphone_and_ipad_counts(offline_competitors: None) -> None:
+    data = payload(run("competitors", "habit tracker", "--json"))
+    app = data["apps"][0]
+    assert app["position"] == 1
+    assert app["iphone_count"] == 5
+    assert app["ipad_count"] == 0
+    assert app["screenshots_exposed"] is True
+
+
+def test_competitors_json_reports_the_niche_strategy(offline_competitors: None) -> None:
+    data = payload(run("competitors", "habit tracker", "--json"))
+    strategy = data["strategy"]
+    assert strategy["median_count"] == 5
+    assert strategy["apps_sampled"] == 5
+    assert strategy["coverage_percent"] == 100.0
+
+
+def test_competitors_screenshots_flag_lists_urls(offline_competitors: None) -> None:
+    result = run("competitors", "habit tracker", "--screenshots")
+    assert "392x696" in plain(result) or "cdn" in plain(result)
+
+
+def test_competitors_marks_withheld_screenshots(monkeypatch: pytest.MonkeyPatch) -> None:
+    import launchpilot.cli.commands.competitors as module
+
+    monkeypatch.setattr(
+        module,
+        "ITunesSearchClient",
+        lambda **kwargs: _FakeCompetitorSource(_competitor_entries(with_shots=False)),
+    )
+    data = payload(run("competitors", "x", "--json"))
+    assert all(a["screenshots_exposed"] is False for a in data["apps"])
+    assert data["strategy"]["apps_missing"] == 5
+
+
+def test_competitors_surfaces_a_catalogue_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    import launchpilot.cli.commands.competitors as module
+    from launchpilot.core.clients.itunes import MarketDataError
+
+    class Failing:
+        def search(self, term: str, *, country: str, limit: int) -> Any:
+            raise MarketDataError("unreachable")
+
+    monkeypatch.setattr(module, "ITunesSearchClient", lambda **kwargs: Failing())
+    assert run("competitors", "x").exit_code == int(ExitCode.USAGE)
+
+
+def test_rank_reports_a_position(offline_competitors: None) -> None:
+    data = payload(run("rank", "2", "habit tracker", "--json"))
+    assert data["app_name"] == "Mine"
+    assert data["positions"][0]["position"] == 3
+    assert data["positions"][0]["found"] is True
+
+
+def test_rank_requires_a_keyword(offline_competitors: None) -> None:
+    assert run("rank", "2").exit_code == int(ExitCode.USAGE)
+
+
+def test_rank_rejects_an_unknown_app(monkeypatch: pytest.MonkeyPatch) -> None:
+    import launchpilot.cli.commands.competitors as module
+
+    monkeypatch.setattr(
+        module, "ITunesSearchClient", lambda **kwargs: _FakeCompetitorSource([], app=None)
+    )
+    result = run("rank", "999999", "habit tracker")
+    assert result.exit_code == int(ExitCode.USAGE)
+
+
+def test_rank_writes_and_reads_its_history(offline_competitors: None, tmp_path: Path) -> None:
+    history = tmp_path / "h.jsonl"
+    run("rank", "2", "habit tracker", "--history", str(history))
+    assert history.is_file()
+
+    data = payload(run("rank", "2", "habit tracker", "--history", str(history), "--json"))
+    assert data["positions"][0]["previous_position"] == 3
+    assert data["positions"][0]["movement"] == 0

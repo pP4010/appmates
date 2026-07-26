@@ -28,6 +28,7 @@ import httpx
 from launchpilot.core.errors import LaunchPilotError
 
 SEARCH_URL = "https://itunes.apple.com/search"
+LOOKUP_URL = "https://itunes.apple.com/lookup"
 
 # Apple does not publish a rate limit for this endpoint; ~20 requests/minute is
 # the community-understood ceiling. Stay well under it.
@@ -53,6 +54,10 @@ class MarketDataSource(Protocol):
 
     def search(self, term: str, *, country: str, limit: int) -> tuple[int, list[dict[str, Any]]]:
         """Return ``(result_count, raw_entries)`` for a search term."""
+        ...
+
+    def lookup(self, app_id: str, *, country: str) -> dict[str, Any] | None:
+        """Return one app's catalogue entry, by numeric track id or bundle id."""
         ...
 
 
@@ -116,34 +121,31 @@ class ITunesSearchClient:
         if remaining > 0:
             time.sleep(remaining)
 
-    def search(self, term: str, *, country: str, limit: int) -> tuple[int, list[dict[str, Any]]]:
-        params = {
-            "term": term,
-            "country": country.lower(),
-            "entity": "software",
-            "limit": str(limit),
-        }
-        cache_key = json.dumps(params, sort_keys=True)
+    def _get(self, url: str, params: dict[str, str], *, subject: str) -> dict[str, Any]:
+        """One cached, throttled GET with catalogue errors translated.
+
+        ``subject`` only appears in error messages, so a failure names the term
+        or app the user asked about rather than a URL.
+        """
+        cache_key = json.dumps({"url": url, **params}, sort_keys=True)
 
         if self._cache is not None:
             cached = self._cache.get(cache_key)
             if cached is not None:
-                return int(cached.get("resultCount", 0)), list(cached.get("results", []))
+                return cached
 
         self._throttle()
         try:
             if self._client is not None:
-                response = self._client.get(SEARCH_URL, params=params)
+                response = self._client.get(url, params=params)
             else:
                 headers = {"User-Agent": USER_AGENT}
-                response = httpx.get(
-                    SEARCH_URL, params=params, timeout=self._timeout, headers=headers
-                )
+                response = httpx.get(url, params=params, timeout=self._timeout, headers=headers)
             self._last_request_at = time.monotonic()
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:
             raise MarketDataError(
-                f"App Store catalogue returned {exc.response.status_code} for {term!r}. "
+                f"App Store catalogue returned {exc.response.status_code} for {subject!r}. "
                 "This endpoint rate-limits; wait a minute and retry."
             ) from exc
         except httpx.HTTPError as exc:
@@ -154,14 +156,37 @@ class ITunesSearchClient:
         except ValueError as exc:
             # The endpoint answers rate-limited requests with a non-JSON body.
             raise MarketDataError(
-                f"App Store catalogue returned a non-JSON response for {term!r}. "
+                f"App Store catalogue returned a non-JSON response for {subject!r}. "
                 "This usually means rate limiting; wait a minute and retry."
             ) from exc
 
         if self._cache is not None:
             self._cache.set(cache_key, payload)
+        return payload
 
+    def search(self, term: str, *, country: str, limit: int) -> tuple[int, list[dict[str, Any]]]:
+        payload = self._get(
+            SEARCH_URL,
+            {
+                "term": term,
+                "country": country.lower(),
+                "entity": "software",
+                "limit": str(limit),
+            },
+            subject=term,
+        )
         return int(payload.get("resultCount", 0)), list(payload.get("results", []))
+
+    def lookup(self, app_id: str, *, country: str) -> dict[str, Any] | None:
+        """Fetch one app by numeric track id or by bundle id.
+
+        The endpoint takes different parameter names for the two, and returns an
+        empty result set rather than a 404 when nothing matches.
+        """
+        key = "bundleId" if not app_id.isdigit() else "id"
+        payload = self._get(LOOKUP_URL, {key: app_id, "country": country.lower()}, subject=app_id)
+        results = payload.get("results") or []
+        return dict(results[0]) if results else None
 
 
 def default_cache_dir() -> Path:

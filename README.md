@@ -51,6 +51,8 @@ Three things break releases, and all three are mechanically checkable:
 | **Google Play's 12-testers-for-14-days gate** | Tracks the streak day by day, including the dips that silently reset your clock |
 | **A keyword field quietly wasting a third of its budget** | Audits the 100 characters Apple never shows anyone, and rebuilds them |
 | **Building an app into a market that cannot be won** | Scores a niche from the public catalogue before you write any code |
+| **Designing screenshots with no idea what the field does** | Summarises competitors' screenshot conventions, and saves theirs for reference |
+| **No idea whether your listing is indexed at all** | Reports your position per keyword and tracks it over time, locally |
 
 ## Install
 
@@ -192,6 +194,80 @@ reasoning written next to each number. Edit them and re-run.
 > related apps. Three unrelated markets scored 45, 46 and 47. Counting only apps
 > with real traction separates the same keywords by 1 to 149. The result count is
 > still reported as context, but it is not scored.
+
+### `competitors`
+
+```bash
+launchpilot competitors "habit tracker" --top 10
+launchpilot competitors "gratitude journal" --screenshots
+launchpilot competitors "gratitude journal" --download ./rivals --width 300
+launchpilot competitors "budget app" --country fr --json
+```
+
+```
+habit tracker · US · 190 results
+
+  #   App                        Ratings   Stars   Updated   iPhone   iPad
+  1   Habit Tracker              144,343     4.8       16d        0     10
+  2   Habit Tracker - HabitKit     2,274     4.9       55d      n/a    n/a
+  3   Onrise: Habit Tracker        2,495     4.8      187d        7      0
+  4   Productive - Habit Tracker  91,098     4.6      129d        7      7
+
+  What this field does with screenshots
+  Median iPhone screenshots   7
+  Count distribution          3×1 · 7×3
+  Mostly portrait             4 of 5
+  Ship iPad screenshots       3 of 5
+  Using all 10 slots          0
+```
+
+Who you are up against for a term, and how they present. The niche summary is
+the useful part: knowing the field ships a median of seven portrait screenshots
+tells you more than any single competitor does.
+
+Dimensions and orientation are read **from the screenshot URLs themselves** —
+the catalogue encodes the served size in the last path segment — so describing
+a competitor's whole gallery costs no bandwidth. `--download` saves them for
+offline reference.
+
+> **Screenshot availability is partial, and the tool says so.** Across a 55-app
+> sample the catalogue exposed iPhone screenshots for **47%** of apps and some
+> set for 55%. Apps it withheld are marked `n/a` rather than shown as having
+> none, and they are excluded from the medians instead of counted as zeros —
+> folding them in would halve every figure for a reason that has nothing to do
+> with your competitors. iPhone and iPad counts are separate for the same
+> reason: an app can expose ten iPad screenshots and no iPhone ones.
+
+### `rank`
+
+```bash
+launchpilot rank 1438388363 "habit tracker" "daily habits"
+launchpilot rank com.example.myapp "budget" --country fr
+launchpilot rank 1438388363 "habit tracker" --history ./ranks.jsonl
+```
+
+```
+Habit Tracker · US · ranked for 3/3 term(s)
+
+  Keyword           Position   Movement   Since
+  habit tracker           #1        ▲ 3   2026-07-20
+  daily habits            #1        ▲ 3   2026-07-20
+  streak counter          #4        ▲ 3   2026-07-20
+```
+
+**What this measures.** The public catalogue returns results in its own
+relevance order, and this reports your app's place in that order. It is a real,
+repeatable signal, and it moves when your metadata moves.
+
+**What it is not.** The App Store app serves search through a different path,
+with personalisation and paid placements, so the two can disagree. This is a
+directional measure of how your listing is indexed — not the number a given user
+would see. Tools that present a figure like this as *the* App Store ranking are
+overstating what any public endpoint can tell them.
+
+`--history` appends each run to a local JSON Lines file and reports movement
+against it. There is no server, so that file is the record; appending never
+rewrites earlier lines, and one malformed line cannot discard the rest.
 
 ### `keywords`
 
@@ -368,6 +444,8 @@ binary fixtures cannot be diffed in review, and they hide the very properties
 - [x] `niche` — pre-build market assessment from the public catalogue
 - [x] `keywords` — 100-character field audit, coverage map and builder
 - [x] Keyword field in the browser, conformance-tested against the CLI
+- [x] `competitors` — the field for a term, and what it does with screenshots
+- [x] `rank` — search position per keyword, with local history tracking
 - [ ] `launchpilot init` — scaffold a `launchpilot.toml` per project
 - [ ] Play graphic assets (icon, feature graphic) as first-class checks
 - [ ] Device-frame screenshot generation
