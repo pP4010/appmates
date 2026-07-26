@@ -16,8 +16,11 @@ import json
 import sys
 from pathlib import Path
 
+from launchpilot.core.models.app_metadata import LIMITS
 from launchpilot.core.models.report import Store
-from launchpilot.core.specs.registry import load_aso_spec, load_spec
+from launchpilot.core.models.testing import REQUIRED_DAYS, REQUIRED_TESTERS
+from launchpilot.core.services.market_scanner import COUNTRY_NAMES, DEFAULT_STOREFRONTS
+from launchpilot.core.specs.registry import load_aso_spec, load_market_spec, load_spec
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = REPO_ROOT / "web" / "lib" / "specs.json"
@@ -50,7 +53,24 @@ def build() -> dict[str, object]:
         if isinstance(value, set):
             aso[name] = sorted(value)
 
-    return {"_comment": BANNER, "stores": stores, "aso": aso}
+    return {
+        "_comment": BANNER,
+        "stores": stores,
+        "aso": aso,
+        "market": load_market_spec().model_dump(mode="json"),
+        "listing_limits": {
+            store.value: {key: limit.model_dump(mode="json") for key, limit in limits.items()}
+            for store, limits in LIMITS.items()
+        },
+        "closed_testing": {
+            "required_testers": REQUIRED_TESTERS,
+            "required_days": REQUIRED_DAYS,
+        },
+        "storefronts": {
+            "default": list(DEFAULT_STOREFRONTS),
+            "names": COUNTRY_NAMES,
+        },
+    }
 
 
 def render() -> str:

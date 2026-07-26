@@ -202,6 +202,346 @@
       "youtube"
     ]
   },
+  "closed_testing": {
+    "required_days": 14,
+    "required_testers": 12
+  },
+  "listing_limits": {
+    "apple": {
+      "description": {
+        "max_length": 4000,
+        "name": "Description",
+        "required": true
+      },
+      "keywords": {
+        "max_length": 100,
+        "name": "Keywords",
+        "required": false
+      },
+      "promotional_text": {
+        "max_length": 170,
+        "name": "Promotional text",
+        "required": false
+      },
+      "subtitle": {
+        "max_length": 30,
+        "name": "Subtitle",
+        "required": false
+      },
+      "title": {
+        "max_length": 30,
+        "name": "App name",
+        "required": true
+      }
+    },
+    "google": {
+      "description": {
+        "max_length": 4000,
+        "name": "Full description",
+        "required": true
+      },
+      "short_description": {
+        "max_length": 80,
+        "name": "Short description",
+        "required": true
+      },
+      "title": {
+        "max_length": 30,
+        "name": "App name",
+        "required": true
+      }
+    }
+  },
+  "market": {
+    "bands": {
+      "favourable_at": 65.0,
+      "hostile_at": 35.0
+    },
+    "last_verified": "2026-07-26",
+    "serious_competitor_ratings": 1000,
+    "signals": [
+      {
+        "aggregate": "median_rating_count",
+        "code": "LEADER_STRENGTH",
+        "curve": [
+          [
+            0.0,
+            100.0
+          ],
+          [
+            150.0,
+            88.0
+          ],
+          [
+            1000.0,
+            65.0
+          ],
+          [
+            5000.0,
+            38.0
+          ],
+          [
+            20000.0,
+            15.0
+          ],
+          [
+            100000.0,
+            0.0
+          ]
+        ],
+        "direction": "lower_is_better",
+        "label": "Leader entrenchment",
+        "rationale": {
+          "favourable": "Leaders hold a median of {observed:,.0f} ratings — a new entrant can realistically accumulate that.",
+          "hostile": "Leaders hold a median of {observed:,.0f} ratings. That install base is a moat, not a head start.",
+          "neutral": "Leaders hold a median of {observed:,.0f} ratings. Catchable, but it will take sustained releases."
+        },
+        "unit": "ratings",
+        "weight": 0.25
+      },
+      {
+        "aggregate": "serious_competitor_count",
+        "code": "COMPETITIVE_DEPTH",
+        "curve": [
+          [
+            0.0,
+            100.0
+          ],
+          [
+            3.0,
+            88.0
+          ],
+          [
+            10.0,
+            72.0
+          ],
+          [
+            30.0,
+            50.0
+          ],
+          [
+            60.0,
+            30.0
+          ],
+          [
+            120.0,
+            12.0
+          ],
+          [
+            200.0,
+            5.0
+          ]
+        ],
+        "direction": "lower_is_better",
+        "label": "Credible competitors",
+        "rationale": {
+          "favourable": "Only {observed:,.0f} app(s) here have real traction — the field is thin where it counts.",
+          "hostile": "{observed:,.0f} apps already have real traction. Every results page is full of established players.",
+          "neutral": "{observed:,.0f} apps have meaningful traction. A normal, workable field."
+        },
+        "unit": "apps",
+        "weight": 0.15
+      },
+      {
+        "aggregate": "median_days_since_update",
+        "code": "MARKET_FRESHNESS",
+        "curve": [
+          [
+            0.0,
+            10.0
+          ],
+          [
+            30.0,
+            28.0
+          ],
+          [
+            90.0,
+            50.0
+          ],
+          [
+            180.0,
+            72.0
+          ],
+          [
+            365.0,
+            90.0
+          ],
+          [
+            730.0,
+            100.0
+          ]
+        ],
+        "direction": "higher_is_better",
+        "label": "Incumbent neglect",
+        "rationale": {
+          "favourable": "Leaders last shipped a median of {observed:,.0f} days ago — the field is being neglected.",
+          "hostile": "Leaders shipped a median of {observed:,.0f} days ago. These are funded teams defending the slot.",
+          "neutral": "Leaders ship every {observed:,.0f} days or so. Actively maintained, not aggressively."
+        },
+        "unit": "days",
+        "weight": 0.15
+      },
+      {
+        "aggregate": "median_rating",
+        "code": "SATISFACTION_GAP",
+        "curve": [
+          [
+            3.0,
+            100.0
+          ],
+          [
+            3.8,
+            82.0
+          ],
+          [
+            4.3,
+            58.0
+          ],
+          [
+            4.6,
+            35.0
+          ],
+          [
+            4.8,
+            18.0
+          ],
+          [
+            5.0,
+            5.0
+          ]
+        ],
+        "direction": "lower_is_better",
+        "label": "User dissatisfaction",
+        "rationale": {
+          "favourable": "Leaders average {observed:.1f}★ — users are not satisfied with what exists.",
+          "hostile": "Leaders average {observed:.1f}★. Users have little reason to switch.",
+          "neutral": "Leaders average {observed:.1f}★. Decent, with room to be clearly better."
+        },
+        "unit": "stars",
+        "weight": 0.15
+      },
+      {
+        "aggregate": "keyword_in_name_share",
+        "code": "KEYWORD_TARGETING",
+        "curve": [
+          [
+            0.0,
+            100.0
+          ],
+          [
+            10.0,
+            85.0
+          ],
+          [
+            30.0,
+            62.0
+          ],
+          [
+            50.0,
+            42.0
+          ],
+          [
+            75.0,
+            20.0
+          ],
+          [
+            100.0,
+            5.0
+          ]
+        ],
+        "direction": "lower_is_better",
+        "label": "Keyword under-targeting",
+        "rationale": {
+          "favourable": "Only {observed:.0f}% of leaders put this term in their name — they rank incidentally, so targeting it deliberately is an edge.",
+          "hostile": "{observed:.0f}% of leaders target this term by name. They chose this fight and optimised for it.",
+          "neutral": "{observed:.0f}% of leaders target this term by name."
+        },
+        "unit": "percent",
+        "weight": 0.2
+      },
+      {
+        "aggregate": "repeat_publisher_share",
+        "code": "PUBLISHER_CONCENTRATION",
+        "curve": [
+          [
+            0.0,
+            70.0
+          ],
+          [
+            20.0,
+            52.0
+          ],
+          [
+            40.0,
+            36.0
+          ],
+          [
+            60.0,
+            22.0
+          ],
+          [
+            100.0,
+            5.0
+          ]
+        ],
+        "direction": "lower_is_better",
+        "label": "Publisher concentration",
+        "rationale": {
+          "favourable": "No publisher holds multiple slots — the field is fragmented.",
+          "hostile": "{observed:.0f}% of leading slots belong to repeat publishers running portfolio cross-promotion.",
+          "neutral": "{observed:.0f}% of leading slots belong to repeat publishers."
+        },
+        "unit": "percent",
+        "weight": 0.1
+      }
+    ],
+    "source": "https://itunes.apple.com/search",
+    "verdicts": {
+      "contested_at": 35.0,
+      "open_at": 60.0
+    },
+    "version": "1.0"
+  },
+  "storefronts": {
+    "default": [
+      "us",
+      "gb",
+      "ca",
+      "au",
+      "de",
+      "fr",
+      "es",
+      "it",
+      "nl",
+      "br",
+      "mx",
+      "jp",
+      "kr",
+      "pl"
+    ],
+    "names": {
+      "au": "Australia",
+      "br": "Brazil",
+      "ca": "Canada",
+      "cn": "China",
+      "de": "Germany",
+      "es": "Spain",
+      "fr": "France",
+      "gb": "United Kingdom",
+      "id": "Indonesia",
+      "in": "India",
+      "it": "Italy",
+      "jp": "Japan",
+      "kr": "South Korea",
+      "mx": "Mexico",
+      "nl": "Netherlands",
+      "pl": "Poland",
+      "ru": "Russia",
+      "se": "Sweden",
+      "tr": "Turkey",
+      "us": "United States"
+    }
+  },
   "stores": {
     "apple": {
       "graphic_assets": [],

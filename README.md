@@ -449,10 +449,19 @@ anything you build against it now keeps working later.
 
 ## Web checker (no install, no upload)
 
-`web/` is a zero-backend version of two of these tools: drag screenshots in for
-the same finding codes and repaired copies, or audit the keyword field as you
-type. Nothing is uploaded and no server does any work — the screenshot rules read
-the file's *header* rather than its pixels, and the keyword rules are pure text.
+**Every tool above also runs in the browser**, with no install, no account and no
+server of ours in the path. The offline tools read file headers rather than
+pixels; the market tools call Apple's public catalogue directly, which answers
+with `access-control-allow-origin: *`.
+
+```bash
+python3 -m http.server 8000 --directory web
+```
+
+Each browser engine is conformance-tested against its Python original — finding
+codes, character costs, coverage, winnability, every signal's observation and
+rationale, streak and reset detection. CI fails if they disagree or if any
+generated file is stale. See [web/README.md](web/README.md).
 
 ```bash
 python3 -m http.server 8000 --directory web
@@ -519,7 +528,7 @@ binary fixtures cannot be diffed in review, and they hide the very properties
 - [x] Zero-backend web checker with browser-side repair
 - [x] `niche` — pre-build market assessment from the public catalogue
 - [x] `keywords` — 100-character field audit, coverage map and builder
-- [x] Keyword field in the browser, conformance-tested against the CLI
+- [x] Every tool in the browser, conformance-tested against the CLI
 - [x] `competitors` — the field for a term, and what it does with screenshots
 - [x] `rank` — search position per keyword, with local history tracking
 - [x] `markets` — which storefront a term is actually winnable in

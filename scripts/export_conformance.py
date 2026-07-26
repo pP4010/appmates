@@ -17,6 +17,7 @@ Run with ``--check`` in CI to detect a stale corpus.
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import itertools
 import json
 import sys
@@ -24,8 +25,12 @@ from pathlib import Path
 from typing import Any
 
 from launchpilot.core.models.report import ImageFacts, Store
+from launchpilot.core.models.testing import DailyTesterCount
+from launchpilot.core.services.competitor_analyzer import analyse_competitors, extract_terms
+from launchpilot.core.services.google_play import evaluate
 from launchpilot.core.services.image_validator import ScreenshotValidator
 from launchpilot.core.services.keyword_builder import KeywordBuilder
+from launchpilot.core.services.market_analyzer import analyse_keyword
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = REPO_ROOT / "web" / "test" / "conformance-cases.json"
@@ -332,6 +337,317 @@ def build_build_cases() -> list[dict[str, Any]]:
     ]
 
 
+MARKET_TODAY = dt.date(2026, 7, 26)
+
+# Fields chosen so every signal moves independently across the scenarios.
+MARKET_SCENARIOS: list[dict[str, Any]] = [
+    {
+        "name": "empty niche",
+        "keyword": "sourdough starter log",
+        "apps": [{"ratings": 5, "stars": 4.0, "updated": "2024-01-01", "name": "Bread Diary"}] * 3,
+        "result_count": 12,
+    },
+    {
+        "name": "entrenched niche",
+        "keyword": "photo editor",
+        "apps": [
+            {"ratings": 250_000, "stars": 4.8, "updated": "2026-07-24", "name": "Photo Editor Pro"}
+        ]
+        * 60,
+        "result_count": 200,
+    },
+    {
+        "name": "stale leaders",
+        "keyword": "ham radio logbook",
+        "apps": [{"ratings": 40, "stars": 3.6, "updated": "2023-02-01", "name": "QSO Log"}] * 6,
+        "result_count": 90,
+    },
+    {
+        "name": "untargeted leaders",
+        "keyword": "morning routine",
+        "apps": [{"ratings": 9_000, "stars": 4.7, "updated": "2026-06-01", "name": "Unrelated"}]
+        * 12,
+        "result_count": 180,
+    },
+    {
+        "name": "publisher concentration",
+        "keyword": "budget",
+        "apps": [
+            {
+                "ratings": 5_000,
+                "stars": 4.5,
+                "updated": "2026-05-01",
+                "name": "Budget A",
+                "seller": "Big",
+            },
+            {
+                "ratings": 5_000,
+                "stars": 4.5,
+                "updated": "2026-05-01",
+                "name": "Budget B",
+                "seller": "Big",
+            },
+            {
+                "ratings": 5_000,
+                "stars": 4.5,
+                "updated": "2026-05-01",
+                "name": "Budget C",
+                "seller": "Big",
+            },
+            {
+                "ratings": 400,
+                "stars": 4.1,
+                "updated": "2026-05-01",
+                "name": "Budget D",
+                "seller": "Solo",
+            },
+        ],
+        "result_count": 60,
+    },
+    {
+        "name": "missing dates and ratings",
+        "keyword": "obscure tool",
+        "apps": [{"ratings": 0, "stars": None, "updated": None, "name": "Bare"}] * 4,
+        "result_count": 8,
+    },
+    {
+        "name": "no results at all",
+        "keyword": "zzzz nothing",
+        "apps": [],
+        "result_count": 0,
+    },
+    {
+        "name": "thin sample",
+        "keyword": "two apps only",
+        "apps": [{"ratings": 100, "stars": 4.4, "updated": "2026-01-01", "name": "One"}] * 2,
+        "result_count": 2,
+    },
+]
+
+
+def _market_entries(scenario: dict[str, Any]) -> list[dict[str, Any]]:
+    entries = []
+    for index, app in enumerate(scenario["apps"]):
+        entry: dict[str, Any] = {
+            "trackId": index,
+            "trackName": f"{app['name']} {index}",
+            "sellerName": app.get("seller", f"Dev {index}"),
+            "userRatingCount": app["ratings"],
+            "price": 0.0,
+        }
+        if app["stars"] is not None:
+            entry["averageUserRating"] = app["stars"]
+        if app["updated"] is not None:
+            entry["currentVersionReleaseDate"] = f"{app['updated']}T00:00:00Z"
+        entries.append(entry)
+    return entries
+
+
+def build_market_cases() -> list[dict[str, Any]]:
+    """Niche scoring scenarios, scored by the Python analyser.
+
+    ``today`` is pinned: the freshness signal reads a date difference, so an
+    unpinned corpus would drift a point every day and fail CI for no reason.
+    """
+    cases = []
+    for scenario in MARKET_SCENARIOS:
+        entries = _market_entries(scenario)
+        report = analyse_keyword(
+            scenario["keyword"],
+            country="us",
+            result_count=scenario["result_count"],
+            entries=entries,
+            today=MARKET_TODAY,
+        )
+        cases.append(
+            {
+                "name": scenario["name"],
+                "keyword": scenario["keyword"],
+                "country": "us",
+                "resultCount": scenario["result_count"],
+                "today": MARKET_TODAY.isoformat(),
+                "entries": entries,
+                "expectedWinnability": report.winnability,
+                "expectedVerdict": report.verdict.value,
+                "expectedAppsSampled": report.apps_sampled,
+                "expectedNotes": report.notes,
+                "expectedSignals": [
+                    {
+                        "code": s.code,
+                        "observed": s.observed,
+                        "score": s.score,
+                        "band": s.band.value,
+                        "rationale": s.rationale,
+                    }
+                    for s in report.signals
+                ],
+            }
+        )
+    return cases
+
+
+TESTING_TODAY = dt.date(2026, 7, 26)
+
+TESTING_SCENARIOS: list[dict[str, Any]] = [
+    {"name": "not started", "counts": [], "approved": True},
+    {"name": "one day at target", "counts": [12], "approved": True},
+    {"name": "nine days at target", "counts": [12] * 9, "approved": True},
+    {"name": "fourteen days at target", "counts": [12] * 14, "approved": True},
+    {"name": "twenty days at target", "counts": [12] * 20, "approved": True},
+    {"name": "below target throughout", "counts": [8] * 14, "approved": True},
+    # The case the whole module exists for: a dip that restarts Google's clock.
+    {"name": "dip on day nine", "counts": [12] * 8 + [11] + [12] * 6, "approved": True},
+    {"name": "dip then long recovery", "counts": [12] * 3 + [5] + [12] * 14, "approved": True},
+    {"name": "release not approved", "counts": [12] * 20, "approved": False},
+    {"name": "exactly at threshold", "counts": [12] * 13 + [12], "approved": True},
+    {"name": "above threshold", "counts": [30] * 14, "approved": True},
+    {"name": "final day drops", "counts": [12] * 13 + [3], "approved": True},
+]
+
+
+def build_testing_cases() -> list[dict[str, Any]]:
+    """Closed-testing timelines, evaluated by the Python engine.
+
+    ``today`` is pinned because the projected date is computed from it.
+    """
+    cases = []
+    for scenario in TESTING_SCENARIOS:
+        counts = scenario["counts"]
+        history = [
+            DailyTesterCount(
+                date=TESTING_TODAY - dt.timedelta(days=len(counts) - 1 - offset),
+                opted_in=value,
+            )
+            for offset, value in enumerate(counts)
+        ]
+        status = evaluate(history, release_approved=scenario["approved"], today=TESTING_TODAY)
+        cases.append(
+            {
+                "name": scenario["name"],
+                "history": [{"date": d.date.isoformat(), "optedIn": d.opted_in} for d in history],
+                "releaseApproved": scenario["approved"],
+                "today": TESTING_TODAY.isoformat(),
+                "expectedEligible": status.eligible,
+                "expectedActive": status.active_testers,
+                "expectedStreak": status.current_streak_days,
+                "expectedLongest": status.longest_streak_days,
+                "expectedDaysRemaining": status.days_remaining,
+                "expectedWasReset": status.streak_was_reset,
+                "expectedBlockerCodes": sorted(b.code for b in status.blocking_reasons),
+                "expectedProjected": (
+                    status.projected_eligible_date.isoformat()
+                    if status.projected_eligible_date
+                    else None
+                ),
+            }
+        )
+    return cases
+
+
+COMPETITOR_SCENARIOS: list[dict[str, Any]] = [
+    {
+        "name": "all exposed",
+        "apps": [{"iphone": 7, "ipad": 0, "name": "Habit Tracker"}] * 5,
+    },
+    {
+        "name": "half withheld",
+        "apps": [
+            {"iphone": 7, "ipad": 3, "name": "Habit One"},
+            {"iphone": 0, "ipad": 0, "name": "Withheld Two"},
+            {"iphone": 5, "ipad": 0, "name": "Habit Three"},
+            {"iphone": 0, "ipad": 0, "name": "Withheld Four"},
+        ],
+    },
+    {
+        "name": "ipad only leader",
+        "apps": [
+            {"iphone": 0, "ipad": 10, "name": "Tablet First"},
+            {"iphone": 6, "ipad": 0, "name": "Phone First"},
+        ],
+    },
+    {
+        "name": "landscape field",
+        "apps": [{"iphone": 5, "ipad": 0, "name": "Racing Game", "portrait": False}] * 4,
+    },
+    {
+        "name": "uses every slot",
+        "apps": [{"iphone": 10, "ipad": 0, "name": "Maximal App"}] * 3,
+    },
+    {"name": "nothing at all", "apps": []},
+]
+
+
+def _competitor_entries(scenario: dict[str, Any]) -> list[dict[str, Any]]:
+    entries = []
+    for index, app in enumerate(scenario["apps"]):
+        dims = "392x696bb" if app.get("portrait", True) else "696x392bb"
+        entries.append(
+            {
+                "trackId": index,
+                "trackName": f"{app['name']} {index}",
+                "sellerName": app.get("seller", f"Dev {index}"),
+                "description": app.get("description", "Track your daily habit and build streaks."),
+                "userRatingCount": 500,
+                "averageUserRating": 4.5,
+                "price": 0.0,
+                "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+                "screenshotUrls": [
+                    f"https://cdn/{index}-{k}.png/{dims}.png" for k in range(app["iphone"])
+                ],
+                "ipadScreenshotUrls": [
+                    f"https://cdn/{index}-p{k}.png/{dims}.png" for k in range(app["ipad"])
+                ],
+            }
+        )
+    return entries
+
+
+def build_competitor_cases() -> list[dict[str, Any]]:
+    cases = []
+    for scenario in COMPETITOR_SCENARIOS:
+        entries = _competitor_entries(scenario)
+        report = analyse_competitors(
+            "habit tracker", country="us", result_count=len(entries), entries=entries
+        )
+        terms = extract_terms(report.apps, your_text="My Habit App", min_apps=1)
+        strategy = report.strategy
+        cases.append(
+            {
+                "name": scenario["name"],
+                "entries": entries,
+                "expectedIphoneCounts": [a.iphone_count for a in report.apps],
+                "expectedIpadCounts": [a.ipad_count for a in report.apps],
+                "expectedExposed": [a.screenshots_exposed for a in report.apps],
+                "expectedStrategy": (
+                    {
+                        "appsSampled": strategy.apps_sampled,
+                        "appsMissing": strategy.apps_missing,
+                        "medianCount": strategy.median_count,
+                        "coveragePercent": strategy.coverage_percent,
+                        "portraitApps": strategy.portrait_apps,
+                        "landscapeApps": strategy.landscape_apps,
+                        "ipadApps": strategy.ipad_apps,
+                        "usesMaxSlots": strategy.uses_max_slots,
+                    }
+                    if strategy
+                    else None
+                ),
+                "expectedTerms": [
+                    {
+                        "term": t.term,
+                        "appsInName": t.apps_in_name,
+                        "appsInDescription": t.apps_in_description,
+                        "score": t.score,
+                        "inYourListing": t.in_your_listing,
+                    }
+                    for t in terms
+                ],
+                "expectedNotes": report.notes,
+            }
+        )
+    return cases
+
+
 def render() -> str:
     payload = {
         "_comment": (
@@ -342,6 +658,9 @@ def render() -> str:
         "setCases": build_set_cases(),
         "keywordCases": build_keyword_cases(),
         "keywordBuildCases": build_build_cases(),
+        "marketCases": build_market_cases(),
+        "testingCases": build_testing_cases(),
+        "competitorCases": build_competitor_cases(),
     }
     return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
 

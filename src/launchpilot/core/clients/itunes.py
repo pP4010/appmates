@@ -182,9 +182,17 @@ class ITunesSearchClient:
 
         The endpoint takes different parameter names for the two, and returns an
         empty result set rather than a 404 when nothing matches.
+
+        ``country`` is omitted for numeric ids, matching the browser client. A
+        track id already identifies one app across every storefront, and the
+        parameter only varies pricing fields nothing here reads — but combining
+        the two makes Apple drop its CORS headers, which breaks the web build.
+        Keeping the request shapes identical keeps the two clients honest.
         """
-        key = "bundleId" if not app_id.isdigit() else "id"
-        payload = self._get(LOOKUP_URL, {key: app_id, "country": country.lower()}, subject=app_id)
+        params = (
+            {"id": app_id} if app_id.isdigit() else {"bundleId": app_id, "country": country.lower()}
+        )
+        payload = self._get(LOOKUP_URL, params, subject=app_id)
         results = payload.get("results") or []
         return dict(results[0]) if results else None
 

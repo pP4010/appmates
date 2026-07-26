@@ -1,25 +1,19 @@
-# LaunchPilot web checker
+# LaunchPilot web app
 
-A zero-backend version of the CLI. Two tools, both with nothing uploaded, no
-account, and no server doing any work:
+Every LaunchPilot tool, running in the browser. Nothing is uploaded, there is no
+account, and no server of ours is involved at any point.
 
-* **Screenshots** — drag files in, get the same findings the CLI produces, and
-  download repaired copies.
-* **Keyword field** — audit the 100-character App Store field as you type, see
-  which phrases you can actually rank for, and get a rebuilt field.
-
-## Why there is no backend
-
-Almost every rule LaunchPilot applies is a property of the file's *header*:
-dimensions, colour type, alpha channel, byte size. None of it needs the pixels,
-so none of it needs to leave the machine. Reading a few hundred header bytes in
-the browser answers the question a multi-megabyte upload would have answered,
-instantly and privately.
-
-That is not only cheaper, it is more correct. A fully opaque RGBA PNG is still
-rejected by App Store Connect, so sampling pixels on a canvas to look for
-transparency would give the wrong answer. The PNG colour-type byte gives the
-right one.
+| Tool | Needs the network? |
+|---|---|
+| **Screenshots** — validate and repair | no |
+| **Keyword field** — audit the 100 characters | no |
+| **Listing text** — both stores' field limits | no |
+| **Niche** — is this market worth entering | yes |
+| **Markets** — which storefront it is winnable in | yes |
+| **Competitors** — the field, their screenshots, shared vocabulary | yes |
+| **Rank** — your position per keyword | yes |
+| **Play testers** — the 12-for-14-days gate | no |
+| **Specs** — the bundled catalogue and its provenance | no |
 
 ## Running it
 
@@ -29,85 +23,93 @@ Any static file server. There is no build step.
 python3 -m http.server 8000 --directory web
 ```
 
-Then open <http://localhost:8000>. Deploy by copying `web/` to any static host.
+Deploy by copying `web/` to any static host.
+
+## Why there is no backend
+
+Two independent reasons, and both are load-bearing.
+
+**The offline tools read headers, not pixels.** Dimensions, colour type, alpha
+channel, byte size — none of it needs the image data, so none of it needs to
+leave the machine. It is also more correct than the obvious alternative: a fully
+opaque RGBA PNG is still rejected by App Store Connect, so sampling canvas
+pixels for transparency would give the wrong answer where the PNG colour-type
+byte gives the right one.
+
+**The market tools call Apple directly.** The public catalogue endpoint answers
+with `access-control-allow-origin: *`, so the page can query it from the browser.
+No proxy, no API key, no request of yours passing through anything we run.
 
 ## Keeping it honest
 
-The browser reimplements rule logic that already exists in Python. Two
+The browser reimplements logic that already exists in Python. Two
 implementations of the same rules drift, so the drift is made to fail loudly.
 
-**Specification data is generated, never retyped.** `lib/specs.json` comes from
-`src/launchpilot/core/specs/*.yaml` via `scripts/export_specs.py`. The numbers
-that actually change when a store updates its rules exist in exactly one place.
+**Specification data is generated, never retyped.** `lib/specs.json` is projected
+from `src/launchpilot/core/specs/*.yaml` by `scripts/export_specs.py` — store
+sizes, scoring curves and weights, field limits, word lists, storefront names.
+The numbers that change when a store updates a rule exist in exactly one place.
 
-**Rule logic is tested against Python.** `scripts/export_conformance.py` runs the
-Python implementations across a grid of inputs and records what they produced;
-`test/conformance.test.js` asserts the JavaScript engines return identical
-results for all 939 cases — finding codes, statuses and device classes for
-screenshots, and codes, character costs, coverage and rebuilt fields for the
-keyword engine.
+**Every engine is tested against its Python original.** `scripts/export_conformance.py`
+runs the Python implementations across a grid of inputs and records what they
+produced; `test/conformance.test.js` asserts the JavaScript returns the same
+thing:
+
+| Engine | What is compared |
+|---|---|
+| Screenshot rules | finding codes, status, device class — 939 cases |
+| Keyword field | codes, per-word character costs, coverage, rebuilt field |
+| Niche scoring | winnability, verdict, and every signal's observation, score, band and rationale sentence |
+| Closed testing | eligibility, streak, reset detection, blocker codes, projected date |
+| Competitors | iPhone/iPad counts, screenshot strategy, extracted terms |
 
 **Header parsing is tested against Pillow.** Rules are only as correct as the
-facts they run on. `scripts/export_parser_fixtures.py` writes tiny real images
-and records what Pillow reads from them; `test/parser.test.js` asserts the JS
-parser agrees — including the palette PNG whose transparency hides in a `tRNS`
-chunk rather than the colour-type byte.
+facts they run on, so `test/parser.test.js` asserts the JS parser reads real
+images the same way Pillow does — including the palette PNG whose transparency
+hides in a `tRNS` chunk rather than the colour-type byte.
 
-CI fails if any generated file is stale, so editing a YAML spec without
-regenerating cannot ship.
+CI fails if any generated file is stale.
 
 ```bash
-uv run python scripts/export_specs.py            # regenerate after a spec change
-uv run python scripts/export_conformance.py
-uv run python scripts/export_parser_fixtures.py
-
-node --test "web/test/*.test.js"                 # 24 tests
+node --test "web/test/*.test.js"     # 47 tests
 ```
 
-## Why repaired files come out as JPEG
+## Two things the catalogue does that took finding
 
-`canvas.toBlob('image/png')` emits a 32-bit RGBA PNG even when every pixel is
-opaque. A "fixed" PNG would therefore still carry the alpha channel that got the
-screenshot rejected — fixing nothing. JPEG cannot represent alpha at all, so the
-output is clean by construction, and both stores accept it.
+**`?id=X&country=us` returns no CORS headers at all.** `?id=X` alone answers
+with `access-control-allow-origin: *`, and adding `country` silently drops it,
+so the browser blocks the response and reports an opaque "Failed to fetch". The
+client omits `country` for numeric ids — a track id already identifies one app
+across every storefront, and the parameter only varies pricing fields nothing
+here reads. The Python client does the same, so both send identical requests.
 
-The CLI uses Pillow and writes genuine alpha-free PNGs, so `launchpilot
-fix-screenshots` remains the answer when PNG specifically is required.
+**A 200-result page is about 1.5 MB.** The endpoint returns every field it has,
+including full descriptions and device lists, with no way to ask for less. That
+is fine on a desktop connection and not fine on a phone or behind a proxy that
+caps response bodies. Rather than quietly lowering the page size for everyone —
+which would change the competitive-depth score and break parity with the CLI —
+the full page is attempted first and a fallback is **reported in the output**, so
+a smaller sample is visible rather than mistaken for a thinner market.
 
 ## Layout
 
 ```
 web/
-├── index.html          # markup and styles
-├── app.js              # UI wiring only — no rules live here
-├── lib/
-│   ├── image-facts.js  # PNG/JPEG header parsing (mirrors read_facts)
-│   ├── validator.js    # screenshot rules (mirrors ScreenshotValidator)
-│   ├── keywords.js     # keyword field engine (mirrors KeywordBuilder)
-│   ├── fixer.js        # canvas repair (mirrors ScreenshotFixer)
-│   ├── zip.js          # stored-entry ZIP writer for batch download
+├── index.html          # shell and views
+├── styles.css
+├── app.js              # routing and boot only
+├── lib/                # engines, each mirroring a Python service
+│   ├── image-facts.js  # PNG/JPEG headers      ← read_facts
+│   ├── validator.js    # screenshot rules      ← ScreenshotValidator
+│   ├── fixer.js        # canvas repair         ← ScreenshotFixer
+│   ├── keywords.js     # keyword field         ← KeywordBuilder
+│   ├── metadata.js     # listing limits        ← MetadataValidator
+│   ├── market.js       # niche + markets       ← market_analyzer, market_scanner
+│   ├── competitors.js  # competitors + rank    ← competitor_analyzer
+│   ├── testers.js      # closed testing        ← google_play
+│   ├── itunes.js       # catalogue client      ← clients/itunes
+│   ├── zip.js          # batch download
 │   └── specs.json      # GENERATED — do not edit
+├── views/              # one module per tool; rendering only
 └── test/
-    ├── conformance.test.js  # JS engine ≡ Python engine
-    ├── parser.test.js       # JS parser ≡ Pillow
-    ├── zip.test.js
-    ├── conformance-cases.json  # GENERATED
-    └── fixtures/               # GENERATED
 ```
-
-## A note on porting the keyword engine
-
-Two things bit during the port and are worth knowing before editing
-`lib/keywords.js`:
-
-**JavaScript's `\w` is ASCII-only.** Python's `re.UNICODE` keeps "café" whole;
-a literal port splits it into "caf" and "é", which silently changes which
-phrases count as covered on any non-English storefront. The tokeniser uses
-`\p{L}\p{N}` with the `u` flag instead, and a conformance case exists purely
-to hold that line.
-
-**Finding order comes from insertion order.** The Python side iterates a dict
-built by walking the field left to right, so the JS side uses a `Map` rather
-than a plain object — object key ordering would reorder numeric-looking
-keywords and break the comparison for reasons that have nothing to do with the
-rules.

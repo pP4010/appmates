@@ -17,6 +17,14 @@ import { dirname, join } from 'node:path';
 
 import { loadSpecs, validateFacts, validateSet } from '../lib/validator.js';
 import { loadAso, auditField, buildField, tokenize } from '../lib/keywords.js';
+import { analyseCompetitors, extractTerms } from '../lib/competitors.js';
+import { evaluateTesting, loadTestingSpec } from '../lib/testers.js';
+import {
+  analyseKeyword,
+  interpolate,
+  keywordInName,
+  loadMarketSpec,
+} from '../lib/market.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const specs = JSON.parse(readFileSync(join(here, '..', 'lib', 'specs.json'), 'utf8'));
@@ -24,6 +32,8 @@ const corpus = JSON.parse(readFileSync(join(here, 'conformance-cases.json'), 'ut
 
 loadSpecs(specs);
 loadAso(specs);
+loadMarketSpec(specs);
+loadTestingSpec(specs);
 
 function describeCase(c) {
   const f = c.facts;
@@ -214,5 +224,203 @@ test('the keyword corpus exercises every rule the engine can emit', () => {
   for (const code of Object.keys(specs.aso.findings)) {
     if (code === 'ASO_WASTED_BUDGET') continue; // informational, not emitted as a finding
     assert.ok(emitted.has(code), `no conformance case covers ${code}`);
+  }
+});
+
+// --- market scoring ------------------------------------------------------
+
+test('niche scoring matches the Python analyser', () => {
+  for (const c of corpus.marketCases) {
+    const report = analyseKeyword(c.keyword, {
+      country: c.country,
+      resultCount: c.resultCount,
+      entries: c.entries,
+      today: new Date(`${c.today}T00:00:00Z`),
+    });
+    assert.equal(report.winnability, c.expectedWinnability, `${c.name}: winnability`);
+    assert.equal(report.verdict, c.expectedVerdict, `${c.name}: verdict`);
+    assert.equal(report.appsSampled, c.expectedAppsSampled, `${c.name}: sample size`);
+  }
+});
+
+test('every market signal matches the Python analyser', () => {
+  for (const c of corpus.marketCases) {
+    const report = analyseKeyword(c.keyword, {
+      country: c.country,
+      resultCount: c.resultCount,
+      entries: c.entries,
+      today: new Date(`${c.today}T00:00:00Z`),
+    });
+    assert.deepEqual(
+      report.signals.map((s) => ({
+        code: s.code,
+        observed: s.observed,
+        score: s.score,
+        band: s.band,
+        rationale: s.rationale,
+      })),
+      c.expectedSignals,
+      `${c.name}: signals`,
+    );
+  }
+});
+
+test('market notes match the Python analyser', () => {
+  for (const c of corpus.marketCases) {
+    const report = analyseKeyword(c.keyword, {
+      country: c.country,
+      resultCount: c.resultCount,
+      entries: c.entries,
+      today: new Date(`${c.today}T00:00:00Z`),
+    });
+    assert.deepEqual(report.notes, c.expectedNotes, `${c.name}: notes`);
+  }
+});
+
+test('interpolation clamps and interpolates like the Python curve', () => {
+  const curve = [[0, 100], [10, 50], [20, 0]];
+  assert.equal(interpolate(curve, -5), 100);
+  assert.equal(interpolate(curve, 5), 75);
+  assert.equal(interpolate(curve, 999), 0);
+  assert.equal(interpolate([], 5), 0);
+});
+
+test('keyword-in-name matching is word-wise, not substring', () => {
+  assert.equal(keywordInName('habit tracker', 'Tracker of Habit'), true);
+  assert.equal(keywordInName('habit tracker', 'Habit-Tracker!'), true);
+  assert.equal(keywordInName('hab', 'Habit Tracker'), false);
+  assert.equal(keywordInName('', 'Anything'), false);
+});
+
+test('the market corpus exercises every verdict', () => {
+  const verdicts = new Set(corpus.marketCases.map((c) => c.expectedVerdict));
+  assert.deepEqual([...verdicts].sort(), ['contested', 'locked', 'open']);
+});
+
+// --- closed testing ------------------------------------------------------
+
+test('closed-testing evaluation matches the Python engine', () => {
+  for (const c of corpus.testingCases) {
+    const status = evaluateTesting(c.history, {
+      releaseApproved: c.releaseApproved,
+      today: new Date(`${c.today}T00:00:00Z`),
+    });
+    assert.equal(status.eligible, c.expectedEligible, `${c.name}: eligible`);
+    assert.equal(status.activeTesters, c.expectedActive, `${c.name}: active testers`);
+    assert.equal(status.currentStreakDays, c.expectedStreak, `${c.name}: streak`);
+    assert.equal(status.longestStreakDays, c.expectedLongest, `${c.name}: longest streak`);
+    assert.equal(status.daysRemaining, c.expectedDaysRemaining, `${c.name}: days remaining`);
+  }
+});
+
+test('a dip that restarts Google’s clock is detected identically', () => {
+  for (const c of corpus.testingCases) {
+    const status = evaluateTesting(c.history, {
+      releaseApproved: c.releaseApproved,
+      today: new Date(`${c.today}T00:00:00Z`),
+    });
+    assert.equal(status.wasReset, c.expectedWasReset, `${c.name}: reset detection`);
+  }
+});
+
+test('blocking reasons match the Python engine', () => {
+  for (const c of corpus.testingCases) {
+    const status = evaluateTesting(c.history, {
+      releaseApproved: c.releaseApproved,
+      today: new Date(`${c.today}T00:00:00Z`),
+    });
+    assert.deepEqual(
+      status.blockers.map((b) => b.code).sort(),
+      c.expectedBlockerCodes,
+      `${c.name}: blockers`,
+    );
+  }
+});
+
+test('the projected eligibility date matches the Python engine', () => {
+  for (const c of corpus.testingCases) {
+    const status = evaluateTesting(c.history, {
+      releaseApproved: c.releaseApproved,
+      today: new Date(`${c.today}T00:00:00Z`),
+    });
+    assert.equal(status.projectedDate, c.expectedProjected, `${c.name}: projected date`);
+  }
+});
+
+test('the testing corpus covers the reset case it exists for', () => {
+  assert.ok(corpus.testingCases.some((c) => c.expectedWasReset));
+  assert.ok(corpus.testingCases.some((c) => c.expectedEligible));
+});
+
+// --- competitors ---------------------------------------------------------
+
+function competitorReport(c) {
+  return analyseCompetitors('habit tracker', {
+    country: 'us',
+    resultCount: c.entries.length,
+    entries: c.entries,
+    yourText: 'My Habit App',
+  });
+}
+
+test('iPhone and iPad counts match the Python analyser', () => {
+  for (const c of corpus.competitorCases) {
+    const report = competitorReport(c);
+    assert.deepEqual(report.apps.map((a) => a.iphoneCount), c.expectedIphoneCounts, c.name);
+    assert.deepEqual(report.apps.map((a) => a.ipadCount), c.expectedIpadCounts, c.name);
+    assert.deepEqual(report.apps.map((a) => a.screenshotsExposed), c.expectedExposed, c.name);
+  }
+});
+
+test('screenshot strategy matches the Python analyser', () => {
+  for (const c of corpus.competitorCases) {
+    const { strategy } = competitorReport(c);
+    if (c.expectedStrategy === null) {
+      assert.equal(strategy, null, `${c.name}: no strategy`);
+      continue;
+    }
+    assert.deepEqual(
+      {
+        appsSampled: strategy.appsSampled,
+        appsMissing: strategy.appsMissing,
+        medianCount: strategy.medianCount,
+        coveragePercent: strategy.coveragePercent,
+        portraitApps: strategy.portraitApps,
+        landscapeApps: strategy.landscapeApps,
+        ipadApps: strategy.ipadApps,
+        usesMaxSlots: strategy.usesMaxSlots,
+      },
+      c.expectedStrategy,
+      `${c.name}: strategy`,
+    );
+  }
+});
+
+test('extracted terms match the Python analyser', () => {
+  for (const c of corpus.competitorCases) {
+    const report = analyseCompetitors('habit tracker', {
+      country: 'us',
+      resultCount: c.entries.length,
+      entries: c.entries,
+      yourText: 'My Habit App',
+    });
+    const terms = extractTerms(report.apps, { yourText: 'My Habit App', minApps: 1 });
+    assert.deepEqual(
+      terms.map((t) => ({
+        term: t.term,
+        appsInName: t.appsInName,
+        appsInDescription: t.appsInDescription,
+        score: t.score,
+        inYourListing: t.inYourListing,
+      })),
+      c.expectedTerms,
+      `${c.name}: terms`,
+    );
+  }
+});
+
+test('competitor notes match the Python analyser', () => {
+  for (const c of corpus.competitorCases) {
+    assert.deepEqual(competitorReport(c).notes, c.expectedNotes, `${c.name}: notes`);
   }
 });

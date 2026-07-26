@@ -167,15 +167,21 @@ def _build_signal(signal_spec: SignalSpec, aggregates: Aggregates, spec: MarketS
     band = _band_for(score, spec)
     template = signal_spec.rationale.get(band.value, "")
 
+    # Round once, then use that value everywhere. Formatting the template from
+    # the raw observation while reporting a rounded one let a single line
+    # contradict itself — "4.5 stars" beside "Leaders average 4.6★" — because
+    # the two roundings landed on different sides.
+    rounded = round(observed, 2)
+
     return Signal(
         code=signal_spec.code,
         label=signal_spec.label,
-        observed=round(observed, 2),
+        observed=rounded,
         unit=signal_spec.unit,
         score=round(score, 1),
         weight=signal_spec.weight,
         band=band,
-        rationale=template.format(observed=observed),
+        rationale=template.format(observed=rounded),
     )
 
 

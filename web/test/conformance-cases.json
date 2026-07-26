@@ -18876,5 +18876,2836 @@
       "subtitle": "",
       "expectedField": ""
     }
+  ],
+  "marketCases": [
+    {
+      "name": "empty niche",
+      "keyword": "sourdough starter log",
+      "country": "us",
+      "resultCount": 12,
+      "today": "2026-07-26",
+      "entries": [
+        {
+          "trackId": 0,
+          "trackName": "Bread Diary 0",
+          "sellerName": "Dev 0",
+          "userRatingCount": 5,
+          "price": 0.0,
+          "averageUserRating": 4.0,
+          "currentVersionReleaseDate": "2024-01-01T00:00:00Z"
+        },
+        {
+          "trackId": 1,
+          "trackName": "Bread Diary 1",
+          "sellerName": "Dev 1",
+          "userRatingCount": 5,
+          "price": 0.0,
+          "averageUserRating": 4.0,
+          "currentVersionReleaseDate": "2024-01-01T00:00:00Z"
+        },
+        {
+          "trackId": 2,
+          "trackName": "Bread Diary 2",
+          "sellerName": "Dev 2",
+          "userRatingCount": 5,
+          "price": 0.0,
+          "averageUserRating": 4.0,
+          "currentVersionReleaseDate": "2024-01-01T00:00:00Z"
+        }
+      ],
+      "expectedWinnability": 92.8,
+      "expectedVerdict": "open",
+      "expectedAppsSampled": 3,
+      "expectedNotes": [
+        "Only 3 app(s) available to sample, so the leader signals are noisy."
+      ],
+      "expectedSignals": [
+        {
+          "code": "LEADER_STRENGTH",
+          "observed": 5.0,
+          "score": 99.6,
+          "band": "favourable",
+          "rationale": "Leaders hold a median of 5 ratings — a new entrant can realistically accumulate that."
+        },
+        {
+          "code": "COMPETITIVE_DEPTH",
+          "observed": 0.0,
+          "score": 100.0,
+          "band": "favourable",
+          "rationale": "Only 0 app(s) here have real traction — the field is thin where it counts."
+        },
+        {
+          "code": "MARKET_FRESHNESS",
+          "observed": 937.0,
+          "score": 100.0,
+          "band": "favourable",
+          "rationale": "Leaders last shipped a median of 937 days ago — the field is being neglected."
+        },
+        {
+          "code": "SATISFACTION_GAP",
+          "observed": 4.0,
+          "score": 72.4,
+          "band": "favourable",
+          "rationale": "Leaders average 4.0★ — users are not satisfied with what exists."
+        },
+        {
+          "code": "KEYWORD_TARGETING",
+          "observed": 0.0,
+          "score": 100.0,
+          "band": "favourable",
+          "rationale": "Only 0% of leaders put this term in their name — they rank incidentally, so targeting it deliberately is an edge."
+        },
+        {
+          "code": "PUBLISHER_CONCENTRATION",
+          "observed": 0.0,
+          "score": 70.0,
+          "band": "favourable",
+          "rationale": "No publisher holds multiple slots — the field is fragmented."
+        }
+      ]
+    },
+    {
+      "name": "entrenched niche",
+      "keyword": "photo editor",
+      "country": "us",
+      "resultCount": 200,
+      "today": "2026-07-26",
+      "entries": [
+        {
+          "trackId": 0,
+          "trackName": "Photo Editor Pro 0",
+          "sellerName": "Dev 0",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 1,
+          "trackName": "Photo Editor Pro 1",
+          "sellerName": "Dev 1",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 2,
+          "trackName": "Photo Editor Pro 2",
+          "sellerName": "Dev 2",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 3,
+          "trackName": "Photo Editor Pro 3",
+          "sellerName": "Dev 3",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 4,
+          "trackName": "Photo Editor Pro 4",
+          "sellerName": "Dev 4",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 5,
+          "trackName": "Photo Editor Pro 5",
+          "sellerName": "Dev 5",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 6,
+          "trackName": "Photo Editor Pro 6",
+          "sellerName": "Dev 6",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 7,
+          "trackName": "Photo Editor Pro 7",
+          "sellerName": "Dev 7",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 8,
+          "trackName": "Photo Editor Pro 8",
+          "sellerName": "Dev 8",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 9,
+          "trackName": "Photo Editor Pro 9",
+          "sellerName": "Dev 9",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 10,
+          "trackName": "Photo Editor Pro 10",
+          "sellerName": "Dev 10",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 11,
+          "trackName": "Photo Editor Pro 11",
+          "sellerName": "Dev 11",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 12,
+          "trackName": "Photo Editor Pro 12",
+          "sellerName": "Dev 12",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 13,
+          "trackName": "Photo Editor Pro 13",
+          "sellerName": "Dev 13",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 14,
+          "trackName": "Photo Editor Pro 14",
+          "sellerName": "Dev 14",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 15,
+          "trackName": "Photo Editor Pro 15",
+          "sellerName": "Dev 15",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 16,
+          "trackName": "Photo Editor Pro 16",
+          "sellerName": "Dev 16",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 17,
+          "trackName": "Photo Editor Pro 17",
+          "sellerName": "Dev 17",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 18,
+          "trackName": "Photo Editor Pro 18",
+          "sellerName": "Dev 18",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 19,
+          "trackName": "Photo Editor Pro 19",
+          "sellerName": "Dev 19",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 20,
+          "trackName": "Photo Editor Pro 20",
+          "sellerName": "Dev 20",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 21,
+          "trackName": "Photo Editor Pro 21",
+          "sellerName": "Dev 21",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 22,
+          "trackName": "Photo Editor Pro 22",
+          "sellerName": "Dev 22",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 23,
+          "trackName": "Photo Editor Pro 23",
+          "sellerName": "Dev 23",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 24,
+          "trackName": "Photo Editor Pro 24",
+          "sellerName": "Dev 24",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 25,
+          "trackName": "Photo Editor Pro 25",
+          "sellerName": "Dev 25",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 26,
+          "trackName": "Photo Editor Pro 26",
+          "sellerName": "Dev 26",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 27,
+          "trackName": "Photo Editor Pro 27",
+          "sellerName": "Dev 27",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 28,
+          "trackName": "Photo Editor Pro 28",
+          "sellerName": "Dev 28",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 29,
+          "trackName": "Photo Editor Pro 29",
+          "sellerName": "Dev 29",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 30,
+          "trackName": "Photo Editor Pro 30",
+          "sellerName": "Dev 30",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 31,
+          "trackName": "Photo Editor Pro 31",
+          "sellerName": "Dev 31",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 32,
+          "trackName": "Photo Editor Pro 32",
+          "sellerName": "Dev 32",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 33,
+          "trackName": "Photo Editor Pro 33",
+          "sellerName": "Dev 33",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 34,
+          "trackName": "Photo Editor Pro 34",
+          "sellerName": "Dev 34",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 35,
+          "trackName": "Photo Editor Pro 35",
+          "sellerName": "Dev 35",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 36,
+          "trackName": "Photo Editor Pro 36",
+          "sellerName": "Dev 36",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 37,
+          "trackName": "Photo Editor Pro 37",
+          "sellerName": "Dev 37",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 38,
+          "trackName": "Photo Editor Pro 38",
+          "sellerName": "Dev 38",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 39,
+          "trackName": "Photo Editor Pro 39",
+          "sellerName": "Dev 39",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 40,
+          "trackName": "Photo Editor Pro 40",
+          "sellerName": "Dev 40",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 41,
+          "trackName": "Photo Editor Pro 41",
+          "sellerName": "Dev 41",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 42,
+          "trackName": "Photo Editor Pro 42",
+          "sellerName": "Dev 42",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 43,
+          "trackName": "Photo Editor Pro 43",
+          "sellerName": "Dev 43",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 44,
+          "trackName": "Photo Editor Pro 44",
+          "sellerName": "Dev 44",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 45,
+          "trackName": "Photo Editor Pro 45",
+          "sellerName": "Dev 45",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 46,
+          "trackName": "Photo Editor Pro 46",
+          "sellerName": "Dev 46",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 47,
+          "trackName": "Photo Editor Pro 47",
+          "sellerName": "Dev 47",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 48,
+          "trackName": "Photo Editor Pro 48",
+          "sellerName": "Dev 48",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 49,
+          "trackName": "Photo Editor Pro 49",
+          "sellerName": "Dev 49",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 50,
+          "trackName": "Photo Editor Pro 50",
+          "sellerName": "Dev 50",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 51,
+          "trackName": "Photo Editor Pro 51",
+          "sellerName": "Dev 51",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 52,
+          "trackName": "Photo Editor Pro 52",
+          "sellerName": "Dev 52",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 53,
+          "trackName": "Photo Editor Pro 53",
+          "sellerName": "Dev 53",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 54,
+          "trackName": "Photo Editor Pro 54",
+          "sellerName": "Dev 54",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 55,
+          "trackName": "Photo Editor Pro 55",
+          "sellerName": "Dev 55",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 56,
+          "trackName": "Photo Editor Pro 56",
+          "sellerName": "Dev 56",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 57,
+          "trackName": "Photo Editor Pro 57",
+          "sellerName": "Dev 57",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 58,
+          "trackName": "Photo Editor Pro 58",
+          "sellerName": "Dev 58",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        },
+        {
+          "trackId": 59,
+          "trackName": "Photo Editor Pro 59",
+          "sellerName": "Dev 59",
+          "userRatingCount": 250000,
+          "price": 0.0,
+          "averageUserRating": 4.8,
+          "currentVersionReleaseDate": "2026-07-24T00:00:00Z"
+        }
+      ],
+      "expectedWinnability": 16.9,
+      "expectedVerdict": "locked",
+      "expectedAppsSampled": 10,
+      "expectedNotes": [
+        "The catalogue caps results at 200; the result count is a floor, not a market size."
+      ],
+      "expectedSignals": [
+        {
+          "code": "LEADER_STRENGTH",
+          "observed": 250000.0,
+          "score": 0.0,
+          "band": "hostile",
+          "rationale": "Leaders hold a median of 250,000 ratings. That install base is a moat, not a head start."
+        },
+        {
+          "code": "COMPETITIVE_DEPTH",
+          "observed": 60.0,
+          "score": 30.0,
+          "band": "hostile",
+          "rationale": "60 apps already have real traction. Every results page is full of established players."
+        },
+        {
+          "code": "MARKET_FRESHNESS",
+          "observed": 2.0,
+          "score": 11.2,
+          "band": "hostile",
+          "rationale": "Leaders shipped a median of 2 days ago. These are funded teams defending the slot."
+        },
+        {
+          "code": "SATISFACTION_GAP",
+          "observed": 4.8,
+          "score": 18.0,
+          "band": "hostile",
+          "rationale": "Leaders average 4.8★. Users have little reason to switch."
+        },
+        {
+          "code": "KEYWORD_TARGETING",
+          "observed": 100.0,
+          "score": 5.0,
+          "band": "hostile",
+          "rationale": "100% of leaders target this term by name. They chose this fight and optimised for it."
+        },
+        {
+          "code": "PUBLISHER_CONCENTRATION",
+          "observed": 0.0,
+          "score": 70.0,
+          "band": "favourable",
+          "rationale": "No publisher holds multiple slots — the field is fragmented."
+        }
+      ]
+    },
+    {
+      "name": "stale leaders",
+      "keyword": "ham radio logbook",
+      "country": "us",
+      "resultCount": 90,
+      "today": "2026-07-26",
+      "entries": [
+        {
+          "trackId": 0,
+          "trackName": "QSO Log 0",
+          "sellerName": "Dev 0",
+          "userRatingCount": 40,
+          "price": 0.0,
+          "averageUserRating": 3.6,
+          "currentVersionReleaseDate": "2023-02-01T00:00:00Z"
+        },
+        {
+          "trackId": 1,
+          "trackName": "QSO Log 1",
+          "sellerName": "Dev 1",
+          "userRatingCount": 40,
+          "price": 0.0,
+          "averageUserRating": 3.6,
+          "currentVersionReleaseDate": "2023-02-01T00:00:00Z"
+        },
+        {
+          "trackId": 2,
+          "trackName": "QSO Log 2",
+          "sellerName": "Dev 2",
+          "userRatingCount": 40,
+          "price": 0.0,
+          "averageUserRating": 3.6,
+          "currentVersionReleaseDate": "2023-02-01T00:00:00Z"
+        },
+        {
+          "trackId": 3,
+          "trackName": "QSO Log 3",
+          "sellerName": "Dev 3",
+          "userRatingCount": 40,
+          "price": 0.0,
+          "averageUserRating": 3.6,
+          "currentVersionReleaseDate": "2023-02-01T00:00:00Z"
+        },
+        {
+          "trackId": 4,
+          "trackName": "QSO Log 4",
+          "sellerName": "Dev 4",
+          "userRatingCount": 40,
+          "price": 0.0,
+          "averageUserRating": 3.6,
+          "currentVersionReleaseDate": "2023-02-01T00:00:00Z"
+        },
+        {
+          "trackId": 5,
+          "trackName": "QSO Log 5",
+          "sellerName": "Dev 5",
+          "userRatingCount": 40,
+          "price": 0.0,
+          "averageUserRating": 3.6,
+          "currentVersionReleaseDate": "2023-02-01T00:00:00Z"
+        }
+      ],
+      "expectedWinnability": 94.2,
+      "expectedVerdict": "open",
+      "expectedAppsSampled": 6,
+      "expectedNotes": [
+        "Only 6 app(s) available to sample, so the leader signals are noisy."
+      ],
+      "expectedSignals": [
+        {
+          "code": "LEADER_STRENGTH",
+          "observed": 40.0,
+          "score": 96.8,
+          "band": "favourable",
+          "rationale": "Leaders hold a median of 40 ratings — a new entrant can realistically accumulate that."
+        },
+        {
+          "code": "COMPETITIVE_DEPTH",
+          "observed": 0.0,
+          "score": 100.0,
+          "band": "favourable",
+          "rationale": "Only 0 app(s) here have real traction — the field is thin where it counts."
+        },
+        {
+          "code": "MARKET_FRESHNESS",
+          "observed": 1271.0,
+          "score": 100.0,
+          "band": "favourable",
+          "rationale": "Leaders last shipped a median of 1,271 days ago — the field is being neglected."
+        },
+        {
+          "code": "SATISFACTION_GAP",
+          "observed": 3.6,
+          "score": 86.5,
+          "band": "favourable",
+          "rationale": "Leaders average 3.6★ — users are not satisfied with what exists."
+        },
+        {
+          "code": "KEYWORD_TARGETING",
+          "observed": 0.0,
+          "score": 100.0,
+          "band": "favourable",
+          "rationale": "Only 0% of leaders put this term in their name — they rank incidentally, so targeting it deliberately is an edge."
+        },
+        {
+          "code": "PUBLISHER_CONCENTRATION",
+          "observed": 0.0,
+          "score": 70.0,
+          "band": "favourable",
+          "rationale": "No publisher holds multiple slots — the field is fragmented."
+        }
+      ]
+    },
+    {
+      "name": "untargeted leaders",
+      "keyword": "morning routine",
+      "country": "us",
+      "resultCount": 180,
+      "today": "2026-07-26",
+      "entries": [
+        {
+          "trackId": 0,
+          "trackName": "Unrelated 0",
+          "sellerName": "Dev 0",
+          "userRatingCount": 9000,
+          "price": 0.0,
+          "averageUserRating": 4.7,
+          "currentVersionReleaseDate": "2026-06-01T00:00:00Z"
+        },
+        {
+          "trackId": 1,
+          "trackName": "Unrelated 1",
+          "sellerName": "Dev 1",
+          "userRatingCount": 9000,
+          "price": 0.0,
+          "averageUserRating": 4.7,
+          "currentVersionReleaseDate": "2026-06-01T00:00:00Z"
+        },
+        {
+          "trackId": 2,
+          "trackName": "Unrelated 2",
+          "sellerName": "Dev 2",
+          "userRatingCount": 9000,
+          "price": 0.0,
+          "averageUserRating": 4.7,
+          "currentVersionReleaseDate": "2026-06-01T00:00:00Z"
+        },
+        {
+          "trackId": 3,
+          "trackName": "Unrelated 3",
+          "sellerName": "Dev 3",
+          "userRatingCount": 9000,
+          "price": 0.0,
+          "averageUserRating": 4.7,
+          "currentVersionReleaseDate": "2026-06-01T00:00:00Z"
+        },
+        {
+          "trackId": 4,
+          "trackName": "Unrelated 4",
+          "sellerName": "Dev 4",
+          "userRatingCount": 9000,
+          "price": 0.0,
+          "averageUserRating": 4.7,
+          "currentVersionReleaseDate": "2026-06-01T00:00:00Z"
+        },
+        {
+          "trackId": 5,
+          "trackName": "Unrelated 5",
+          "sellerName": "Dev 5",
+          "userRatingCount": 9000,
+          "price": 0.0,
+          "averageUserRating": 4.7,
+          "currentVersionReleaseDate": "2026-06-01T00:00:00Z"
+        },
+        {
+          "trackId": 6,
+          "trackName": "Unrelated 6",
+          "sellerName": "Dev 6",
+          "userRatingCount": 9000,
+          "price": 0.0,
+          "averageUserRating": 4.7,
+          "currentVersionReleaseDate": "2026-06-01T00:00:00Z"
+        },
+        {
+          "trackId": 7,
+          "trackName": "Unrelated 7",
+          "sellerName": "Dev 7",
+          "userRatingCount": 9000,
+          "price": 0.0,
+          "averageUserRating": 4.7,
+          "currentVersionReleaseDate": "2026-06-01T00:00:00Z"
+        },
+        {
+          "trackId": 8,
+          "trackName": "Unrelated 8",
+          "sellerName": "Dev 8",
+          "userRatingCount": 9000,
+          "price": 0.0,
+          "averageUserRating": 4.7,
+          "currentVersionReleaseDate": "2026-06-01T00:00:00Z"
+        },
+        {
+          "trackId": 9,
+          "trackName": "Unrelated 9",
+          "sellerName": "Dev 9",
+          "userRatingCount": 9000,
+          "price": 0.0,
+          "averageUserRating": 4.7,
+          "currentVersionReleaseDate": "2026-06-01T00:00:00Z"
+        },
+        {
+          "trackId": 10,
+          "trackName": "Unrelated 10",
+          "sellerName": "Dev 10",
+          "userRatingCount": 9000,
+          "price": 0.0,
+          "averageUserRating": 4.7,
+          "currentVersionReleaseDate": "2026-06-01T00:00:00Z"
+        },
+        {
+          "trackId": 11,
+          "trackName": "Unrelated 11",
+          "sellerName": "Dev 11",
+          "userRatingCount": 9000,
+          "price": 0.0,
+          "averageUserRating": 4.7,
+          "currentVersionReleaseDate": "2026-06-01T00:00:00Z"
+        }
+      ],
+      "expectedWinnability": 55.0,
+      "expectedVerdict": "contested",
+      "expectedAppsSampled": 10,
+      "expectedNotes": [],
+      "expectedSignals": [
+        {
+          "code": "LEADER_STRENGTH",
+          "observed": 9000.0,
+          "score": 31.9,
+          "band": "hostile",
+          "rationale": "Leaders hold a median of 9,000 ratings. That install base is a moat, not a head start."
+        },
+        {
+          "code": "COMPETITIVE_DEPTH",
+          "observed": 12.0,
+          "score": 69.8,
+          "band": "favourable",
+          "rationale": "Only 12 app(s) here have real traction — the field is thin where it counts."
+        },
+        {
+          "code": "MARKET_FRESHNESS",
+          "observed": 55.0,
+          "score": 37.2,
+          "band": "neutral",
+          "rationale": "Leaders ship every 55 days or so. Actively maintained, not aggressively."
+        },
+        {
+          "code": "SATISFACTION_GAP",
+          "observed": 4.7,
+          "score": 26.5,
+          "band": "hostile",
+          "rationale": "Leaders average 4.7★. Users have little reason to switch."
+        },
+        {
+          "code": "KEYWORD_TARGETING",
+          "observed": 0.0,
+          "score": 100.0,
+          "band": "favourable",
+          "rationale": "Only 0% of leaders put this term in their name — they rank incidentally, so targeting it deliberately is an edge."
+        },
+        {
+          "code": "PUBLISHER_CONCENTRATION",
+          "observed": 0.0,
+          "score": 70.0,
+          "band": "favourable",
+          "rationale": "No publisher holds multiple slots — the field is fragmented."
+        }
+      ]
+    },
+    {
+      "name": "publisher concentration",
+      "keyword": "budget",
+      "country": "us",
+      "resultCount": 60,
+      "today": "2026-07-26",
+      "entries": [
+        {
+          "trackId": 0,
+          "trackName": "Budget A 0",
+          "sellerName": "Big",
+          "userRatingCount": 5000,
+          "price": 0.0,
+          "averageUserRating": 4.5,
+          "currentVersionReleaseDate": "2026-05-01T00:00:00Z"
+        },
+        {
+          "trackId": 1,
+          "trackName": "Budget B 1",
+          "sellerName": "Big",
+          "userRatingCount": 5000,
+          "price": 0.0,
+          "averageUserRating": 4.5,
+          "currentVersionReleaseDate": "2026-05-01T00:00:00Z"
+        },
+        {
+          "trackId": 2,
+          "trackName": "Budget C 2",
+          "sellerName": "Big",
+          "userRatingCount": 5000,
+          "price": 0.0,
+          "averageUserRating": 4.5,
+          "currentVersionReleaseDate": "2026-05-01T00:00:00Z"
+        },
+        {
+          "trackId": 3,
+          "trackName": "Budget D 3",
+          "sellerName": "Solo",
+          "userRatingCount": 400,
+          "price": 0.0,
+          "averageUserRating": 4.1,
+          "currentVersionReleaseDate": "2026-05-01T00:00:00Z"
+        }
+      ],
+      "expectedWinnability": 38.9,
+      "expectedVerdict": "contested",
+      "expectedAppsSampled": 4,
+      "expectedNotes": [
+        "Only 4 app(s) available to sample, so the leader signals are noisy."
+      ],
+      "expectedSignals": [
+        {
+          "code": "LEADER_STRENGTH",
+          "observed": 5000.0,
+          "score": 38.0,
+          "band": "neutral",
+          "rationale": "Leaders hold a median of 5,000 ratings. Catchable, but it will take sustained releases."
+        },
+        {
+          "code": "COMPETITIVE_DEPTH",
+          "observed": 3.0,
+          "score": 88.0,
+          "band": "favourable",
+          "rationale": "Only 3 app(s) here have real traction — the field is thin where it counts."
+        },
+        {
+          "code": "MARKET_FRESHNESS",
+          "observed": 86.0,
+          "score": 48.5,
+          "band": "neutral",
+          "rationale": "Leaders ship every 86 days or so. Actively maintained, not aggressively."
+        },
+        {
+          "code": "SATISFACTION_GAP",
+          "observed": 4.5,
+          "score": 42.7,
+          "band": "neutral",
+          "rationale": "Leaders average 4.5★. Decent, with room to be clearly better."
+        },
+        {
+          "code": "KEYWORD_TARGETING",
+          "observed": 100.0,
+          "score": 5.0,
+          "band": "hostile",
+          "rationale": "100% of leaders target this term by name. They chose this fight and optimised for it."
+        },
+        {
+          "code": "PUBLISHER_CONCENTRATION",
+          "observed": 75.0,
+          "score": 15.6,
+          "band": "hostile",
+          "rationale": "75% of leading slots belong to repeat publishers running portfolio cross-promotion."
+        }
+      ]
+    },
+    {
+      "name": "missing dates and ratings",
+      "keyword": "obscure tool",
+      "country": "us",
+      "resultCount": 8,
+      "today": "2026-07-26",
+      "entries": [
+        {
+          "trackId": 0,
+          "trackName": "Bare 0",
+          "sellerName": "Dev 0",
+          "userRatingCount": 0,
+          "price": 0.0
+        },
+        {
+          "trackId": 1,
+          "trackName": "Bare 1",
+          "sellerName": "Dev 1",
+          "userRatingCount": 0,
+          "price": 0.0
+        },
+        {
+          "trackId": 2,
+          "trackName": "Bare 2",
+          "sellerName": "Dev 2",
+          "userRatingCount": 0,
+          "price": 0.0
+        },
+        {
+          "trackId": 3,
+          "trackName": "Bare 3",
+          "sellerName": "Dev 3",
+          "userRatingCount": 0,
+          "price": 0.0
+        }
+      ],
+      "expectedWinnability": 83.5,
+      "expectedVerdict": "open",
+      "expectedAppsSampled": 4,
+      "expectedNotes": [
+        "Only 4 app(s) available to sample, so the leader signals are noisy."
+      ],
+      "expectedSignals": [
+        {
+          "code": "LEADER_STRENGTH",
+          "observed": 0.0,
+          "score": 100.0,
+          "band": "favourable",
+          "rationale": "Leaders hold a median of 0 ratings — a new entrant can realistically accumulate that."
+        },
+        {
+          "code": "COMPETITIVE_DEPTH",
+          "observed": 0.0,
+          "score": 100.0,
+          "band": "favourable",
+          "rationale": "Only 0 app(s) here have real traction — the field is thin where it counts."
+        },
+        {
+          "code": "MARKET_FRESHNESS",
+          "observed": 0.0,
+          "score": 10.0,
+          "band": "hostile",
+          "rationale": "Leaders shipped a median of 0 days ago. These are funded teams defending the slot."
+        },
+        {
+          "code": "SATISFACTION_GAP",
+          "observed": 0.0,
+          "score": 100.0,
+          "band": "favourable",
+          "rationale": "Leaders average 0.0★ — users are not satisfied with what exists."
+        },
+        {
+          "code": "KEYWORD_TARGETING",
+          "observed": 0.0,
+          "score": 100.0,
+          "band": "favourable",
+          "rationale": "Only 0% of leaders put this term in their name — they rank incidentally, so targeting it deliberately is an edge."
+        },
+        {
+          "code": "PUBLISHER_CONCENTRATION",
+          "observed": 0.0,
+          "score": 70.0,
+          "band": "favourable",
+          "rationale": "No publisher holds multiple slots — the field is fragmented."
+        }
+      ]
+    },
+    {
+      "name": "no results at all",
+      "keyword": "zzzz nothing",
+      "country": "us",
+      "resultCount": 0,
+      "today": "2026-07-26",
+      "entries": [],
+      "expectedWinnability": 0.0,
+      "expectedVerdict": "locked",
+      "expectedAppsSampled": 0,
+      "expectedNotes": [
+        "No apps returned for this term; the signals below are not meaningful."
+      ],
+      "expectedSignals": []
+    },
+    {
+      "name": "thin sample",
+      "keyword": "two apps only",
+      "country": "us",
+      "resultCount": 2,
+      "today": "2026-07-26",
+      "entries": [
+        {
+          "trackId": 0,
+          "trackName": "One 0",
+          "sellerName": "Dev 0",
+          "userRatingCount": 100,
+          "price": 0.0,
+          "averageUserRating": 4.4,
+          "currentVersionReleaseDate": "2026-01-01T00:00:00Z"
+        },
+        {
+          "trackId": 1,
+          "trackName": "One 1",
+          "sellerName": "Dev 1",
+          "userRatingCount": 100,
+          "price": 0.0,
+          "averageUserRating": 4.4,
+          "currentVersionReleaseDate": "2026-01-01T00:00:00Z"
+        }
+      ],
+      "expectedWinnability": 83.7,
+      "expectedVerdict": "open",
+      "expectedAppsSampled": 2,
+      "expectedNotes": [
+        "Only 2 app(s) available to sample, so the leader signals are noisy."
+      ],
+      "expectedSignals": [
+        {
+          "code": "LEADER_STRENGTH",
+          "observed": 100.0,
+          "score": 92.0,
+          "band": "favourable",
+          "rationale": "Leaders hold a median of 100 ratings — a new entrant can realistically accumulate that."
+        },
+        {
+          "code": "COMPETITIVE_DEPTH",
+          "observed": 0.0,
+          "score": 100.0,
+          "band": "favourable",
+          "rationale": "Only 0 app(s) here have real traction — the field is thin where it counts."
+        },
+        {
+          "code": "MARKET_FRESHNESS",
+          "observed": 206.0,
+          "score": 74.5,
+          "band": "favourable",
+          "rationale": "Leaders last shipped a median of 206 days ago — the field is being neglected."
+        },
+        {
+          "code": "SATISFACTION_GAP",
+          "observed": 4.4,
+          "score": 50.3,
+          "band": "neutral",
+          "rationale": "Leaders average 4.4★. Decent, with room to be clearly better."
+        },
+        {
+          "code": "KEYWORD_TARGETING",
+          "observed": 0.0,
+          "score": 100.0,
+          "band": "favourable",
+          "rationale": "Only 0% of leaders put this term in their name — they rank incidentally, so targeting it deliberately is an edge."
+        },
+        {
+          "code": "PUBLISHER_CONCENTRATION",
+          "observed": 0.0,
+          "score": 70.0,
+          "band": "favourable",
+          "rationale": "No publisher holds multiple slots — the field is fragmented."
+        }
+      ]
+    }
+  ],
+  "testingCases": [
+    {
+      "name": "not started",
+      "history": [],
+      "releaseApproved": true,
+      "today": "2026-07-26",
+      "expectedEligible": false,
+      "expectedActive": 0,
+      "expectedStreak": 0,
+      "expectedLongest": 0,
+      "expectedDaysRemaining": 14,
+      "expectedWasReset": false,
+      "expectedBlockerCodes": [
+        "NOT_ENOUGH_TESTERS",
+        "STREAK_TOO_SHORT"
+      ],
+      "expectedProjected": null
+    },
+    {
+      "name": "one day at target",
+      "history": [
+        {
+          "date": "2026-07-26",
+          "optedIn": 12
+        }
+      ],
+      "releaseApproved": true,
+      "today": "2026-07-26",
+      "expectedEligible": false,
+      "expectedActive": 12,
+      "expectedStreak": 1,
+      "expectedLongest": 1,
+      "expectedDaysRemaining": 13,
+      "expectedWasReset": false,
+      "expectedBlockerCodes": [
+        "STREAK_TOO_SHORT"
+      ],
+      "expectedProjected": "2026-08-08"
+    },
+    {
+      "name": "nine days at target",
+      "history": [
+        {
+          "date": "2026-07-18",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-19",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-20",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-21",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-22",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-23",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-24",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-25",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-26",
+          "optedIn": 12
+        }
+      ],
+      "releaseApproved": true,
+      "today": "2026-07-26",
+      "expectedEligible": false,
+      "expectedActive": 12,
+      "expectedStreak": 9,
+      "expectedLongest": 9,
+      "expectedDaysRemaining": 5,
+      "expectedWasReset": false,
+      "expectedBlockerCodes": [
+        "STREAK_TOO_SHORT"
+      ],
+      "expectedProjected": "2026-07-31"
+    },
+    {
+      "name": "fourteen days at target",
+      "history": [
+        {
+          "date": "2026-07-13",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-14",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-15",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-16",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-17",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-18",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-19",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-20",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-21",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-22",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-23",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-24",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-25",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-26",
+          "optedIn": 12
+        }
+      ],
+      "releaseApproved": true,
+      "today": "2026-07-26",
+      "expectedEligible": true,
+      "expectedActive": 12,
+      "expectedStreak": 14,
+      "expectedLongest": 14,
+      "expectedDaysRemaining": 0,
+      "expectedWasReset": false,
+      "expectedBlockerCodes": [],
+      "expectedProjected": null
+    },
+    {
+      "name": "twenty days at target",
+      "history": [
+        {
+          "date": "2026-07-07",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-08",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-09",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-10",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-11",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-12",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-13",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-14",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-15",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-16",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-17",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-18",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-19",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-20",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-21",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-22",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-23",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-24",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-25",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-26",
+          "optedIn": 12
+        }
+      ],
+      "releaseApproved": true,
+      "today": "2026-07-26",
+      "expectedEligible": true,
+      "expectedActive": 12,
+      "expectedStreak": 20,
+      "expectedLongest": 20,
+      "expectedDaysRemaining": 0,
+      "expectedWasReset": false,
+      "expectedBlockerCodes": [],
+      "expectedProjected": null
+    },
+    {
+      "name": "below target throughout",
+      "history": [
+        {
+          "date": "2026-07-13",
+          "optedIn": 8
+        },
+        {
+          "date": "2026-07-14",
+          "optedIn": 8
+        },
+        {
+          "date": "2026-07-15",
+          "optedIn": 8
+        },
+        {
+          "date": "2026-07-16",
+          "optedIn": 8
+        },
+        {
+          "date": "2026-07-17",
+          "optedIn": 8
+        },
+        {
+          "date": "2026-07-18",
+          "optedIn": 8
+        },
+        {
+          "date": "2026-07-19",
+          "optedIn": 8
+        },
+        {
+          "date": "2026-07-20",
+          "optedIn": 8
+        },
+        {
+          "date": "2026-07-21",
+          "optedIn": 8
+        },
+        {
+          "date": "2026-07-22",
+          "optedIn": 8
+        },
+        {
+          "date": "2026-07-23",
+          "optedIn": 8
+        },
+        {
+          "date": "2026-07-24",
+          "optedIn": 8
+        },
+        {
+          "date": "2026-07-25",
+          "optedIn": 8
+        },
+        {
+          "date": "2026-07-26",
+          "optedIn": 8
+        }
+      ],
+      "releaseApproved": true,
+      "today": "2026-07-26",
+      "expectedEligible": false,
+      "expectedActive": 8,
+      "expectedStreak": 0,
+      "expectedLongest": 0,
+      "expectedDaysRemaining": 14,
+      "expectedWasReset": false,
+      "expectedBlockerCodes": [
+        "NOT_ENOUGH_TESTERS",
+        "STREAK_TOO_SHORT"
+      ],
+      "expectedProjected": null
+    },
+    {
+      "name": "dip on day nine",
+      "history": [
+        {
+          "date": "2026-07-12",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-13",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-14",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-15",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-16",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-17",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-18",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-19",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-20",
+          "optedIn": 11
+        },
+        {
+          "date": "2026-07-21",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-22",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-23",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-24",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-25",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-26",
+          "optedIn": 12
+        }
+      ],
+      "releaseApproved": true,
+      "today": "2026-07-26",
+      "expectedEligible": false,
+      "expectedActive": 12,
+      "expectedStreak": 6,
+      "expectedLongest": 8,
+      "expectedDaysRemaining": 8,
+      "expectedWasReset": true,
+      "expectedBlockerCodes": [
+        "STREAK_RESET",
+        "STREAK_TOO_SHORT"
+      ],
+      "expectedProjected": "2026-08-03"
+    },
+    {
+      "name": "dip then long recovery",
+      "history": [
+        {
+          "date": "2026-07-09",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-10",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-11",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-12",
+          "optedIn": 5
+        },
+        {
+          "date": "2026-07-13",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-14",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-15",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-16",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-17",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-18",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-19",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-20",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-21",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-22",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-23",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-24",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-25",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-26",
+          "optedIn": 12
+        }
+      ],
+      "releaseApproved": true,
+      "today": "2026-07-26",
+      "expectedEligible": true,
+      "expectedActive": 12,
+      "expectedStreak": 14,
+      "expectedLongest": 14,
+      "expectedDaysRemaining": 0,
+      "expectedWasReset": true,
+      "expectedBlockerCodes": [
+        "STREAK_RESET"
+      ],
+      "expectedProjected": null
+    },
+    {
+      "name": "release not approved",
+      "history": [
+        {
+          "date": "2026-07-07",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-08",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-09",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-10",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-11",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-12",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-13",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-14",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-15",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-16",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-17",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-18",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-19",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-20",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-21",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-22",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-23",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-24",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-25",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-26",
+          "optedIn": 12
+        }
+      ],
+      "releaseApproved": false,
+      "today": "2026-07-26",
+      "expectedEligible": false,
+      "expectedActive": 12,
+      "expectedStreak": 0,
+      "expectedLongest": 20,
+      "expectedDaysRemaining": 14,
+      "expectedWasReset": false,
+      "expectedBlockerCodes": [
+        "RELEASE_NOT_APPROVED",
+        "STREAK_TOO_SHORT"
+      ],
+      "expectedProjected": null
+    },
+    {
+      "name": "exactly at threshold",
+      "history": [
+        {
+          "date": "2026-07-13",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-14",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-15",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-16",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-17",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-18",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-19",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-20",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-21",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-22",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-23",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-24",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-25",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-26",
+          "optedIn": 12
+        }
+      ],
+      "releaseApproved": true,
+      "today": "2026-07-26",
+      "expectedEligible": true,
+      "expectedActive": 12,
+      "expectedStreak": 14,
+      "expectedLongest": 14,
+      "expectedDaysRemaining": 0,
+      "expectedWasReset": false,
+      "expectedBlockerCodes": [],
+      "expectedProjected": null
+    },
+    {
+      "name": "above threshold",
+      "history": [
+        {
+          "date": "2026-07-13",
+          "optedIn": 30
+        },
+        {
+          "date": "2026-07-14",
+          "optedIn": 30
+        },
+        {
+          "date": "2026-07-15",
+          "optedIn": 30
+        },
+        {
+          "date": "2026-07-16",
+          "optedIn": 30
+        },
+        {
+          "date": "2026-07-17",
+          "optedIn": 30
+        },
+        {
+          "date": "2026-07-18",
+          "optedIn": 30
+        },
+        {
+          "date": "2026-07-19",
+          "optedIn": 30
+        },
+        {
+          "date": "2026-07-20",
+          "optedIn": 30
+        },
+        {
+          "date": "2026-07-21",
+          "optedIn": 30
+        },
+        {
+          "date": "2026-07-22",
+          "optedIn": 30
+        },
+        {
+          "date": "2026-07-23",
+          "optedIn": 30
+        },
+        {
+          "date": "2026-07-24",
+          "optedIn": 30
+        },
+        {
+          "date": "2026-07-25",
+          "optedIn": 30
+        },
+        {
+          "date": "2026-07-26",
+          "optedIn": 30
+        }
+      ],
+      "releaseApproved": true,
+      "today": "2026-07-26",
+      "expectedEligible": true,
+      "expectedActive": 30,
+      "expectedStreak": 14,
+      "expectedLongest": 14,
+      "expectedDaysRemaining": 0,
+      "expectedWasReset": false,
+      "expectedBlockerCodes": [],
+      "expectedProjected": null
+    },
+    {
+      "name": "final day drops",
+      "history": [
+        {
+          "date": "2026-07-13",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-14",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-15",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-16",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-17",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-18",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-19",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-20",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-21",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-22",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-23",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-24",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-25",
+          "optedIn": 12
+        },
+        {
+          "date": "2026-07-26",
+          "optedIn": 3
+        }
+      ],
+      "releaseApproved": true,
+      "today": "2026-07-26",
+      "expectedEligible": false,
+      "expectedActive": 3,
+      "expectedStreak": 0,
+      "expectedLongest": 13,
+      "expectedDaysRemaining": 14,
+      "expectedWasReset": true,
+      "expectedBlockerCodes": [
+        "NOT_ENOUGH_TESTERS",
+        "STREAK_RESET",
+        "STREAK_TOO_SHORT"
+      ],
+      "expectedProjected": null
+    }
+  ],
+  "competitorCases": [
+    {
+      "name": "all exposed",
+      "entries": [
+        {
+          "trackId": 0,
+          "trackName": "Habit Tracker 0",
+          "sellerName": "Dev 0",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [
+            "https://cdn/0-0.png/392x696bb.png",
+            "https://cdn/0-1.png/392x696bb.png",
+            "https://cdn/0-2.png/392x696bb.png",
+            "https://cdn/0-3.png/392x696bb.png",
+            "https://cdn/0-4.png/392x696bb.png",
+            "https://cdn/0-5.png/392x696bb.png",
+            "https://cdn/0-6.png/392x696bb.png"
+          ],
+          "ipadScreenshotUrls": []
+        },
+        {
+          "trackId": 1,
+          "trackName": "Habit Tracker 1",
+          "sellerName": "Dev 1",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [
+            "https://cdn/1-0.png/392x696bb.png",
+            "https://cdn/1-1.png/392x696bb.png",
+            "https://cdn/1-2.png/392x696bb.png",
+            "https://cdn/1-3.png/392x696bb.png",
+            "https://cdn/1-4.png/392x696bb.png",
+            "https://cdn/1-5.png/392x696bb.png",
+            "https://cdn/1-6.png/392x696bb.png"
+          ],
+          "ipadScreenshotUrls": []
+        },
+        {
+          "trackId": 2,
+          "trackName": "Habit Tracker 2",
+          "sellerName": "Dev 2",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [
+            "https://cdn/2-0.png/392x696bb.png",
+            "https://cdn/2-1.png/392x696bb.png",
+            "https://cdn/2-2.png/392x696bb.png",
+            "https://cdn/2-3.png/392x696bb.png",
+            "https://cdn/2-4.png/392x696bb.png",
+            "https://cdn/2-5.png/392x696bb.png",
+            "https://cdn/2-6.png/392x696bb.png"
+          ],
+          "ipadScreenshotUrls": []
+        },
+        {
+          "trackId": 3,
+          "trackName": "Habit Tracker 3",
+          "sellerName": "Dev 3",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [
+            "https://cdn/3-0.png/392x696bb.png",
+            "https://cdn/3-1.png/392x696bb.png",
+            "https://cdn/3-2.png/392x696bb.png",
+            "https://cdn/3-3.png/392x696bb.png",
+            "https://cdn/3-4.png/392x696bb.png",
+            "https://cdn/3-5.png/392x696bb.png",
+            "https://cdn/3-6.png/392x696bb.png"
+          ],
+          "ipadScreenshotUrls": []
+        },
+        {
+          "trackId": 4,
+          "trackName": "Habit Tracker 4",
+          "sellerName": "Dev 4",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [
+            "https://cdn/4-0.png/392x696bb.png",
+            "https://cdn/4-1.png/392x696bb.png",
+            "https://cdn/4-2.png/392x696bb.png",
+            "https://cdn/4-3.png/392x696bb.png",
+            "https://cdn/4-4.png/392x696bb.png",
+            "https://cdn/4-5.png/392x696bb.png",
+            "https://cdn/4-6.png/392x696bb.png"
+          ],
+          "ipadScreenshotUrls": []
+        }
+      ],
+      "expectedIphoneCounts": [
+        7,
+        7,
+        7,
+        7,
+        7
+      ],
+      "expectedIpadCounts": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "expectedExposed": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "expectedStrategy": {
+        "appsSampled": 5,
+        "appsMissing": 0,
+        "medianCount": 7,
+        "coveragePercent": 100.0,
+        "portraitApps": 5,
+        "landscapeApps": 0,
+        "ipadApps": 0,
+        "usesMaxSlots": 0
+      },
+      "expectedTerms": [
+        {
+          "term": "habit",
+          "appsInName": 5,
+          "appsInDescription": 0,
+          "score": 80.0,
+          "inYourListing": true
+        },
+        {
+          "term": "tracker",
+          "appsInName": 5,
+          "appsInDescription": 0,
+          "score": 80.0,
+          "inYourListing": false
+        },
+        {
+          "term": "build",
+          "appsInName": 0,
+          "appsInDescription": 5,
+          "score": 20.0,
+          "inYourListing": false
+        },
+        {
+          "term": "daily",
+          "appsInName": 0,
+          "appsInDescription": 5,
+          "score": 20.0,
+          "inYourListing": false
+        },
+        {
+          "term": "streaks",
+          "appsInName": 0,
+          "appsInDescription": 5,
+          "score": 20.0,
+          "inYourListing": false
+        },
+        {
+          "term": "track",
+          "appsInName": 0,
+          "appsInDescription": 5,
+          "score": 20.0,
+          "inYourListing": false
+        }
+      ],
+      "expectedNotes": []
+    },
+    {
+      "name": "half withheld",
+      "entries": [
+        {
+          "trackId": 0,
+          "trackName": "Habit One 0",
+          "sellerName": "Dev 0",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [
+            "https://cdn/0-0.png/392x696bb.png",
+            "https://cdn/0-1.png/392x696bb.png",
+            "https://cdn/0-2.png/392x696bb.png",
+            "https://cdn/0-3.png/392x696bb.png",
+            "https://cdn/0-4.png/392x696bb.png",
+            "https://cdn/0-5.png/392x696bb.png",
+            "https://cdn/0-6.png/392x696bb.png"
+          ],
+          "ipadScreenshotUrls": [
+            "https://cdn/0-p0.png/392x696bb.png",
+            "https://cdn/0-p1.png/392x696bb.png",
+            "https://cdn/0-p2.png/392x696bb.png"
+          ]
+        },
+        {
+          "trackId": 1,
+          "trackName": "Withheld Two 1",
+          "sellerName": "Dev 1",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [],
+          "ipadScreenshotUrls": []
+        },
+        {
+          "trackId": 2,
+          "trackName": "Habit Three 2",
+          "sellerName": "Dev 2",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [
+            "https://cdn/2-0.png/392x696bb.png",
+            "https://cdn/2-1.png/392x696bb.png",
+            "https://cdn/2-2.png/392x696bb.png",
+            "https://cdn/2-3.png/392x696bb.png",
+            "https://cdn/2-4.png/392x696bb.png"
+          ],
+          "ipadScreenshotUrls": []
+        },
+        {
+          "trackId": 3,
+          "trackName": "Withheld Four 3",
+          "sellerName": "Dev 3",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [],
+          "ipadScreenshotUrls": []
+        }
+      ],
+      "expectedIphoneCounts": [
+        7,
+        0,
+        5,
+        0
+      ],
+      "expectedIpadCounts": [
+        3,
+        0,
+        0,
+        0
+      ],
+      "expectedExposed": [
+        true,
+        false,
+        true,
+        false
+      ],
+      "expectedStrategy": {
+        "appsSampled": 2,
+        "appsMissing": 2,
+        "medianCount": 6.0,
+        "coveragePercent": 50.0,
+        "portraitApps": 2,
+        "landscapeApps": 0,
+        "ipadApps": 1,
+        "usesMaxSlots": 0
+      },
+      "expectedTerms": [
+        {
+          "term": "habit",
+          "appsInName": 2,
+          "appsInDescription": 2,
+          "score": 50.0,
+          "inYourListing": true
+        },
+        {
+          "term": "withheld",
+          "appsInName": 2,
+          "appsInDescription": 0,
+          "score": 40.0,
+          "inYourListing": false
+        },
+        {
+          "term": "four",
+          "appsInName": 1,
+          "appsInDescription": 0,
+          "score": 20.0,
+          "inYourListing": false
+        },
+        {
+          "term": "three",
+          "appsInName": 1,
+          "appsInDescription": 0,
+          "score": 20.0,
+          "inYourListing": false
+        },
+        {
+          "term": "build",
+          "appsInName": 0,
+          "appsInDescription": 4,
+          "score": 20.0,
+          "inYourListing": false
+        },
+        {
+          "term": "daily",
+          "appsInName": 0,
+          "appsInDescription": 4,
+          "score": 20.0,
+          "inYourListing": false
+        },
+        {
+          "term": "streaks",
+          "appsInName": 0,
+          "appsInDescription": 4,
+          "score": 20.0,
+          "inYourListing": false
+        },
+        {
+          "term": "track",
+          "appsInName": 0,
+          "appsInDescription": 4,
+          "score": 20.0,
+          "inYourListing": false
+        }
+      ],
+      "expectedNotes": [
+        "The catalogue withheld screenshots for 2 of 4 apps; the figures below come from the other 2."
+      ]
+    },
+    {
+      "name": "ipad only leader",
+      "entries": [
+        {
+          "trackId": 0,
+          "trackName": "Tablet First 0",
+          "sellerName": "Dev 0",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [],
+          "ipadScreenshotUrls": [
+            "https://cdn/0-p0.png/392x696bb.png",
+            "https://cdn/0-p1.png/392x696bb.png",
+            "https://cdn/0-p2.png/392x696bb.png",
+            "https://cdn/0-p3.png/392x696bb.png",
+            "https://cdn/0-p4.png/392x696bb.png",
+            "https://cdn/0-p5.png/392x696bb.png",
+            "https://cdn/0-p6.png/392x696bb.png",
+            "https://cdn/0-p7.png/392x696bb.png",
+            "https://cdn/0-p8.png/392x696bb.png",
+            "https://cdn/0-p9.png/392x696bb.png"
+          ]
+        },
+        {
+          "trackId": 1,
+          "trackName": "Phone First 1",
+          "sellerName": "Dev 1",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [
+            "https://cdn/1-0.png/392x696bb.png",
+            "https://cdn/1-1.png/392x696bb.png",
+            "https://cdn/1-2.png/392x696bb.png",
+            "https://cdn/1-3.png/392x696bb.png",
+            "https://cdn/1-4.png/392x696bb.png",
+            "https://cdn/1-5.png/392x696bb.png"
+          ],
+          "ipadScreenshotUrls": []
+        }
+      ],
+      "expectedIphoneCounts": [
+        0,
+        6
+      ],
+      "expectedIpadCounts": [
+        10,
+        0
+      ],
+      "expectedExposed": [
+        true,
+        true
+      ],
+      "expectedStrategy": {
+        "appsSampled": 2,
+        "appsMissing": 0,
+        "medianCount": 6,
+        "coveragePercent": 100.0,
+        "portraitApps": 1,
+        "landscapeApps": 0,
+        "ipadApps": 1,
+        "usesMaxSlots": 0
+      },
+      "expectedTerms": [
+        {
+          "term": "first",
+          "appsInName": 2,
+          "appsInDescription": 0,
+          "score": 80.0,
+          "inYourListing": false
+        },
+        {
+          "term": "phone",
+          "appsInName": 1,
+          "appsInDescription": 0,
+          "score": 40.0,
+          "inYourListing": false
+        },
+        {
+          "term": "tablet",
+          "appsInName": 1,
+          "appsInDescription": 0,
+          "score": 40.0,
+          "inYourListing": false
+        },
+        {
+          "term": "build",
+          "appsInName": 0,
+          "appsInDescription": 2,
+          "score": 20.0,
+          "inYourListing": false
+        },
+        {
+          "term": "daily",
+          "appsInName": 0,
+          "appsInDescription": 2,
+          "score": 20.0,
+          "inYourListing": false
+        },
+        {
+          "term": "habit",
+          "appsInName": 0,
+          "appsInDescription": 2,
+          "score": 20.0,
+          "inYourListing": true
+        },
+        {
+          "term": "streaks",
+          "appsInName": 0,
+          "appsInDescription": 2,
+          "score": 20.0,
+          "inYourListing": false
+        },
+        {
+          "term": "track",
+          "appsInName": 0,
+          "appsInDescription": 2,
+          "score": 20.0,
+          "inYourListing": false
+        }
+      ],
+      "expectedNotes": []
+    },
+    {
+      "name": "landscape field",
+      "entries": [
+        {
+          "trackId": 0,
+          "trackName": "Racing Game 0",
+          "sellerName": "Dev 0",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [
+            "https://cdn/0-0.png/696x392bb.png",
+            "https://cdn/0-1.png/696x392bb.png",
+            "https://cdn/0-2.png/696x392bb.png",
+            "https://cdn/0-3.png/696x392bb.png",
+            "https://cdn/0-4.png/696x392bb.png"
+          ],
+          "ipadScreenshotUrls": []
+        },
+        {
+          "trackId": 1,
+          "trackName": "Racing Game 1",
+          "sellerName": "Dev 1",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [
+            "https://cdn/1-0.png/696x392bb.png",
+            "https://cdn/1-1.png/696x392bb.png",
+            "https://cdn/1-2.png/696x392bb.png",
+            "https://cdn/1-3.png/696x392bb.png",
+            "https://cdn/1-4.png/696x392bb.png"
+          ],
+          "ipadScreenshotUrls": []
+        },
+        {
+          "trackId": 2,
+          "trackName": "Racing Game 2",
+          "sellerName": "Dev 2",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [
+            "https://cdn/2-0.png/696x392bb.png",
+            "https://cdn/2-1.png/696x392bb.png",
+            "https://cdn/2-2.png/696x392bb.png",
+            "https://cdn/2-3.png/696x392bb.png",
+            "https://cdn/2-4.png/696x392bb.png"
+          ],
+          "ipadScreenshotUrls": []
+        },
+        {
+          "trackId": 3,
+          "trackName": "Racing Game 3",
+          "sellerName": "Dev 3",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [
+            "https://cdn/3-0.png/696x392bb.png",
+            "https://cdn/3-1.png/696x392bb.png",
+            "https://cdn/3-2.png/696x392bb.png",
+            "https://cdn/3-3.png/696x392bb.png",
+            "https://cdn/3-4.png/696x392bb.png"
+          ],
+          "ipadScreenshotUrls": []
+        }
+      ],
+      "expectedIphoneCounts": [
+        5,
+        5,
+        5,
+        5
+      ],
+      "expectedIpadCounts": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "expectedExposed": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "expectedStrategy": {
+        "appsSampled": 4,
+        "appsMissing": 0,
+        "medianCount": 5.0,
+        "coveragePercent": 100.0,
+        "portraitApps": 0,
+        "landscapeApps": 4,
+        "ipadApps": 0,
+        "usesMaxSlots": 0
+      },
+      "expectedTerms": [
+        {
+          "term": "racing",
+          "appsInName": 4,
+          "appsInDescription": 0,
+          "score": 80.0,
+          "inYourListing": false
+        },
+        {
+          "term": "build",
+          "appsInName": 0,
+          "appsInDescription": 4,
+          "score": 20.0,
+          "inYourListing": false
+        },
+        {
+          "term": "daily",
+          "appsInName": 0,
+          "appsInDescription": 4,
+          "score": 20.0,
+          "inYourListing": false
+        },
+        {
+          "term": "habit",
+          "appsInName": 0,
+          "appsInDescription": 4,
+          "score": 20.0,
+          "inYourListing": true
+        },
+        {
+          "term": "streaks",
+          "appsInName": 0,
+          "appsInDescription": 4,
+          "score": 20.0,
+          "inYourListing": false
+        },
+        {
+          "term": "track",
+          "appsInName": 0,
+          "appsInDescription": 4,
+          "score": 20.0,
+          "inYourListing": false
+        }
+      ],
+      "expectedNotes": []
+    },
+    {
+      "name": "uses every slot",
+      "entries": [
+        {
+          "trackId": 0,
+          "trackName": "Maximal App 0",
+          "sellerName": "Dev 0",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [
+            "https://cdn/0-0.png/392x696bb.png",
+            "https://cdn/0-1.png/392x696bb.png",
+            "https://cdn/0-2.png/392x696bb.png",
+            "https://cdn/0-3.png/392x696bb.png",
+            "https://cdn/0-4.png/392x696bb.png",
+            "https://cdn/0-5.png/392x696bb.png",
+            "https://cdn/0-6.png/392x696bb.png",
+            "https://cdn/0-7.png/392x696bb.png",
+            "https://cdn/0-8.png/392x696bb.png",
+            "https://cdn/0-9.png/392x696bb.png"
+          ],
+          "ipadScreenshotUrls": []
+        },
+        {
+          "trackId": 1,
+          "trackName": "Maximal App 1",
+          "sellerName": "Dev 1",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [
+            "https://cdn/1-0.png/392x696bb.png",
+            "https://cdn/1-1.png/392x696bb.png",
+            "https://cdn/1-2.png/392x696bb.png",
+            "https://cdn/1-3.png/392x696bb.png",
+            "https://cdn/1-4.png/392x696bb.png",
+            "https://cdn/1-5.png/392x696bb.png",
+            "https://cdn/1-6.png/392x696bb.png",
+            "https://cdn/1-7.png/392x696bb.png",
+            "https://cdn/1-8.png/392x696bb.png",
+            "https://cdn/1-9.png/392x696bb.png"
+          ],
+          "ipadScreenshotUrls": []
+        },
+        {
+          "trackId": 2,
+          "trackName": "Maximal App 2",
+          "sellerName": "Dev 2",
+          "description": "Track your daily habit and build streaks.",
+          "userRatingCount": 500,
+          "averageUserRating": 4.5,
+          "price": 0.0,
+          "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+          "screenshotUrls": [
+            "https://cdn/2-0.png/392x696bb.png",
+            "https://cdn/2-1.png/392x696bb.png",
+            "https://cdn/2-2.png/392x696bb.png",
+            "https://cdn/2-3.png/392x696bb.png",
+            "https://cdn/2-4.png/392x696bb.png",
+            "https://cdn/2-5.png/392x696bb.png",
+            "https://cdn/2-6.png/392x696bb.png",
+            "https://cdn/2-7.png/392x696bb.png",
+            "https://cdn/2-8.png/392x696bb.png",
+            "https://cdn/2-9.png/392x696bb.png"
+          ],
+          "ipadScreenshotUrls": []
+        }
+      ],
+      "expectedIphoneCounts": [
+        10,
+        10,
+        10
+      ],
+      "expectedIpadCounts": [
+        0,
+        0,
+        0
+      ],
+      "expectedExposed": [
+        true,
+        true,
+        true
+      ],
+      "expectedStrategy": {
+        "appsSampled": 3,
+        "appsMissing": 0,
+        "medianCount": 10,
+        "coveragePercent": 100.0,
+        "portraitApps": 3,
+        "landscapeApps": 0,
+        "ipadApps": 0,
+        "usesMaxSlots": 3
+      },
+      "expectedTerms": [
+        {
+          "term": "maximal",
+          "appsInName": 3,
+          "appsInDescription": 0,
+          "score": 80.0,
+          "inYourListing": false
+        },
+        {
+          "term": "build",
+          "appsInName": 0,
+          "appsInDescription": 3,
+          "score": 20.0,
+          "inYourListing": false
+        },
+        {
+          "term": "daily",
+          "appsInName": 0,
+          "appsInDescription": 3,
+          "score": 20.0,
+          "inYourListing": false
+        },
+        {
+          "term": "habit",
+          "appsInName": 0,
+          "appsInDescription": 3,
+          "score": 20.0,
+          "inYourListing": true
+        },
+        {
+          "term": "streaks",
+          "appsInName": 0,
+          "appsInDescription": 3,
+          "score": 20.0,
+          "inYourListing": false
+        },
+        {
+          "term": "track",
+          "appsInName": 0,
+          "appsInDescription": 3,
+          "score": 20.0,
+          "inYourListing": false
+        }
+      ],
+      "expectedNotes": []
+    },
+    {
+      "name": "nothing at all",
+      "entries": [],
+      "expectedIphoneCounts": [],
+      "expectedIpadCounts": [],
+      "expectedExposed": [],
+      "expectedStrategy": null,
+      "expectedTerms": [],
+      "expectedNotes": [
+        "No apps returned for 'habit tracker'."
+      ]
+    }
   ]
 }

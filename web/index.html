@@ -4,253 +4,43 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LaunchPilot — App Store &amp; Play pre-flight checks</title>
-<meta name="description" content="Check your App Store and Google Play screenshots and keyword field against the stores' rules. Runs entirely in your browser — nothing is uploaded.">
-<style>
-  :root {
-    color-scheme: light dark;
-    --bg: #fbfbfd;
-    --surface: #ffffff;
-    --border: #e3e3e8;
-    --text: #16161a;
-    --muted: #6b6b76;
-    --accent: #3b5bdb;
-    --error: #c92a2a;
-    --error-bg: #fff5f5;
-    --warning: #a5730a;
-    --warning-bg: #fff9db;
-    --success: #2b8a3e;
-    --success-bg: #f4fce3;
-    --radius: 10px;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0d0d10;
-      --surface: #16161a;
-      --border: #2a2a32;
-      --text: #ececf1;
-      --muted: #9a9aa6;
-      --accent: #748ffc;
-      --error: #ff8787;
-      --error-bg: #2a1416;
-      --warning: #ffd43b;
-      --warning-bg: #2a2410;
-      --success: #8ce99a;
-      --success-bg: #142a18;
-    }
-  }
-
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    padding: 2rem 1.25rem 4rem;
-    background: var(--bg);
-    color: var(--text);
-    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  main { max-width: 940px; margin: 0 auto; }
-  h1 { font-size: 1.9rem; letter-spacing: -0.02em; margin: 0 0 .4rem; }
-  h2 { font-size: 1.05rem; margin: 2.2rem 0 .75rem; letter-spacing: -0.01em; }
-  p { margin: 0 0 1rem; }
-  code, .mono {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: .86em;
-  }
-  a { color: var(--accent); }
-
-  .tagline { color: var(--muted); margin-bottom: 1rem; font-size: 1.02rem; }
-  .privacy {
-    display: inline-flex; align-items: center; gap: .5rem;
-    background: var(--success-bg); color: var(--success);
-    border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
-    border-radius: 100px; padding: .3rem .85rem;
-    font-size: .82rem; font-weight: 600; margin-bottom: 1.75rem;
-  }
-
-  /* --- drop zone --- */
-  #drop {
-    border: 2px dashed var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
-    padding: 2.75rem 1.5rem;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color .15s, background .15s;
-  }
-  #drop:hover, #drop:focus-visible { border-color: var(--accent); }
-  #drop.dragging {
-    border-color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 8%, var(--surface));
-  }
-  #drop strong { display: block; font-size: 1.05rem; margin-bottom: .3rem; }
-  #drop span { color: var(--muted); font-size: .9rem; }
-  input[type=file] { display: none; }
-
-  /* --- controls --- */
-  .controls {
-    display: flex; flex-wrap: wrap; gap: 1.25rem; align-items: center;
-    margin: 1.25rem 0 0; font-size: .9rem;
-  }
-  .controls label { color: var(--muted); margin-right: .4rem; }
-  select, button {
-    font: inherit; font-size: .9rem;
-    padding: .4rem .7rem;
-    border-radius: 7px; border: 1px solid var(--border);
-    background: var(--surface); color: var(--text);
-    cursor: pointer;
-  }
-  button.primary {
-    background: var(--accent); color: #fff; border-color: transparent; font-weight: 600;
-  }
-  button:disabled { opacity: .45; cursor: not-allowed; }
-
-  /* --- summary --- */
-  #summary {
-    display: none; margin-top: 1.75rem;
-    border: 1px solid var(--border); border-left-width: 4px;
-    border-radius: var(--radius); background: var(--surface);
-    padding: .9rem 1.1rem; font-size: .93rem;
-  }
-  #summary.pass { border-left-color: var(--success); }
-  #summary.warn { border-left-color: var(--warning); }
-  #summary.fail { border-left-color: var(--error); }
-  #summary .verdict { font-weight: 700; letter-spacing: .02em; }
-  #summary.pass .verdict { color: var(--success); }
-  #summary.warn .verdict { color: var(--warning); }
-  #summary.fail .verdict { color: var(--error); }
-  #summary .detail { color: var(--muted); }
-
-  /* --- results --- */
-  .card {
-    border: 1px solid var(--border); border-radius: var(--radius);
-    background: var(--surface); margin-bottom: .7rem; overflow: hidden;
-  }
-  .card-head {
-    display: flex; flex-wrap: wrap; gap: .75rem; align-items: baseline;
-    padding: .7rem .95rem;
-  }
-  .card-head .name { font-weight: 600; }
-  .card-head .meta { color: var(--muted); font-size: .84rem; }
-  .badge {
-    font-size: .72rem; font-weight: 700; letter-spacing: .04em;
-    padding: .12rem .5rem; border-radius: 5px; text-transform: uppercase;
-  }
-  .badge.pass { background: var(--success-bg); color: var(--success); }
-  .badge.warn { background: var(--warning-bg); color: var(--warning); }
-  .badge.fail { background: var(--error-bg); color: var(--error); }
-
-  .findings { border-top: 1px solid var(--border); }
-  .finding { padding: .6rem .95rem; border-bottom: 1px solid var(--border); }
-  .finding:last-child { border-bottom: none; }
-  .finding.error { background: var(--error-bg); }
-  .finding.warning { background: var(--warning-bg); }
-  .finding .code {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: .78rem; font-weight: 700;
-  }
-  .finding.error .code { color: var(--error); }
-  .finding.warning .code { color: var(--warning); }
-  .finding.info .code { color: var(--accent); }
-  .finding .msg { font-size: .88rem; }
-  .finding .hint { color: var(--muted); font-size: .83rem; margin-top: .2rem; }
-
-  #setFindings:empty { display: none; }
-
-  /* --- fix panel --- */
-  #fixPanel { display: none; margin-top: 1.5rem; }
-  .note {
-    color: var(--muted); font-size: .83rem;
-    border-left: 2px solid var(--border); padding-left: .75rem; margin-top: .8rem;
-  }
-  footer {
-    margin-top: 3.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border);
-    color: var(--muted); font-size: .84rem;
-  }
-  .hidden { display: none !important; }
-
-  /* --- tabs --- */
-  .tabs {
-    display: flex; gap: .35rem; margin-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border);
-  }
-  .tab {
-    border: none; background: none; color: var(--muted);
-    padding: .55rem .9rem; border-radius: 0;
-    border-bottom: 2px solid transparent; margin-bottom: -1px;
-    font-size: .93rem; font-weight: 600;
-  }
-  .tab:hover { color: var(--text); }
-  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
-  /* --- keyword form --- */
-  .lead { font-size: .95rem; max-width: 62ch; }
-  .muted-note { color: var(--muted); font-size: .88rem; }
-  .form-grid {
-    display: grid; grid-template-columns: 10rem 1fr; gap: .7rem 1rem;
-    align-items: center; margin: 1.5rem 0;
-  }
-  .form-grid label { color: var(--muted); font-size: .88rem; }
-  .form-grid input, .form-grid textarea {
-    font: inherit; font-size: .92rem;
-    padding: .5rem .7rem; width: 100%;
-    border: 1px solid var(--border); border-radius: 7px;
-    background: var(--surface); color: var(--text);
-  }
-  .form-grid textarea {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: .85rem; resize: vertical;
-  }
-  .form-grid input:focus, .form-grid textarea:focus {
-    outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
-    outline-offset: 1px; border-color: var(--accent);
-  }
-  @media (max-width: 600px) {
-    .form-grid { grid-template-columns: 1fr; gap: .3rem; }
-    .form-grid label { margin-top: .5rem; }
-  }
-
-  .budget-line {
-    display: flex; flex-wrap: wrap; align-items: baseline; gap: .75rem;
-    font-size: .9rem; margin: 1.25rem 0 .5rem;
-  }
-  .budget-bar {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    letter-spacing: -1px;
-  }
-  .budget-bar.ok { color: var(--success); }
-  .budget-bar.warn { color: var(--warning); }
-  .budget-bar.over { color: var(--error); }
-
-  .suggestion {
-    margin-top: 1.5rem; padding: .9rem 1.1rem;
-    border: 1px solid var(--border); border-left: 4px solid var(--accent);
-    border-radius: var(--radius); background: var(--surface);
-  }
-  .suggestion code {
-    display: block; margin: .4rem 0 .3rem;
-    font-size: .88rem; word-break: break-all;
-  }
-</style>
+<meta name="description" content="Check screenshots, keywords, listing text, market difficulty and competitors before you ship. Runs entirely in your browser — nothing is uploaded.">
+<link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="brand">
+      <h1>LaunchPilot</h1>
+      <span class="tagline">Catch App Store and Play rejections before the stores do</span>
+    </div>
+    <span class="privacy"><span aria-hidden="true">🔒</span> Nothing uploaded · no account · no server</span>
+  </div>
+  <nav class="nav" id="nav">
+    <a href="#screenshots">Screenshots</a>
+    <a href="#keywords">Keyword field</a>
+    <a href="#metadata">Listing text</a>
+    <a href="#niche">Niche</a>
+    <a href="#markets">Markets</a>
+    <a href="#competitors">Competitors</a>
+    <a href="#rank">Rank</a>
+    <a href="#testers">Play testers</a>
+    <a href="#specs">Specs</a>
+  </nav>
+</header>
+
 <main>
-  <h1>LaunchPilot</h1>
-  <p class="tagline">Catch App Store and Google Play rejections before the stores do.</p>
-  <div class="privacy">
-    <span aria-hidden="true">🔒</span>
-    Runs entirely in your browser — no upload, no account, no server
-  </div>
 
-  <div class="tabs" role="tablist">
-    <button class="tab active" role="tab" data-panel="panel-screenshots" aria-selected="true">
-      Screenshots
-    </button>
-    <button class="tab" role="tab" data-panel="panel-keywords" aria-selected="false">
-      Keyword field
-    </button>
-  </div>
+<!-- ================= screenshots ================= -->
+<section class="view" id="view-screenshots">
+  <p class="lead">
+    Every rule here reads the file's <strong>header</strong>, not its pixels, so a few
+    hundred bytes answer locally what a multi-megabyte upload would have answered.
+    That is also more correct: a fully opaque RGBA PNG is still rejected by Apple,
+    so sampling pixels for transparency would give the wrong answer.
+  </p>
 
-  <section id="panel-screenshots" role="tabpanel">
   <div id="drop" tabindex="0" role="button" aria-label="Choose screenshots to check">
     <strong>Drop your screenshots here</strong>
     <span>or click to choose files · PNG and JPEG · nothing leaves your machine</span>
@@ -258,7 +48,7 @@
   </div>
 
   <div class="controls">
-    <div>
+    <div class="field">
       <label for="storeSelect">Store</label>
       <select id="storeSelect">
         <option value="auto" selected>Auto-detect</option>
@@ -266,23 +56,22 @@
         <option value="google">Google Play</option>
       </select>
     </div>
-    <div>
+    <div class="field">
       <label for="targetSelect">Fix to</label>
       <select id="targetSelect"><option value="">Nearest valid size</option></select>
     </div>
-    <div>
+    <div class="field">
       <label for="bgInput">Background</label>
-      <input type="color" id="bgInput" value="#ffffff"
-             style="vertical-align:middle;width:2.2rem;height:1.9rem;padding:1px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer">
+      <input type="color" id="bgInput" value="#ffffff" style="width:2.6rem;height:2.1rem;padding:1px;border:1px solid var(--border);border-radius:7px;background:var(--surface)">
     </div>
     <button id="clearBtn" class="hidden">Clear</button>
   </div>
 
-  <div id="summary"></div>
+  <div id="summary" class="summary hidden"></div>
   <div id="setFindings"></div>
   <div id="results"></div>
 
-  <div id="fixPanel">
+  <div id="fixPanel" class="hidden">
     <h2>Repair</h2>
     <button id="fixBtn" class="primary">Fix and download</button>
     <p class="note">
@@ -290,55 +79,271 @@
       letterboxes to the nearest valid resolution — never stretching, since a
       distorted UI screenshot reads as broken to reviewers.
       <br><br>
-      Output is JPEG, and that is deliberate: a canvas-exported PNG still carries
-      a 32-bit alpha channel even when every pixel is opaque, so it would fail
-      the very rule you came here to fix. JPEG cannot represent alpha at all.
-      Both stores accept it. The
-      <a href="https://github.com/pP4010/launchpilot">command-line tool</a>
-      writes real alpha-free PNGs if you need PNG specifically.
+      Output is JPEG, deliberately: a canvas-exported PNG still carries a 32-bit
+      alpha channel even when every pixel is opaque, so it would fail the very
+      rule you came here to fix. JPEG cannot represent alpha at all, and both
+      stores accept it.
     </p>
   </div>
-  </section>
+</section>
 
-  <section id="panel-keywords" role="tabpanel" hidden>
-    <p class="lead">
-      Apple indexes your app name, subtitle and the 100-character keyword field
-      as one pool of <strong>words</strong>, then combines them to form matches.
-      So a phrase is reachable when each of its words is somewhere in the pool —
-      the phrase itself never has to appear — a word already in your title is
-      already indexed, and every space is overhead.
-    </p>
-    <p class="lead muted-note">
-      The field is never shown to a user, so none of this is self-correcting:
-      a listing wasting a third of its budget looks exactly like a perfect one.
-    </p>
+<!-- ================= keywords ================= -->
+<section class="view" id="view-keywords">
+  <p class="lead">
+    Apple indexes your app name, subtitle and the 100-character keyword field as
+    one pool of <strong>words</strong>, then combines them. So a phrase is reachable
+    when each of its words is somewhere in the pool — the phrase itself never has
+    to appear — a word already in your title is already indexed, and every space
+    is overhead. The field is never shown to a user, so none of this is
+    self-correcting.
+  </p>
 
-    <div class="form-grid">
-      <label for="kwTitle">App name</label>
-      <input id="kwTitle" type="text" maxlength="30" placeholder="Kaizen: Habit Tracker">
-      <label for="kwSubtitle">Subtitle</label>
-      <input id="kwSubtitle" type="text" maxlength="30" placeholder="Build daily routines">
-      <label for="kwField">Keyword field</label>
-      <input id="kwField" type="text" placeholder="habit,streak,focus,routine">
-      <label for="kwTargets">Phrases to rank for</label>
-      <textarea id="kwTargets" rows="4" placeholder="habit tracker&#10;morning streak&#10;gratitude journal"></textarea>
+  <div class="form-grid">
+    <label for="kwTitle">App name</label>
+    <input id="kwTitle" type="text" maxlength="30" placeholder="Kaizen: Habit Tracker">
+    <label for="kwSubtitle">Subtitle</label>
+    <input id="kwSubtitle" type="text" maxlength="30" placeholder="Build daily routines">
+    <label for="kwField">Keyword field</label>
+    <input id="kwField" type="text" placeholder="habit,streak,focus,routine">
+    <label for="kwTargets">Phrases to rank for</label>
+    <textarea id="kwTargets" rows="4" placeholder="habit tracker&#10;morning streak&#10;gratitude journal"></textarea>
+  </div>
+
+  <div id="kwBudget"></div>
+  <div id="kwFindings"></div>
+  <div id="kwCoverage"></div>
+  <div id="kwSuggestion"></div>
+</section>
+
+<!-- ================= metadata ================= -->
+<section class="view" id="view-metadata">
+  <p class="lead">
+    Text overruns are the second most common cause of a blocked submission after
+    malformed screenshots, and the limits <strong>differ per store</strong> — the same
+    listing can pass Apple and fail Play. Fields above 90% of their ceiling are
+    flagged too: translations commonly run 15–30% longer than English.
+  </p>
+
+  <div class="form-grid">
+    <label for="mdTitle">App name</label>
+    <input id="mdTitle" type="text" placeholder="Kaizen: Habit Tracker">
+    <label for="mdSubtitle">Subtitle <span class="muted">(Apple)</span></label>
+    <input id="mdSubtitle" type="text" placeholder="Build daily routines">
+    <label for="mdShort">Short description <span class="muted">(Play)</span></label>
+    <input id="mdShort" type="text" placeholder="Track habits and build streaks.">
+    <label for="mdPromo">Promotional text <span class="muted">(Apple)</span></label>
+    <textarea id="mdPromo" rows="2"></textarea>
+    <label for="mdKeywords">Keyword field <span class="muted">(Apple)</span></label>
+    <input id="mdKeywords" type="text" placeholder="habit,streak,focus">
+    <label for="mdDescription">Full description</label>
+    <textarea id="mdDescription" rows="6"></textarea>
+  </div>
+
+  <div id="mdSummary"></div>
+  <div id="mdFields"></div>
+  <div id="mdFindings"></div>
+</section>
+
+<!-- ================= niche ================= -->
+<section class="view" id="view-niche">
+  <p class="lead">
+    Answers what rank trackers structurally cannot: <strong>should I build this at
+    all?</strong> They assume a live app — you cannot track the ranking of something
+    that does not exist. This runs before the first line of code, on the public
+    catalogue, with no account and no API key.
+  </p>
+  <div class="callout">
+    There is deliberately <strong>no search-volume number</strong>. Apple has never
+    published per-keyword search counts, and the Search Ads popularity index other
+    tools relabel as volume is an undocumented relative score whose above-floor US
+    keyword population fell 77% in four days in September 2025. Every number here
+    was counted.
+  </div>
+
+  <div class="controls">
+    <div class="field" style="flex:1;min-width:16rem">
+      <label for="nicheKeywords">Search terms, one per line</label>
+      <textarea id="nicheKeywords" rows="3" placeholder="habit tracker&#10;morning routine"></textarea>
     </div>
+    <div class="field">
+      <label for="nicheCountry">Storefront</label>
+      <select id="nicheCountry"></select>
+    </div>
+    <button id="nicheRun" class="primary">Analyse</button>
+  </div>
 
-    <div id="kwBudget"></div>
-    <div id="kwFindings"></div>
-    <div id="kwCoverage"></div>
-    <div id="kwSuggestion"></div>
-  </section>
+  <div id="nicheStatus" class="status"></div>
+  <div id="nicheResults"></div>
+</section>
 
-  <footer>
-    <p id="provenance"></p>
-    <p>
-      Same rules, same finding codes as the LaunchPilot CLI — the specification
-      data is generated from one source and both engines are tested against each
-      other on every commit.
-    </p>
-  </footer>
+<!-- ================= markets ================= -->
+<section class="view" id="view-markets">
+  <p class="lead">
+    Every ASO tool asks <em>how hard is this keyword?</em> as though there were one
+    answer. There are 175 storefronts and the answer differs in each — difficulty
+    tracks the <strong>language a term is searched in</strong> more than the size of the
+    country. That makes it a launch decision: which locale to write first, which
+    language to localise screenshots into.
+  </p>
+
+  <div class="controls">
+    <div class="field" style="flex:1;min-width:14rem">
+      <label for="marketsKeyword">Search term</label>
+      <input id="marketsKeyword" type="text" placeholder="habit tracker">
+    </div>
+    <div class="field" style="flex:1;min-width:14rem">
+      <label for="marketsCountries">Storefronts <span class="muted">(comma-separated)</span></label>
+      <input id="marketsCountries" type="text" placeholder="leave blank for the 14 majors">
+    </div>
+    <button id="marketsRun" class="primary">Scan</button>
+  </div>
+  <p class="note">
+    Deliberately slow: one request per storefront against a free endpoint that
+    rate-limits, spaced politely apart. A 14-country sweep takes about 20 seconds
+    the first time, then comes from cache.
+  </p>
+
+  <div id="marketsStatus" class="status"></div>
+  <div id="marketsResults"></div>
+</section>
+
+<!-- ================= competitors ================= -->
+<section class="view" id="view-competitors">
+  <p class="lead">
+    Who holds a term, what the field does with its screenshots, and the vocabulary
+    everyone agrees on. Dimensions are read from the screenshot URLs themselves —
+    the catalogue encodes the served size — so describing a whole gallery costs no
+    bandwidth.
+  </p>
+  <div class="callout">
+    <strong>Screenshot availability is partial.</strong> Across a 55-app sample the
+    catalogue exposed iPhone screenshots for 47% of apps. Apps it withheld are
+    marked <code>n/a</code> rather than shown as having none, and they are excluded
+    from the medians instead of counted as zeros. Only names and descriptions are
+    public — subtitles and keyword fields are not — so the vocabulary below is a
+    floor on what rivals target, not the whole of it.
+  </div>
+
+  <div class="controls">
+    <div class="field" style="flex:1;min-width:14rem">
+      <label for="compKeyword">Search term</label>
+      <input id="compKeyword" type="text" placeholder="habit tracker">
+    </div>
+    <div class="field">
+      <label for="compCountry">Storefront</label>
+      <select id="compCountry"></select>
+    </div>
+    <div class="field">
+      <label for="compTop">Show</label>
+      <input id="compTop" type="number" min="3" max="30" value="10" style="width:5rem">
+    </div>
+    <div class="field" style="flex:1;min-width:12rem">
+      <label for="compMine">Your title <span class="muted">(optional)</span></label>
+      <input id="compMine" type="text" placeholder="Kaizen: Habit Tracker">
+    </div>
+    <button id="compRun" class="primary">Analyse</button>
+  </div>
+
+  <div id="compStatus" class="status"></div>
+  <div id="compResults"></div>
+</section>
+
+<!-- ================= rank ================= -->
+<section class="view" id="view-rank">
+  <p class="lead">
+    Where your app sits in the public catalogue's results for each term.
+  </p>
+  <div class="callout">
+    <strong>This is not the App Store's ranking.</strong> The public endpoint returns
+    results in its own relevance order, and that is what this reports — a real,
+    repeatable signal that moves when your metadata moves. The App Store app serves
+    search through a different path, with personalisation and paid placements, so
+    the two can disagree. History is kept in this browser only.
+  </div>
+
+  <div class="controls">
+    <div class="field" style="min-width:14rem">
+      <label for="rankApp">App Store id or bundle id</label>
+      <input id="rankApp" type="text" placeholder="1438388363 or com.example.app">
+    </div>
+    <div class="field" style="flex:1;min-width:14rem">
+      <label for="rankKeywords">Search terms, one per line</label>
+      <textarea id="rankKeywords" rows="3" placeholder="habit tracker&#10;daily habits"></textarea>
+    </div>
+    <div class="field">
+      <label for="rankCountry">Storefront</label>
+      <select id="rankCountry"></select>
+    </div>
+    <button id="rankRun" class="primary">Check</button>
+  </div>
+
+  <div id="rankStatus" class="status"></div>
+  <div id="rankResults"></div>
+</section>
+
+<!-- ================= testers ================= -->
+<section class="view" id="view-testers">
+  <p class="lead">
+    Personal Play developer accounts created after 13 November 2023 need 12 testers
+    opted in <strong>continuously</strong> for 14 days before applying for production
+    access. The word that costs people two weeks is <em>continuously</em>: if your
+    count drops to 11 on day nine, Google restarts the clock.
+  </p>
+
+  <div class="controls">
+    <div class="field">
+      <label for="testDays">Days passed</label>
+      <input id="testDays" type="number" min="0" max="120" value="9" style="width:6rem">
+    </div>
+    <div class="field">
+      <label for="testCount">Testers opted in</label>
+      <input id="testCount" type="number" min="0" max="500" value="12" style="width:7rem">
+    </div>
+    <div class="field">
+      <label for="testApproved">Release approved</label>
+      <select id="testApproved">
+        <option value="yes" selected>Yes</option>
+        <option value="no">Not yet</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="testResults"></div>
+
+  <h3>Day-by-day timeline</h3>
+  <p class="lead">
+    The flat form above cannot see a dip by construction. Paste a real timeline and
+    the reset is detected.
+  </p>
+  <textarea id="testHistory" rows="6" style="width:100%;max-width:36rem" placeholder='[
+  { "date": "2026-07-01", "opted_in": 12 },
+  { "date": "2026-07-02", "opted_in": 11 },
+  { "date": "2026-07-03", "opted_in": 13 }
+]'></textarea>
+  <div id="testHistoryStatus" class="status"></div>
+</section>
+
+<!-- ================= specs ================= -->
+<section class="view" id="view-specs">
+  <p class="lead">
+    The bundled specification catalogue, with the date each store's rules were last
+    verified against its official documentation. These numbers are generated from
+    one source and drive both this page and the command-line tool.
+  </p>
+  <div id="specsBody"></div>
+</section>
+
 </main>
+
+<footer>
+  <p id="provenance"></p>
+  <p>
+    Same rules, same finding codes as the
+    <a href="https://github.com/pP4010/launchpilot">LaunchPilot CLI</a> — the
+    specification data is generated from one source and both engines are tested
+    against each other on every commit.
+  </p>
+</footer>
 
 <script type="module" src="./app.js"></script>
 </body>
