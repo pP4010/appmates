@@ -1,0 +1,171 @@
+# Niche winnability scoring — the published methodology.
+#
+# Every signal here is computed from data the public App Store catalogue returns.
+# Nothing is modelled, estimated, or bought from a data vendor, and there is no
+# "search volume" figure: Apple does not publish per-keyword search counts, and
+# the Search Ads popularity index that every other tool re-labels as volume is a
+# relative score Apple degraded sharply in September 2025.
+#
+# Scores are normalised 0-100 where HIGHER ALWAYS MEANS MORE WINNABLE, whichever
+# direction the raw observation runs. `curve` maps an observation to a score by
+# linear interpolation between anchor points; values outside the range clamp to
+# the nearest anchor. Curves rather than thresholds, so that one extra competitor
+# never flips a verdict on its own.
+#
+# Disagree with a weight? Edit it here. The CLI prints every signal's raw
+# observation alongside its score precisely so the weighting can be argued with.
+version: "1.0"
+source: https://itunes.apple.com/search  # public catalogue, no credentials
+last_verified: 2026-07-26
+
+# Applied to a signal's score to label it.
+bands:
+  favourable_at: 65
+  hostile_at: 35
+
+# Applied to the weighted total to reach a verdict.
+verdicts:
+  open_at: 60
+  contested_at: 35
+
+# An app is a "credible competitor" above this many ratings. Below it, an app is
+# present in the results but is not meaningfully holding the position.
+serious_competitor_ratings: 1000
+
+signals:
+  - code: LEADER_STRENGTH
+    label: Leader entrenchment
+    unit: ratings
+    weight: 0.25
+    # Median rating count across the sampled leaders. Rating count is a public,
+    # observable proxy for install base — the closest thing to a moat an app has.
+    # Weighted heaviest because it is the hardest thing to overcome: you can
+    # out-design a competitor in a quarter, you cannot out-accumulate ten years
+    # of reviews.
+    aggregate: median_rating_count
+    curve:
+      - [0, 100]
+      - [150, 88]
+      - [1000, 65]
+      - [5000, 38]
+      - [20000, 15]
+      - [100000, 0]
+    rationale:
+      favourable: "Leaders hold a median of {observed:,.0f} ratings — a new entrant can realistically accumulate that."
+      neutral: "Leaders hold a median of {observed:,.0f} ratings. Catchable, but it will take sustained releases."
+      hostile: "Leaders hold a median of {observed:,.0f} ratings. That install base is a moat, not a head start."
+
+  - code: COMPETITIVE_DEPTH
+    label: Credible competitors
+    unit: apps
+    weight: 0.15
+    # Apps in the results carrying more than `serious_competitor_ratings` reviews.
+    #
+    # This deliberately does NOT use the raw result count. That was measured
+    # across eight keywords spanning "photo editor" (brutal) to "sourdough
+    # starter log" (essentially empty) and returned 162-191 every time —
+    # a standard deviation of 9. The store pads every result page with loosely
+    # related apps, so the count reflects the page size, not the market.
+    #
+    # Counting only apps with real traction separates the same keywords by
+    # 1 to 149, which is the discrimination the raw count could not provide.
+    aggregate: serious_competitor_count
+    curve:
+      - [0, 100]
+      - [3, 88]
+      - [10, 72]
+      - [30, 50]
+      - [60, 30]
+      - [120, 12]
+      - [200, 5]
+    rationale:
+      favourable: "Only {observed:,.0f} app(s) here have real traction — the field is thin where it counts."
+      neutral: "{observed:,.0f} apps have meaningful traction. A normal, workable field."
+      hostile: "{observed:,.0f} apps already have real traction. Every results page is full of established players."
+
+  - code: MARKET_FRESHNESS
+    label: Incumbent neglect
+    unit: days
+    weight: 0.15
+    # Median days since the leaders last shipped. Counter-intuitively, a STALE
+    # market is an opportunity: abandoned leaders keep their rankings for a while
+    # but lose them to anyone actively shipping. Frequently-updated leaders mean
+    # funded teams defending the position.
+    aggregate: median_days_since_update
+    direction: higher_is_better
+    curve:
+      - [0, 10]
+      - [30, 28]
+      - [90, 50]
+      - [180, 72]
+      - [365, 90]
+      - [730, 100]
+    rationale:
+      favourable: "Leaders last shipped a median of {observed:,.0f} days ago — the field is being neglected."
+      neutral: "Leaders ship every {observed:,.0f} days or so. Actively maintained, not aggressively."
+      hostile: "Leaders shipped a median of {observed:,.0f} days ago. These are funded teams defending the slot."
+
+  - code: SATISFACTION_GAP
+    label: User dissatisfaction
+    unit: stars
+    weight: 0.15
+    # Median star rating of the leaders. A low ceiling means users are unhappy
+    # with what exists, which is the clearest possible product opening. A field
+    # of 4.8s means the incumbents are genuinely good and users have no reason
+    # to switch.
+    aggregate: median_rating
+    curve:
+      - [3.0, 100]
+      - [3.8, 82]
+      - [4.3, 58]
+      - [4.6, 35]
+      - [4.8, 18]
+      - [5.0, 5]
+    rationale:
+      favourable: "Leaders average {observed:.1f}★ — users are not satisfied with what exists."
+      neutral: "Leaders average {observed:.1f}★. Decent, with room to be clearly better."
+      hostile: "Leaders average {observed:.1f}★. Users have little reason to switch."
+
+  - code: KEYWORD_TARGETING
+    label: Keyword under-targeting
+    unit: percent
+    weight: 0.20
+    # Share of leaders carrying the search term in their app name. This is the
+    # ASO-specific signal and it is why this tool exists: a term where the top
+    # apps rank *incidentally*, without targeting it, is a term you can take by
+    # simply putting it in your title and subtitle. High targeting means you are
+    # fighting people who chose this fight.
+    aggregate: keyword_in_name_share
+    curve:
+      - [0, 100]
+      - [10, 85]
+      - [30, 62]
+      - [50, 42]
+      - [75, 20]
+      - [100, 5]
+    rationale:
+      favourable: "Only {observed:.0f}% of leaders put this term in their name — they rank incidentally, so targeting it deliberately is an edge."
+      neutral: "{observed:.0f}% of leaders target this term by name."
+      hostile: "{observed:.0f}% of leaders target this term by name. They chose this fight and optimised for it."
+
+  - code: PUBLISHER_CONCENTRATION
+    label: Publisher concentration
+    unit: percent
+    weight: 0.10
+    # Share of sampled leaders belonging to publishers that appear more than
+    # once. One studio holding several slots means portfolio cross-promotion,
+    # which an independent developer cannot match on spend.
+    aggregate: repeat_publisher_share
+    # Anchored at 70 rather than 100 for zero: across the calibration set, most
+    # niches have no repeat publisher at all. Treating the normal case as an
+    # advantage handed every keyword a free 10 points and compressed the range.
+    curve:
+      - [0, 70]
+      - [20, 52]
+      - [40, 36]
+      - [60, 22]
+      - [100, 5]
+    rationale:
+      favourable: "No publisher holds multiple slots — the field is fragmented."
+      neutral: "{observed:.0f}% of leading slots belong to repeat publishers."
+      hostile: "{observed:.0f}% of leading slots belong to repeat publishers running portfolio cross-promotion."

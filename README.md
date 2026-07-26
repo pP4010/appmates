@@ -136,6 +136,61 @@ and LaunchPilot detects the reset:
 The flat `--days-passed` form cannot see a dip by construction, and the output
 says so rather than quietly implying you are fine.
 
+### `niche`
+
+```bash
+launchpilot niche "habit tracker" "morning routine" --country fr
+launchpilot niche "sourdough starter log" --leaders
+launchpilot niche "budget app" --json | jq '.keywords[0].verdict'
+```
+
+```
+Keyword                     score  verdict     credible competitors
+bouldering training log      76.1  OPEN         3
+sourdough starter log        66.3  OPEN         1
+gratitude journal            39.2  CONTESTED   32
+habit tracker                30.8  LOCKED      49
+photo editor                 16.2  LOCKED     149
+```
+
+Answers the question the established ASO tools structurally cannot: **should I
+build this at all?** Rank trackers and keyword optimisers assume a live app — you
+cannot track the ranking of something that does not exist. This runs before the
+first line of code, on the public App Store catalogue, with no account and no API
+key.
+
+**There is deliberately no "search volume" number.** Apple has never published
+per-keyword search counts. The Search Ads popularity index that other tools
+relabel as volume is a relative score with no published methodology, and in
+September 2025 the number of US keywords scoring above the floor
+[dropped 77% in four days](https://respectaso.com/blog/apple-search-ads-popularity-unreliable-aso-keyword-data/)
+when Apple changed something and told nobody. Every number LaunchPilot prints is
+something it counted.
+
+Six signals, each shown with its raw observation so you can disagree with the
+weighting and still trust the facts:
+
+| Signal | What it observes | Why it matters |
+|---|---|---|
+| **Leader entrenchment** | median ratings of the top 10 | You can out-design a competitor in a quarter; you cannot out-accumulate ten years of reviews |
+| **Credible competitors** | apps with >1,000 ratings | Not how many apps exist — how many actually hold the position |
+| **Incumbent neglect** | median days since the leaders shipped | A neglected market is an opening; weekly releases mean a funded team defending it |
+| **User dissatisfaction** | median stars of the leaders | 4.9★ incumbents give users no reason to switch; 3.6★ is a product opening |
+| **Keyword under-targeting** | share of leaders with the term in their name | Leaders ranking *incidentally* means the term is takeable by simply targeting it |
+| **Publisher concentration** | share of slots held by repeat publishers | One studio holding several slots is cross-promotion you cannot outspend |
+
+The weights, curves and thresholds all live in
+[`core/specs/market.yaml`](src/launchpilot/core/specs/market.yaml) with the
+reasoning written next to each number. Edit them and re-run.
+
+> **On the raw result count.** An earlier revision scored saturation from the
+> number of apps the store returns. Measured across eight keywords spanning
+> *photo editor* to *sourdough starter log*, it returned 162–191 every time — a
+> standard deviation of 9, because the store pads every result page with loosely
+> related apps. Three unrelated markets scored 45, 46 and 47. Counting only apps
+> with real traction separates the same keywords by 1 to 149. The result count is
+> still reported as context, but it is not scored.
+
 ### `validate-metadata`
 
 ```bash
@@ -252,6 +307,7 @@ binary fixtures cannot be diffed in review, and they hide the very properties
 - [x] Closed-testing streak tracking with reset detection
 - [x] JSON output and CI exit codes
 - [x] Zero-backend web checker with browser-side repair
+- [x] `niche` — pre-build market assessment from the public catalogue
 - [ ] `launchpilot init` — scaffold a `launchpilot.toml` per project
 - [ ] Play graphic assets (icon, feature graphic) as first-class checks
 - [ ] Device-frame screenshot generation

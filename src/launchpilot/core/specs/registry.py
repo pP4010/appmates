@@ -111,6 +111,50 @@ class StoreSpec(BaseModel):
         return next((s for s in self.sizes if s.id == spec_id), None)
 
 
+class BandThresholds(BaseModel):
+    favourable_at: float
+    hostile_at: float
+
+
+class VerdictThresholds(BaseModel):
+    open_at: float
+    contested_at: float
+
+
+class SignalSpec(BaseModel):
+    """One scored observation in the niche analysis."""
+
+    code: str
+    label: str
+    unit: str
+    weight: float
+    aggregate: str
+    """Name of the observation this signal reads; resolved against ``Aggregates``."""
+
+    curve: list[tuple[float, float]]
+    """(observation, score) anchors, linearly interpolated and clamped."""
+
+    direction: str = "lower_is_better"
+    rationale: dict[str, str] = Field(default_factory=dict)
+
+
+class MarketSpec(BaseModel):
+    version: str
+    source: str
+    last_verified: dt.date
+    bands: BandThresholds
+    verdicts: VerdictThresholds
+    serious_competitor_ratings: int = 1000
+    signals: list[SignalSpec] = Field(default_factory=list)
+
+    def get(self, code: str) -> SignalSpec | None:
+        return next((s for s in self.signals if s.code == code), None)
+
+    @property
+    def total_weight(self) -> float:
+        return sum(s.weight for s in self.signals)
+
+
 _FILES: dict[Store, str] = {
     Store.APPLE: "apple.yaml",
     Store.GOOGLE: "google_play.yaml",
@@ -132,3 +176,9 @@ def load_spec(store: Store) -> StoreSpec:
 
 def all_specs() -> list[StoreSpec]:
     return [load_spec(store) for store in Store]
+
+
+@functools.cache
+def load_market_spec() -> MarketSpec:
+    """Load and cache the niche-scoring methodology."""
+    return MarketSpec(**_load_yaml("market.yaml"))

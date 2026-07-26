@@ -386,3 +386,117 @@ def test_specs_json_is_structured() -> None:
 def test_specs_single_store() -> None:
     data = payload(run("specs", "-s", "google", "--json"))
     assert [d["store"] for d in data] == ["google"]
+
+
+# --- niche ---------------------------------------------------------------
+
+
+class _FakeCatalogue:
+    """Stands in for the network so CLI tests stay hermetic."""
+
+    def __init__(self, count: int, results: list[dict[str, Any]]) -> None:
+        self.payload = (count, results)
+
+    def search(self, term: str, *, country: str, limit: int) -> tuple[int, list[dict[str, Any]]]:
+        return self.payload
+
+
+def _fake_apps(n: int, ratings: int = 50) -> list[dict[str, Any]]:
+    return [
+        {
+            "trackId": i,
+            "trackName": f"App {i}",
+            "sellerName": f"Dev {i}",
+            "userRatingCount": ratings,
+            "averageUserRating": 4.2,
+            "price": 0.0,
+            "genres": ["Productivity"],
+            "releaseDate": "2020-01-01T00:00:00Z",
+            "currentVersionReleaseDate": "2025-01-01T00:00:00Z",
+        }
+        for i in range(n)
+    ]
+
+
+@pytest.fixture
+def offline_catalogue(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Point the niche command at a fake catalogue.
+
+    Patched where it is looked up, not where it is defined, so the command's
+    own import is the one replaced.
+    """
+    import launchpilot.cli.commands.niche as niche_module
+
+    monkeypatch.setattr(
+        niche_module,
+        "ITunesSearchClient",
+        lambda **kwargs: _FakeCatalogue(40, _fake_apps(12)),
+    )
+
+
+def test_niche_requires_a_keyword() -> None:
+    assert run("niche").exit_code == int(ExitCode.USAGE)
+
+
+def test_niche_rejects_blank_keywords(offline_catalogue: None) -> None:
+    assert run("niche", "   ").exit_code == int(ExitCode.USAGE)
+
+
+def test_niche_reports_a_verdict(offline_catalogue: None) -> None:
+    result = run("niche", "habit tracker")
+    assert result.exit_code == int(ExitCode.OK)
+    assert "habit tracker" in plain(result)
+
+
+def test_niche_json_carries_the_scored_signals(offline_catalogue: None) -> None:
+    result = run("niche", "habit tracker", "--json")
+    assert result.exit_code == int(ExitCode.OK)
+
+    data = payload(result)
+    assert data["keywords"][0]["keyword"] == "habit tracker"
+    assert data["keywords"][0]["winnability"] > 0
+    assert data["keywords"][0]["verdict"] in {"open", "contested", "locked"}
+    assert {s["code"] for s in data["keywords"][0]["signals"]}
+
+    # Every signal must carry its raw observation, not just a score: the whole
+    # point is that a user can audit the reasoning.
+    for signal in data["keywords"][0]["signals"]:
+        assert "observed" in signal and "rationale" in signal and signal["rationale"]
+
+
+def test_niche_json_never_invents_a_search_volume(offline_catalogue: None) -> None:
+    """Apple does not publish per-keyword search counts, so neither do we."""
+    raw = json.dumps(payload(run("niche", "habit tracker", "--json"))).lower()
+    assert "volume" not in raw
+    assert "popularity" not in raw
+
+
+def test_niche_accepts_several_keywords(offline_catalogue: None) -> None:
+    data = payload(run("niche", "one", "two", "three", "--json"))
+    assert len(data["keywords"]) == 3
+
+
+def test_niche_records_the_storefront(offline_catalogue: None) -> None:
+    data = payload(run("niche", "x", "--country", "fr", "--json"))
+    assert data["country"] == "FR"
+
+
+def test_niche_surfaces_a_catalogue_failure_as_a_usage_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import launchpilot.cli.commands.niche as niche_module
+    from launchpilot.core.clients.itunes import MarketDataError
+
+    class Failing:
+        def search(self, term: str, *, country: str, limit: int) -> Any:
+            raise MarketDataError("catalogue unreachable")
+
+    monkeypatch.setattr(niche_module, "ITunesSearchClient", lambda **kwargs: Failing())
+    result = run("niche", "x")
+    assert result.exit_code == int(ExitCode.USAGE)
+
+
+def test_niche_leaders_flag_lists_competitors(offline_catalogue: None) -> None:
+    result = run("niche", "habit tracker", "--leaders")
+    assert result.exit_code == int(ExitCode.OK)
+    assert "App 0" in plain(result)
