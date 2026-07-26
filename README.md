@@ -182,6 +182,22 @@ Every command exits `0` clean, `1` on findings, `2` on a usage error.
 `--json` emits the same Pydantic models the planned HTTP API will return, so
 anything you build against it now keeps working later.
 
+## Web checker (no install, no upload)
+
+`web/` is a zero-backend version of the screenshot checks: drag files in, get
+the same finding codes, download repaired copies. Nothing is uploaded and no
+server does any work — every rule LaunchPilot applies reads the file's *header*,
+not its pixels, so a few hundred bytes answer the question locally.
+
+```bash
+python3 -m http.server 8000 --directory web
+```
+
+It is kept honest rather than kept in sync by hand: the specification data is
+generated from the same YAML the CLI reads, and the JavaScript engine is tested
+against the Python one on 925 cases plus a set of real images parsed by Pillow.
+CI fails if any generated file is stale. See [web/README.md](web/README.md).
+
 ## Architecture
 
 ```
@@ -191,6 +207,9 @@ src/launchpilot/
     ├── specs/      # ← versioned YAML spec catalogue + registry
     ├── models/     # Pydantic contracts (Finding, Severity, reports)
     └── services/   # the actual logic
+
+web/                # browser checker, generated from and tested against the above
+scripts/            # generators for the web artefacts (run with --check in CI)
 ```
 
 Three decisions worth knowing about:
@@ -232,6 +251,7 @@ binary fixtures cannot be diffed in review, and they hide the very properties
 - [x] Listing text validation for both stores
 - [x] Closed-testing streak tracking with reset detection
 - [x] JSON output and CI exit codes
+- [x] Zero-backend web checker with browser-side repair
 - [ ] `launchpilot init` — scaffold a `launchpilot.toml` per project
 - [ ] Play graphic assets (icon, feature graphic) as first-class checks
 - [ ] Device-frame screenshot generation

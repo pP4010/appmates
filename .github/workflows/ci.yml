@@ -85,6 +85,47 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
+  web:
+    name: Web checker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install
+        run: uv sync --extra dev
+
+      # The browser engine reads generated copies of the Python-side data.
+      # If someone edits a spec YAML without regenerating, the web page would
+      # quietly apply different rules from the CLI, so treat staleness as a
+      # build failure rather than a nightly surprise.
+      - name: Generated artefacts are current
+        run: |
+          uv run python scripts/export_specs.py --check
+          uv run python scripts/export_conformance.py --check
+          uv run python scripts/export_parser_fixtures.py --check
+
+      - name: Conformance and unit tests
+        run: node --test "web/test/*.test.js" | tee /tmp/node-test.log
+
+      # Our own assertions check the bytes we meant to write; this checks that a
+      # real ZIP implementation accepts them.
+      - name: Archive opens with a real unzip
+        run: |
+          ZIP=$(grep -o 'ZIP_FIXTURE=.*' /tmp/node-test.log | head -1 | cut -d= -f2)
+          test -n "$ZIP" || { echo "::error::zip fixture path not emitted"; exit 1; }
+          unzip -t "$ZIP"
+          unzip -o "$ZIP" -d /tmp/zipcheck
+          test -f /tmp/zipcheck/locale/en-US/screen-02.jpg
+
   smoke:
     name: CLI smoke test
     runs-on: ubuntu-latest

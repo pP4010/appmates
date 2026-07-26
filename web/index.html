@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LaunchPilot — check App Store &amp; Play screenshots</title>
+<meta name="description" content="Check your App Store and Google Play screenshots against the stores' rules. Runs entirely in your browser — nothing is uploaded.">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fbfbfd;
+    --surface: #ffffff;
+    --border: #e3e3e8;
+    --text: #16161a;
+    --muted: #6b6b76;
+    --accent: #3b5bdb;
+    --error: #c92a2a;
+    --error-bg: #fff5f5;
+    --warning: #a5730a;
+    --warning-bg: #fff9db;
+    --success: #2b8a3e;
+    --success-bg: #f4fce3;
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d0d10;
+      --surface: #16161a;
+      --border: #2a2a32;
+      --text: #ececf1;
+      --muted: #9a9aa6;
+      --accent: #748ffc;
+      --error: #ff8787;
+      --error-bg: #2a1416;
+      --warning: #ffd43b;
+      --warning-bg: #2a2410;
+      --success: #8ce99a;
+      --success-bg: #142a18;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 2rem 1.25rem 4rem;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 940px; margin: 0 auto; }
+  h1 { font-size: 1.9rem; letter-spacing: -0.02em; margin: 0 0 .4rem; }
+  h2 { font-size: 1.05rem; margin: 2.2rem 0 .75rem; letter-spacing: -0.01em; }
+  p { margin: 0 0 1rem; }
+  code, .mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .86em;
+  }
+  a { color: var(--accent); }
+
+  .tagline { color: var(--muted); margin-bottom: 1rem; font-size: 1.02rem; }
+  .privacy {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: var(--success-bg); color: var(--success);
+    border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
+    border-radius: 100px; padding: .3rem .85rem;
+    font-size: .82rem; font-weight: 600; margin-bottom: 1.75rem;
+  }
+
+  /* --- drop zone --- */
+  #drop {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    padding: 2.75rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  #drop:hover, #drop:focus-visible { border-color: var(--accent); }
+  #drop.dragging {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  }
+  #drop strong { display: block; font-size: 1.05rem; margin-bottom: .3rem; }
+  #drop span { color: var(--muted); font-size: .9rem; }
+  input[type=file] { display: none; }
+
+  /* --- controls --- */
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 1.25rem; align-items: center;
+    margin: 1.25rem 0 0; font-size: .9rem;
+  }
+  .controls label { color: var(--muted); margin-right: .4rem; }
+  select, button {
+    font: inherit; font-size: .9rem;
+    padding: .4rem .7rem;
+    border-radius: 7px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text);
+    cursor: pointer;
+  }
+  button.primary {
+    background: var(--accent); color: #fff; border-color: transparent; font-weight: 600;
+  }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* --- summary --- */
+  #summary {
+    display: none; margin-top: 1.75rem;
+    border: 1px solid var(--border); border-left-width: 4px;
+    border-radius: var(--radius); background: var(--surface);
+    padding: .9rem 1.1rem; font-size: .93rem;
+  }
+  #summary.pass { border-left-color: var(--success); }
+  #summary.warn { border-left-color: var(--warning); }
+  #summary.fail { border-left-color: var(--error); }
+  #summary .verdict { font-weight: 700; letter-spacing: .02em; }
+  #summary.pass .verdict { color: var(--success); }
+  #summary.warn .verdict { color: var(--warning); }
+  #summary.fail .verdict { color: var(--error); }
+  #summary .detail { color: var(--muted); }
+
+  /* --- results --- */
+  .card {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); margin-bottom: .7rem; overflow: hidden;
+  }
+  .card-head {
+    display: flex; flex-wrap: wrap; gap: .75rem; align-items: baseline;
+    padding: .7rem .95rem;
+  }
+  .card-head .name { font-weight: 600; }
+  .card-head .meta { color: var(--muted); font-size: .84rem; }
+  .badge {
+    font-size: .72rem; font-weight: 700; letter-spacing: .04em;
+    padding: .12rem .5rem; border-radius: 5px; text-transform: uppercase;
+  }
+  .badge.pass { background: var(--success-bg); color: var(--success); }
+  .badge.warn { background: var(--warning-bg); color: var(--warning); }
+  .badge.fail { background: var(--error-bg); color: var(--error); }
+
+  .findings { border-top: 1px solid var(--border); }
+  .finding { padding: .6rem .95rem; border-bottom: 1px solid var(--border); }
+  .finding:last-child { border-bottom: none; }
+  .finding.error { background: var(--error-bg); }
+  .finding.warning { background: var(--warning-bg); }
+  .finding .code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .78rem; font-weight: 700;
+  }
+  .finding.error .code { color: var(--error); }
+  .finding.warning .code { color: var(--warning); }
+  .finding.info .code { color: var(--accent); }
+  .finding .msg { font-size: .88rem; }
+  .finding .hint { color: var(--muted); font-size: .83rem; margin-top: .2rem; }
+
+  #setFindings:empty { display: none; }
+
+  /* --- fix panel --- */
+  #fixPanel { display: none; margin-top: 1.5rem; }
+  .note {
+    color: var(--muted); font-size: .83rem;
+    border-left: 2px solid var(--border); padding-left: .75rem; margin-top: .8rem;
+  }
+  footer {
+    margin-top: 3.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border);
+    color: var(--muted); font-size: .84rem;
+  }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>LaunchPilot</h1>
+  <p class="tagline">Catch App Store and Google Play screenshot rejections before the stores do.</p>
+  <div class="privacy">
+    <span aria-hidden="true">🔒</span>
+    Runs entirely in your browser — no upload, no account, no server
+  </div>
+
+  <div id="drop" tabindex="0" role="button" aria-label="Choose screenshots to check">
+    <strong>Drop your screenshots here</strong>
+    <span>or click to choose files · PNG and JPEG · nothing leaves your machine</span>
+    <input type="file" id="fileInput" accept="image/png,image/jpeg" multiple>
+  </div>
+
+  <div class="controls">
+    <div>
+      <label for="storeSelect">Store</label>
+      <select id="storeSelect">
+        <option value="auto" selected>Auto-detect</option>
+        <option value="apple">App Store</option>
+        <option value="google">Google Play</option>
+      </select>
+    </div>
+    <div>
+      <label for="targetSelect">Fix to</label>
+      <select id="targetSelect"><option value="">Nearest valid size</option></select>
+    </div>
+    <div>
+      <label for="bgInput">Background</label>
+      <input type="color" id="bgInput" value="#ffffff"
+             style="vertical-align:middle;width:2.2rem;height:1.9rem;padding:1px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer">
+    </div>
+    <button id="clearBtn" class="hidden">Clear</button>
+  </div>
+
+  <div id="summary"></div>
+  <div id="setFindings"></div>
+  <div id="results"></div>
+
+  <div id="fixPanel">
+    <h2>Repair</h2>
+    <button id="fixBtn" class="primary">Fix and download</button>
+    <p class="note">
+      Flattens transparency onto your chosen background, converts to sRGB and
+      letterboxes to the nearest valid resolution — never stretching, since a
+      distorted UI screenshot reads as broken to reviewers.
+      <br><br>
+      Output is JPEG, and that is deliberate: a canvas-exported PNG still carries
+      a 32-bit alpha channel even when every pixel is opaque, so it would fail
+      the very rule you came here to fix. JPEG cannot represent alpha at all.
+      Both stores accept it. The
+      <a href="https://github.com/pP4010/launchpilot">command-line tool</a>
+      writes real alpha-free PNGs if you need PNG specifically.
+    </p>
+  </div>
+
+  <footer>
+    <p id="provenance"></p>
+    <p>
+      Same rules, same finding codes as the LaunchPilot CLI — the specification
+      data is generated from one source and both engines are tested against each
+      other on every commit.
+    </p>
+  </footer>
+</main>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>

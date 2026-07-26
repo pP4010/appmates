@@ -22,3 +22,6 @@ htmlcov/
 .env.*
 !.env.example
 launchpilot.local.toml
+
+# Local scratch for browser-driven checks
+web/.fixtures/

@@ -87,7 +87,17 @@ class ScreenshotValidator:
                 ],
             )
 
-        report = AssetReport(path=path, facts=facts)
+        return self.validate_facts(facts, path=path)
+
+    def validate_facts(self, facts: ImageFacts, *, path: Path | None = None) -> AssetReport:
+        """Apply every rule to already-extracted facts.
+
+        Split out from :meth:`validate_file` so rules can run without touching
+        the filesystem: the conformance harness feeds synthetic facts to compare
+        this engine against the browser implementation, and an upload endpoint
+        will want the same entry point.
+        """
+        report = AssetReport(path=path or Path("<in-memory>"), facts=facts)
         matched: SizeSpec | None = None
 
         for store in self.stores:
@@ -294,10 +304,10 @@ class ScreenshotValidator:
             stores=self.stores,
             assets=[self.validate_file(p) for p in paths],
         )
-        report.set_findings.extend(self._check_set(report.assets))
+        report.set_findings.extend(self.check_set(report.assets))
         return report
 
-    def _check_set(self, assets: list[AssetReport]) -> Iterable[Finding]:
+    def check_set(self, assets: list[AssetReport]) -> Iterable[Finding]:
         count = len(assets)
 
         if count == 0:
