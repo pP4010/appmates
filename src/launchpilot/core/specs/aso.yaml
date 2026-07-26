@@ -1,0 +1,124 @@
+# App Store keyword field rules.
+#
+# Apple's keyword field is 100 characters, and it is the most technical artefact
+# in a store listing: it is never shown to a user, so nothing about it is
+# self-correcting. A wasted character is a keyword you did not rank for.
+#
+# The rules below are mechanical consequences of one documented behaviour: Apple
+# indexes the *words* of the app name, the subtitle and the keyword field as a
+# single pool, and forms search matches by combining them. Everything else here
+# follows from that.
+source_url: https://developer.apple.com/app-store/product-page/
+last_verified: 2026-07-26
+
+field:
+  max_length: 100
+  separator: ","
+
+# Words Apple already associates with every app, or that carry no search intent.
+# Spending characters on these buys nothing.
+#
+# Every entry is quoted deliberately. YAML 1.1 reads bare `on`, `off`, `yes`,
+# `no`, `y` and `n` as booleans, so an unquoted `on` in this list arrives as
+# `True` and fails validation — or worse, in a laxer schema, silently stops
+# matching the word it was meant to catch.
+noise_words:
+  - "app"
+  - "apps"
+  - "free"
+  - "best"
+  - "top"
+  - "new"
+  - "the"
+  - "and"
+  - "for"
+  - "with"
+  - "your"
+  - "my"
+  - "a"
+  - "an"
+  - "to"
+  - "of"
+  - "in"
+  - "on"
+  - "it"
+  - "is"
+  # French equivalents: LaunchPilot is used on localised listings too.
+  - "le"
+  - "la"
+  - "les"
+  - "un"
+  - "une"
+  - "des"
+  - "du"
+  - "de"
+  - "et"
+  - "pour"
+  - "avec"
+  - "votre"
+  - "mon"
+  - "ma"
+  - "mes"
+
+# Category names are already indexed from the app's chosen category, so
+# repeating them in the keyword field is spend for nothing.
+category_words:
+  - games
+  - game
+  - productivity
+  - utilities
+  - lifestyle
+  - health
+  - fitness
+  - education
+  - finance
+  - photo
+  - video
+  - travel
+  - music
+  - business
+  - medical
+  - weather
+  - sports
+  - news
+  - books
+  - shopping
+
+# Naming another company's app or trademark in metadata risks rejection under
+# App Review Guideline 5.2.1 as well as a trademark complaint. This list is a
+# starting set of the most-commonly-attempted ones; it is not exhaustive, and
+# the check is a warning rather than a verdict.
+trademark_words:
+  - instagram
+  - facebook
+  - whatsapp
+  - tiktok
+  - snapchat
+  - youtube
+  - spotify
+  - netflix
+  - twitter
+  - google
+  - iphone
+  - ipad
+  - apple
+  - android
+  - notion
+  - duolingo
+  - strava
+  - headspace
+  - calm
+
+# Severity assigned to each detectable problem. Codes are stable and shared with
+# the browser implementation.
+findings:
+  ASO_KEYWORD_FIELD_TOO_LONG: error
+  ASO_KEYWORD_SPACES: error
+  ASO_DUPLICATE_IN_FIELD: error
+  ASO_DUPLICATE_OF_TITLE: error
+  ASO_NOISE_WORD: warning
+  ASO_CATEGORY_WORD: warning
+  ASO_TRADEMARK_RISK: warning
+  ASO_PLURAL_PAIR: warning
+  ASO_UNCOVERED_TARGET: warning
+  ASO_WASTED_BUDGET: info

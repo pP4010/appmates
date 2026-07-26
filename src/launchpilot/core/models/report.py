@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, Field, computed_field
 
@@ -48,6 +49,10 @@ class Finding(BaseModel):
     store: Store | None = None
     fix_hint: str | None = None
     fixable: bool = False
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    """Structured detail a consumer may act on, e.g. the character cost of a
+    wasted keyword. Additive and optional: rules that have nothing to attach
+    leave it empty rather than inventing keys."""
 
     def __str__(self) -> str:
         return f"[{self.code}] {self.message}"

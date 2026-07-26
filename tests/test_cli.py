@@ -500,3 +500,84 @@ def test_niche_leaders_flag_lists_competitors(offline_catalogue: None) -> None:
     result = run("niche", "habit tracker", "--leaders")
     assert result.exit_code == int(ExitCode.OK)
     assert "App 0" in plain(result)
+
+
+# --- keywords ------------------------------------------------------------
+
+
+def test_keywords_requires_something_to_work_with() -> None:
+    assert run("keywords").exit_code == int(ExitCode.USAGE)
+
+
+def test_keywords_audits_a_field_and_exits_one_on_errors() -> None:
+    result = run("keywords", "--title", "Habit Tracker", "--field", "habit, streak")
+    assert result.exit_code == int(ExitCode.FINDINGS)
+
+
+def test_keywords_clean_field_exits_zero() -> None:
+    result = run("keywords", "--title", "Kaizen", "--field", "habit,streak")
+    assert result.exit_code == int(ExitCode.OK)
+
+
+def test_keywords_json_reports_waste_and_coverage() -> None:
+    result = run(
+        "keywords",
+        "--title",
+        "Kaizen: Habit Tracker",
+        "--field",
+        "habit, habits, app, free",
+        "-t",
+        "habit tracker",
+        "-t",
+        "gratitude journal",
+        "--json",
+    )
+    data = payload(result)
+    assert data["length"] == len("habit, habits, app, free")
+    assert data["wasted_characters"] > 0
+    assert data["uncovered_targets"] == ["gratitude journal"]
+    assert {c["code"] for c in data["findings"]}
+
+
+def test_keywords_build_prints_only_the_field() -> None:
+    result = run(
+        "keywords", "--title", "Kaizen", "-t", "habit tracker", "-t", "morning streak", "--build"
+    )
+    assert result.exit_code == int(ExitCode.OK)
+    field = plain(result).strip()
+    assert " " not in field
+    assert set(field.split(",")) == {"habit", "tracker", "morning", "streak"}
+
+
+def test_keywords_builds_from_targets_when_no_field_is_given() -> None:
+    data = payload(run("keywords", "--title", "Kaizen", "-t", "habit tracker", "--json"))
+    assert data["field_value"]
+    assert data["uncovered_targets"] == []
+
+
+def test_keywords_reads_a_listing_file(tmp_path: Path) -> None:
+    listing = tmp_path / "listing.toml"
+    listing.write_text(
+        "[[locales]]\n"
+        'locale = "en-US"\n'
+        'title = "Kaizen: Habit Tracker"\n'
+        'subtitle = "Build daily routines"\n'
+        'keywords = "habit, habits, app"\n',
+        encoding="utf-8",
+    )
+    data = payload(run("keywords", str(listing), "--json"))
+    assert data["title"] == "Kaizen: Habit Tracker"
+    assert data["wasted_characters"] > 0
+
+
+def test_keywords_rejects_an_unknown_locale(tmp_path: Path) -> None:
+    listing = tmp_path / "listing.toml"
+    listing.write_text(
+        '[[locales]]\nlocale = "en-US"\ntitle = "X"\nkeywords = "a"\n', encoding="utf-8"
+    )
+    result = run("keywords", str(listing), "--locale", "fr-FR")
+    assert result.exit_code == int(ExitCode.USAGE)
+
+
+def test_keywords_rejects_a_missing_file(tmp_path: Path) -> None:
+    assert run("keywords", str(tmp_path / "nope.toml")).exit_code == int(ExitCode.USAGE)

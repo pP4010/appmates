@@ -182,3 +182,26 @@ def all_specs() -> list[StoreSpec]:
 def load_market_spec() -> MarketSpec:
     """Load and cache the niche-scoring methodology."""
     return MarketSpec(**_load_yaml("market.yaml"))
+
+
+class KeywordFieldSpec(BaseModel):
+    max_length: int = 100
+    separator: str = ","
+
+
+class AsoSpec(BaseModel):
+    """Keyword-field rules and the word lists they check against."""
+
+    source_url: str
+    last_verified: dt.date
+    field: KeywordFieldSpec = Field(default_factory=KeywordFieldSpec)
+    noise_words: set[str] = Field(default_factory=set)
+    category_words: set[str] = Field(default_factory=set)
+    trademark_words: set[str] = Field(default_factory=set)
+    findings: dict[str, str] = Field(default_factory=dict)
+
+
+@functools.cache
+def load_aso_spec() -> AsoSpec:
+    """Load and cache the keyword-field rules."""
+    return AsoSpec(**_load_yaml("aso.yaml"))

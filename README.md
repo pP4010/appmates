@@ -49,6 +49,8 @@ Three things break releases, and all three are mechanically checkable:
 | **Screenshots that violate a store rule** | Validates format, alpha channel, colour space, exact resolution, aspect ratio, file weight — and repairs all of them |
 | **Listing text over a character limit** | Checks title/subtitle/description/keywords against both stores' limits, and warns *before* translation pushes you over |
 | **Google Play's 12-testers-for-14-days gate** | Tracks the streak day by day, including the dips that silently reset your clock |
+| **A keyword field quietly wasting a third of its budget** | Audits the 100 characters Apple never shows anyone, and rebuilds them |
+| **Building an app into a market that cannot be won** | Scores a niche from the public catalogue before you write any code |
 
 ## Install
 
@@ -191,6 +193,62 @@ reasoning written next to each number. Edit them and re-run.
 > with real traction separates the same keywords by 1 to 149. The result count is
 > still reported as context, but it is not scored.
 
+### `keywords`
+
+```bash
+launchpilot keywords --title "Kaizen: Habit Tracker" --subtitle "Build daily routines" \
+    --field "habit, habits, habit tracker, daily, app, free, productivity, streak" \
+    -t "habit tracker" -t "gratitude journal"
+
+launchpilot keywords listing.toml --json
+launchpilot keywords --title "Kaizen" -t "habit tracker" -t "morning streak" --build
+```
+
+```
+  Budget  ███████████████████████░░░░░░░  77/100  · 58 wasted
+
+  ✗ ASO_KEYWORD_SPACES        -9c   9 space(s) in the keyword field.
+  ✗ ASO_DUPLICATE_OF_TITLE    -8c   'tracker' is already in the title.
+  ! ASO_CATEGORY_WORD        -13c   'productivity' is already indexed from your category.
+  ! ASO_PLURAL_PAIR           -7c   'habits' and 'habit' differ only by pluralisation.
+
+  Target phrase        Reachable   Indexed from
+  habit tracker        yes         title (habit, tracker)
+  gratitude journal    no          missing: gratitude, journal
+
+  suggested  routine,morning,streak,gratitude,journal,habits
+  47/100 characters, 30 reclaimed
+```
+
+The 100-character keyword field is the most technical artefact in a listing and
+the only one **never shown to a user** — so nothing about it is self-correcting.
+A listing with a third of its budget wasted looks exactly like a perfect one.
+
+Every rule follows from one documented Apple behaviour: the app name, subtitle
+and keyword field are indexed as a **single pool of words**, and matches are
+formed by combining them. Three consequences do most of the work:
+
+- **A phrase is reachable when every one of its *words* is in the pool.** The
+  phrase itself never has to appear. `habit,tracker` ranks for "habit tracker".
+- **A word already in your title is already indexed.** Repeating it costs
+  characters and buys no reach.
+- **Every space is overhead**, since Apple does the combining. `habit tracker`
+  and `habit,tracker` index identically; the second is a character shorter.
+
+`--build` packs the minimum set of words covering your target phrases into the
+budget, dropping anything already in the title, and emits a bare field for
+piping. Target order is treated as priority, so the phrases you listed first
+survive truncation.
+
+> **On the waste figure.** Costs are deduplicated per word. One word commonly
+> trips several rules at once — `habit` can be both a duplicate within the field
+> *and* already present in the title — but deleting it reclaims its characters
+> once, not once per rule. Summing the findings would inflate the total by
+> exactly the double-counting this tool exists to call out.
+
+The word lists and severities live in
+[`core/specs/aso.yaml`](src/launchpilot/core/specs/aso.yaml).
+
 ### `validate-metadata`
 
 ```bash
@@ -308,6 +366,7 @@ binary fixtures cannot be diffed in review, and they hide the very properties
 - [x] JSON output and CI exit codes
 - [x] Zero-backend web checker with browser-side repair
 - [x] `niche` — pre-build market assessment from the public catalogue
+- [x] `keywords` — 100-character field audit, coverage map and builder
 - [ ] `launchpilot init` — scaffold a `launchpilot.toml` per project
 - [ ] Play graphic assets (icon, feature graphic) as first-class checks
 - [ ] Device-frame screenshot generation
