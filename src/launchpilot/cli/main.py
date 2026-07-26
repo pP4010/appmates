@@ -38,7 +38,10 @@ app.command("specs")(specs)
 
 def _version_callback(value: bool) -> None:
     if value:
-        console.print(f"launchpilot [bold]{__version__}[/bold]")
+        # highlight=False matters: rich's number highlighter would otherwise
+        # split "0.1.0" into separately-styled runs, so `--version | grep 0.1.0`
+        # fails whenever colour is enabled.
+        console.print(f"launchpilot [bold]{__version__}[/bold]", highlight=False)
         raise typer.Exit
 
 

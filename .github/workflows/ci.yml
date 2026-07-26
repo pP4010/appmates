@@ -49,6 +49,13 @@ jobs:
           - python-version: "3.12"
             os: macos-latest
 
+    # Set for the whole job rather than passed to `uv sync` alone: a --python
+    # flag on sync does not carry over to `uv run`, which then falls back to the
+    # .python-version file, resolves a different interpreter, and cannot find
+    # pytest. UV_PYTHON keeps every uv invocation on the same interpreter.
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -61,7 +68,10 @@ jobs:
         run: uv python install ${{ matrix.python-version }}
 
       - name: Install
-        run: uv sync --extra dev --python ${{ matrix.python-version }}
+        run: uv sync --extra dev
+
+      - name: Verify the interpreter matches the matrix
+        run: uv run python -c "import sys; assert sys.version.startswith('${{ matrix.python-version }}'), sys.version"
 
       - name: Run tests
         run: uv run pytest

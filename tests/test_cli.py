@@ -9,6 +9,7 @@ reasons. Exit codes and JSON are the actual contract with CI users.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -22,9 +23,21 @@ from tests.conftest import APPLE_6_9, APPLE_LEGACY_6_5, PLAY_FHD, MakeImage
 
 runner = CliRunner()
 
+_ANSI = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
+
 
 def run(*args: str) -> Any:
     return runner.invoke(app, list(args))
+
+
+def plain(result: Any) -> str:
+    """stdout with styling removed.
+
+    CI sets ``FORCE_COLOR``, so rich emits escape sequences there but not on a
+    plain local terminal. Stripping them keeps these assertions from depending
+    on whether colour happens to be enabled.
+    """
+    return _ANSI.sub("", result.stdout)
 
 
 def payload(result: Any) -> Any:
@@ -41,7 +54,13 @@ def test_no_args_shows_help() -> None:
 def test_version_flag() -> None:
     result = run("--version")
     assert result.exit_code == int(ExitCode.OK)
-    assert __version__ in result.stdout
+    assert __version__ in plain(result)
+
+
+def test_version_output_is_greppable() -> None:
+    """Regression: rich's number highlighter used to split "0.1.0" mid-string."""
+    result = run("--version")
+    assert f"launchpilot {__version__}" in plain(result)
 
 
 # --- validate-screenshots ------------------------------------------------
@@ -351,7 +370,7 @@ def test_validate_metadata_empty_locales_exits_two(tmp_path: Path) -> None:
 def test_specs_lists_both_catalogues() -> None:
     result = run("specs")
     assert result.exit_code == int(ExitCode.OK)
-    assert "1320×2868" in result.stdout
+    assert "1320×2868" in plain(result)
 
 
 def test_specs_json_is_structured() -> None:
