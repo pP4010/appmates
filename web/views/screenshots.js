@@ -4,7 +4,7 @@ import { readFacts, UnreadableImageError } from '../lib/image-facts.js';
 import { detectTargetStore, statusOf, validateFacts, validateSet } from '../lib/validator.js';
 import { applyFix, planFix } from '../lib/fixer.js';
 import { createZip, safeName, uniqueNames } from '../lib/zip.js';
-import { el, escapeHtml, findingHtml } from './shared.js';
+import { appIcon, el, empty, escapeHtml, findingHtml, findingsPanel, pill } from './shared.js';
 
 let entries = [];
 let activeStore = 'apple';
@@ -85,10 +85,11 @@ function render() {
   el('clearBtn').classList.toggle('hidden', entries.length === 0);
 
   if (!entries.length) {
-    el('summary').classList.add('hidden');
+    el('summary').innerHTML = '';
     el('setFindings').innerHTML = '';
     el('results').innerHTML = '';
-    el('fixPanel').classList.add('hidden');
+    el('fixBtn').classList.add('hidden');
+    el('fixNote').classList.add('hidden');
     return;
   }
 
@@ -125,17 +126,12 @@ function render() {
   );
 
   renderSummary(assets, setFindings, choice === 'auto');
-  el('setFindings').innerHTML = setFindings.length
-    ? `<h2>Across the whole set</h2><div class="card"><div class="findings">${setFindings
-        .map(findingHtml)
-        .join('')}</div></div>`
-    : '';
+  el('setFindings').innerHTML = findingsPanel(setFindings, 'Across the whole set');
   renderAssets(assets);
 
-  el('fixPanel').classList.toggle(
-    'hidden',
-    !assets.some((a) => a.facts && a.findings.some((f) => f.fixable)),
-  );
+  const fixable = assets.some((a) => a.facts && a.findings.some((f) => f.fixable));
+  el('fixBtn').classList.toggle('hidden', !fixable);
+  el('fixNote').classList.toggle('hidden', !fixable);
 }
 
 function renderSummary(assets, setFindings, wasAuto) {
@@ -151,39 +147,40 @@ function renderSummary(assets, setFindings, wasAuto) {
         ? 'Uploadable, with warnings'
         : 'Will be rejected';
 
-  const summary = el('summary');
-  summary.className = `summary ${status}`;
-  summary.classList.remove('hidden');
-  summary.innerHTML = `
-    <span class="verdict">${verdict}</span>
-    <span class="muted">
-      · ${assets.length} file${assets.length === 1 ? '' : 's'} checked against
-      <strong>${storeName}</strong>${wasAuto ? ' (auto-detected)' : ''}
-      · ${errors} error${errors === 1 ? '' : 's'} · ${warnings} warning${warnings === 1 ? '' : 's'}
-    </span>`;
+  el('summary').innerHTML = `
+    <div class="summary ${status}">
+      <span class="verdict">${verdict}</span>
+      <span class="muted">${assets.length} file${assets.length === 1 ? '' : 's'} ·
+        <strong>${storeName}</strong>${wasAuto ? ' (auto-detected)' : ''}</span>
+      <span style="margin-left:auto">
+        ${errors ? pill(`${errors} error${errors === 1 ? '' : 's'}`, 'bad') : ''}
+        ${warnings ? pill(`${warnings} warning${warnings === 1 ? '' : 's'}`, 'warn') : ''}
+        ${!errors && !warnings ? pill('clean', 'ok') : ''}
+      </span>
+    </div>`;
 }
 
+const STATUS_TONE = { pass: 'ok', warn: 'warn', fail: 'bad' };
+
 function renderAssets(assets) {
-  el('results').innerHTML =
-    '<h2>Files</h2>' +
-    assets
-      .map((a) => {
-        const f = a.facts;
-        const meta = f
-          ? `${f.width}×${f.height} · ${f.mode}/${f.imageFormat} · ${(f.sizeBytes / 1048576).toFixed(1)} MB` +
-            (a.deviceClass ? ` · ${a.deviceClass}` : '')
-          : 'unreadable';
-        return `
-          <div class="card">
-            <div class="card-head">
-              <span class="badge ${a.status}">${a.status}</span>
-              <span class="name">${escapeHtml(a.file.name)}</span>
-              <span class="meta mono">${escapeHtml(meta)}</span>
-            </div>
-            ${a.findings.length ? `<div class="findings">${a.findings.map(findingHtml).join('')}</div>` : ''}
-          </div>`;
-      })
-      .join('');
+  el('results').innerHTML = assets
+    .map((a) => {
+      const f = a.facts;
+      const meta = f
+        ? `${f.width}×${f.height} · ${f.mode}/${f.imageFormat} · ${(f.sizeBytes / 1048576).toFixed(1)} MB` +
+          (a.deviceClass ? ` · ${a.deviceClass}` : '')
+        : 'unreadable';
+      return `
+        <div class="panel">
+          <div class="panel-head">
+            ${pill(a.status, STATUS_TONE[a.status])}
+            <span>${escapeHtml(a.file.name)}</span>
+            <span class="sub mono" style="margin-left:auto">${escapeHtml(meta)}</span>
+          </div>
+          ${a.findings.length ? `<div class="findings">${a.findings.map(findingHtml).join('')}</div>` : ''}
+        </div>`;
+    })
+    .join('');
 }
 
 async function runFix() {

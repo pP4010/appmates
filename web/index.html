@@ -9,341 +9,357 @@
 </head>
 <body>
 
-<header class="masthead">
-  <div class="masthead-inner">
+<div class="app">
+
+  <!-- ============================ sidebar ============================ -->
+  <aside class="sidebar">
     <div class="brand">
-      <h1>LaunchPilot</h1>
-      <span class="tagline">Catch App Store and Play rejections before the stores do</span>
+      <span class="brand-mark" aria-hidden="true">◈</span>
+      <span>
+        <span class="brand-name">LaunchPilot</span><br>
+        <span class="brand-sub">Pre-flight checks</span>
+      </span>
     </div>
-    <span class="privacy"><span aria-hidden="true">🔒</span> Nothing uploaded · no account · no server</span>
-  </div>
-  <nav class="nav" id="nav">
-    <a href="#screenshots">Screenshots</a>
-    <a href="#keywords">Keyword field</a>
-    <a href="#metadata">Listing text</a>
-    <a href="#niche">Niche</a>
-    <a href="#markets">Markets</a>
-    <a href="#competitors">Competitors</a>
-    <a href="#rank">Rank</a>
-    <a href="#testers">Play testers</a>
-    <a href="#specs">Specs</a>
-  </nav>
-</header>
 
-<main>
+    <!-- Grouped by when in the workflow you reach for them, not alphabetically:
+         the ordering is the argument that this is a pre-launch tool. -->
+    <div class="nav-section">Prepare</div>
+    <a class="nav-item" href="#screenshots"><span class="nav-icon">▢</span> Screenshots</a>
+    <a class="nav-item" href="#keywords"><span class="nav-icon">⌗</span> Keyword field</a>
+    <a class="nav-item" href="#metadata"><span class="nav-icon">¶</span> Listing text</a>
 
-<!-- ================= screenshots ================= -->
-<section class="view" id="view-screenshots">
-  <p class="lead">
-    Every rule here reads the file's <strong>header</strong>, not its pixels, so a few
-    hundred bytes answer locally what a multi-megabyte upload would have answered.
-    That is also more correct: a fully opaque RGBA PNG is still rejected by Apple,
-    so sampling pixels for transparency would give the wrong answer.
-  </p>
+    <div class="nav-section">Research</div>
+    <a class="nav-item" href="#niche"><span class="nav-icon">◎</span> Niche</a>
+    <a class="nav-item" href="#markets"><span class="nav-icon">⊕</span> Markets</a>
+    <a class="nav-item" href="#competitors"><span class="nav-icon">⧉</span> Competitors</a>
 
-  <div id="drop" tabindex="0" role="button" aria-label="Choose screenshots to check">
-    <strong>Drop your screenshots here</strong>
-    <span>or click to choose files · PNG and JPEG · nothing leaves your machine</span>
-    <input type="file" id="fileInput" accept="image/png,image/jpeg" multiple>
-  </div>
+    <div class="nav-section">Track</div>
+    <a class="nav-item" href="#rank"><span class="nav-icon">↗</span> Rank</a>
+    <a class="nav-item" href="#testers"><span class="nav-icon">◷</span> Play testers</a>
 
-  <div class="controls">
-    <div class="field">
-      <label for="storeSelect">Store</label>
-      <select id="storeSelect">
-        <option value="auto" selected>Auto-detect</option>
-        <option value="apple">App Store</option>
-        <option value="google">Google Play</option>
-      </select>
+    <div class="nav-section">Reference</div>
+    <a class="nav-item" href="#specs"><span class="nav-icon">☰</span> Specs</a>
+
+    <div class="sidebar-foot">
+      <div class="privacy-card">
+        <span aria-hidden="true">🔒</span>
+        <span>Nothing uploaded. No account. No server.</span>
+      </div>
     </div>
-    <div class="field">
-      <label for="targetSelect">Fix to</label>
-      <select id="targetSelect"><option value="">Nearest valid size</option></select>
-    </div>
-    <div class="field">
-      <label for="bgInput">Background</label>
-      <input type="color" id="bgInput" value="#ffffff" style="width:2.6rem;height:2.1rem;padding:1px;border:1px solid var(--border);border-radius:7px;background:var(--surface)">
-    </div>
-    <button id="clearBtn" class="hidden">Clear</button>
-  </div>
+  </aside>
 
-  <div id="summary" class="summary hidden"></div>
-  <div id="setFindings"></div>
-  <div id="results"></div>
+  <!-- ============================ main ============================ -->
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <h1 id="viewTitle">Screenshots</h1>
+        <div class="sub" id="viewSub">Validate and repair store assets</div>
+      </div>
+      <div class="topbar-actions" id="topbarActions"></div>
+    </header>
 
-  <div id="fixPanel" class="hidden">
-    <h2>Repair</h2>
-    <button id="fixBtn" class="primary">Fix and download</button>
-    <p class="note">
-      Flattens transparency onto your chosen background, converts to sRGB and
-      letterboxes to the nearest valid resolution — never stretching, since a
-      distorted UI screenshot reads as broken to reviewers.
-      <br><br>
-      Output is JPEG, deliberately: a canvas-exported PNG still carries a 32-bit
-      alpha channel even when every pixel is opaque, so it would fail the very
-      rule you came here to fix. JPEG cannot represent alpha at all, and both
-      stores accept it.
-    </p>
-  </div>
-</section>
+    <div class="content">
 
-<!-- ================= keywords ================= -->
-<section class="view" id="view-keywords">
-  <p class="lead">
-    Apple indexes your app name, subtitle and the 100-character keyword field as
-    one pool of <strong>words</strong>, then combines them. So a phrase is reachable
-    when each of its words is somewhere in the pool — the phrase itself never has
-    to appear — a word already in your title is already indexed, and every space
-    is overhead. The field is never shown to a user, so none of this is
-    self-correcting.
-  </p>
+      <!-- ==================== screenshots ==================== -->
+      <section class="view" id="view-screenshots">
+        <p class="lead">
+          Every rule here reads the file's <strong>header</strong>, not its pixels, so a few
+          hundred bytes answer locally what a multi-megabyte upload would have answered.
+          That is also more correct: a fully opaque RGBA PNG is still rejected by Apple,
+          so sampling pixels for transparency would give the wrong answer.
+        </p>
 
-  <div class="form-grid">
-    <label for="kwTitle">App name</label>
-    <input id="kwTitle" type="text" maxlength="30" placeholder="Kaizen: Habit Tracker">
-    <label for="kwSubtitle">Subtitle</label>
-    <input id="kwSubtitle" type="text" maxlength="30" placeholder="Build daily routines">
-    <label for="kwField">Keyword field</label>
-    <input id="kwField" type="text" placeholder="habit,streak,focus,routine">
-    <label for="kwTargets">Phrases to rank for</label>
-    <textarea id="kwTargets" rows="4" placeholder="habit tracker&#10;morning streak&#10;gratitude journal"></textarea>
-  </div>
+        <div id="drop" tabindex="0" role="button" aria-label="Choose screenshots to check">
+          <span class="drop-icon" aria-hidden="true">⬓</span>
+          <strong>Drop your screenshots here</strong>
+          <span class="hint">or click to choose files · PNG and JPEG · nothing leaves your machine</span>
+          <input type="file" id="fileInput" accept="image/png,image/jpeg" multiple>
+        </div>
 
-  <div id="kwBudget"></div>
-  <div id="kwFindings"></div>
-  <div id="kwCoverage"></div>
-  <div id="kwSuggestion"></div>
-</section>
+        <div class="toolbar" style="margin-top:1.25rem">
+          <div class="field">
+            <label for="storeSelect">Store</label>
+            <select id="storeSelect">
+              <option value="auto" selected>Auto-detect</option>
+              <option value="apple">App Store</option>
+              <option value="google">Google Play</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="targetSelect">Repair to</label>
+            <select id="targetSelect"><option value="">Nearest valid size</option></select>
+          </div>
+          <div class="field">
+            <label for="bgInput">Background</label>
+            <input type="color" id="bgInput" value="#ffffff">
+          </div>
+          <button id="fixBtn" class="primary hidden">Fix and download</button>
+          <button id="clearBtn" class="hidden">Clear</button>
+        </div>
 
-<!-- ================= metadata ================= -->
-<section class="view" id="view-metadata">
-  <p class="lead">
-    Text overruns are the second most common cause of a blocked submission after
-    malformed screenshots, and the limits <strong>differ per store</strong> — the same
-    listing can pass Apple and fail Play. Fields above 90% of their ceiling are
-    flagged too: translations commonly run 15–30% longer than English.
-  </p>
+        <div id="summary"></div>
+        <div id="setFindings"></div>
+        <div id="results"></div>
+        <p class="note hidden" id="fixNote">
+          Output is JPEG, deliberately: a canvas-exported PNG still carries a 32-bit alpha
+          channel even when every pixel is opaque, so it would fail the very rule you came
+          here to fix. JPEG cannot represent alpha at all, and both stores accept it.
+          Resizing letterboxes rather than stretches — a distorted UI screenshot reads as
+          broken to reviewers.
+        </p>
+      </section>
 
-  <div class="form-grid">
-    <label for="mdTitle">App name</label>
-    <input id="mdTitle" type="text" placeholder="Kaizen: Habit Tracker">
-    <label for="mdSubtitle">Subtitle <span class="muted">(Apple)</span></label>
-    <input id="mdSubtitle" type="text" placeholder="Build daily routines">
-    <label for="mdShort">Short description <span class="muted">(Play)</span></label>
-    <input id="mdShort" type="text" placeholder="Track habits and build streaks.">
-    <label for="mdPromo">Promotional text <span class="muted">(Apple)</span></label>
-    <textarea id="mdPromo" rows="2"></textarea>
-    <label for="mdKeywords">Keyword field <span class="muted">(Apple)</span></label>
-    <input id="mdKeywords" type="text" placeholder="habit,streak,focus">
-    <label for="mdDescription">Full description</label>
-    <textarea id="mdDescription" rows="6"></textarea>
-  </div>
+      <!-- ==================== keywords ==================== -->
+      <section class="view" id="view-keywords">
+        <p class="lead">
+          Apple indexes your app name, subtitle and the 100-character keyword field as one
+          pool of <strong>words</strong>, then combines them. A phrase is reachable when each
+          of its words is somewhere in the pool — the phrase itself never has to appear — a
+          word already in your title is already indexed, and every space is overhead. The
+          field is never shown to a user, so none of this is self-correcting.
+        </p>
 
-  <div id="mdSummary"></div>
-  <div id="mdFields"></div>
-  <div id="mdFindings"></div>
-</section>
+        <div class="form-grid">
+          <label for="kwTitle">App name</label>
+          <input id="kwTitle" type="text" maxlength="30" placeholder="Kaizen: Habit Tracker">
+          <label for="kwSubtitle">Subtitle</label>
+          <input id="kwSubtitle" type="text" maxlength="30" placeholder="Build daily routines">
+          <label for="kwField">Keyword field</label>
+          <input id="kwField" type="text" placeholder="habit,streak,focus,routine">
+          <label for="kwTargets">Phrases to rank for</label>
+          <textarea id="kwTargets" rows="4" placeholder="habit tracker&#10;morning streak&#10;gratitude journal"></textarea>
+        </div>
 
-<!-- ================= niche ================= -->
-<section class="view" id="view-niche">
-  <p class="lead">
-    Answers what rank trackers structurally cannot: <strong>should I build this at
-    all?</strong> They assume a live app — you cannot track the ranking of something
-    that does not exist. This runs before the first line of code, on the public
-    catalogue, with no account and no API key.
-  </p>
-  <div class="callout">
-    There is deliberately <strong>no search-volume number</strong>. Apple has never
-    published per-keyword search counts, and the Search Ads popularity index other
-    tools relabel as volume is an undocumented relative score whose above-floor US
-    keyword population fell 77% in four days in September 2025. Every number here
-    was counted.
-  </div>
+        <div id="kwBudget"></div>
+        <div id="kwFindings"></div>
+        <div id="kwCoverage"></div>
+        <div id="kwSuggestion"></div>
+      </section>
 
-  <div class="controls">
-    <div class="field" style="flex:1;min-width:16rem">
-      <label for="nicheKeywords">Search terms, one per line</label>
-      <textarea id="nicheKeywords" rows="3" placeholder="habit tracker&#10;morning routine"></textarea>
-    </div>
-    <div class="field">
-      <label for="nicheCountry">Storefront</label>
-      <select id="nicheCountry"></select>
-    </div>
-    <button id="nicheRun" class="primary">Analyse</button>
-  </div>
+      <!-- ==================== metadata ==================== -->
+      <section class="view" id="view-metadata">
+        <p class="lead">
+          Text overruns are the second most common cause of a blocked submission after
+          malformed screenshots, and the limits <strong>differ per store</strong> — the same
+          listing can pass Apple and fail Play. Fields above 90% of their ceiling are flagged
+          too: translations commonly run 15–30% longer than English.
+        </p>
 
-  <div id="nicheStatus" class="status"></div>
-  <div id="nicheResults"></div>
-</section>
+        <div class="form-grid">
+          <label for="mdTitle">App name</label>
+          <input id="mdTitle" type="text" placeholder="Kaizen: Habit Tracker">
+          <label for="mdSubtitle">Subtitle <span class="muted">Apple</span></label>
+          <input id="mdSubtitle" type="text" placeholder="Build daily routines">
+          <label for="mdShort">Short description <span class="muted">Play</span></label>
+          <input id="mdShort" type="text" placeholder="Track habits and build streaks.">
+          <label for="mdPromo">Promotional text <span class="muted">Apple</span></label>
+          <textarea id="mdPromo" rows="2"></textarea>
+          <label for="mdKeywords">Keyword field <span class="muted">Apple</span></label>
+          <input id="mdKeywords" type="text" placeholder="habit,streak,focus">
+          <label for="mdDescription">Full description</label>
+          <textarea id="mdDescription" rows="5"></textarea>
+        </div>
 
-<!-- ================= markets ================= -->
-<section class="view" id="view-markets">
-  <p class="lead">
-    Every ASO tool asks <em>how hard is this keyword?</em> as though there were one
-    answer. There are 175 storefronts and the answer differs in each — difficulty
-    tracks the <strong>language a term is searched in</strong> more than the size of the
-    country. That makes it a launch decision: which locale to write first, which
-    language to localise screenshots into.
-  </p>
+        <div id="mdSummary"></div>
+        <div id="mdFields"></div>
+        <div id="mdFindings"></div>
+      </section>
 
-  <div class="controls">
-    <div class="field" style="flex:1;min-width:14rem">
-      <label for="marketsKeyword">Search term</label>
-      <input id="marketsKeyword" type="text" placeholder="habit tracker">
-    </div>
-    <div class="field" style="flex:1;min-width:14rem">
-      <label for="marketsCountries">Storefronts <span class="muted">(comma-separated)</span></label>
-      <input id="marketsCountries" type="text" placeholder="leave blank for the 14 majors">
-    </div>
-    <button id="marketsRun" class="primary">Scan</button>
-  </div>
-  <p class="note">
-    Deliberately slow: one request per storefront against a free endpoint that
-    rate-limits, spaced politely apart. A 14-country sweep takes about 20 seconds
-    the first time, then comes from cache.
-  </p>
+      <!-- ==================== niche ==================== -->
+      <section class="view" id="view-niche">
+        <p class="lead">
+          Answers what rank trackers structurally cannot: <strong>should I build this at
+          all?</strong> They assume a live app — you cannot track the ranking of something
+          that does not exist. This runs before the first line of code.
+        </p>
+        <div class="callout">
+          There is deliberately <strong>no search-volume number</strong>. Apple has never
+          published per-keyword search counts, and the Search Ads popularity index other
+          tools relabel as volume is an undocumented relative score whose above-floor US
+          keyword population fell 77% in four days in September 2025. Every number here was
+          counted.
+        </div>
 
-  <div id="marketsStatus" class="status"></div>
-  <div id="marketsResults"></div>
-</section>
+        <div class="toolbar">
+          <div class="field" style="flex:1;min-width:18rem">
+            <label for="nicheKeywords">Search terms, one per line</label>
+            <textarea id="nicheKeywords" rows="3" placeholder="habit tracker&#10;bouldering training log"></textarea>
+          </div>
+          <div class="field">
+            <label for="nicheCountry">Storefront</label>
+            <select id="nicheCountry"></select>
+          </div>
+          <button id="nicheRun" class="primary">Analyse</button>
+        </div>
 
-<!-- ================= competitors ================= -->
-<section class="view" id="view-competitors">
-  <p class="lead">
-    Who holds a term, what the field does with its screenshots, and the vocabulary
-    everyone agrees on. Dimensions are read from the screenshot URLs themselves —
-    the catalogue encodes the served size — so describing a whole gallery costs no
-    bandwidth.
-  </p>
-  <div class="callout">
-    <strong>Screenshot availability is partial.</strong> Across a 55-app sample the
-    catalogue exposed iPhone screenshots for 47% of apps. Apps it withheld are
-    marked <code>n/a</code> rather than shown as having none, and they are excluded
-    from the medians instead of counted as zeros. Only names and descriptions are
-    public — subtitles and keyword fields are not — so the vocabulary below is a
-    floor on what rivals target, not the whole of it.
-  </div>
+        <div id="nicheStatus" class="status"></div>
+        <div id="nicheResults"></div>
+      </section>
 
-  <div class="controls">
-    <div class="field" style="flex:1;min-width:14rem">
-      <label for="compKeyword">Search term</label>
-      <input id="compKeyword" type="text" placeholder="habit tracker">
-    </div>
-    <div class="field">
-      <label for="compCountry">Storefront</label>
-      <select id="compCountry"></select>
-    </div>
-    <div class="field">
-      <label for="compTop">Show</label>
-      <input id="compTop" type="number" min="3" max="30" value="10" style="width:5rem">
-    </div>
-    <div class="field" style="flex:1;min-width:12rem">
-      <label for="compMine">Your title <span class="muted">(optional)</span></label>
-      <input id="compMine" type="text" placeholder="Kaizen: Habit Tracker">
-    </div>
-    <button id="compRun" class="primary">Analyse</button>
-  </div>
+      <!-- ==================== markets ==================== -->
+      <section class="view" id="view-markets">
+        <p class="lead">
+          Every ASO tool asks <em>how hard is this keyword?</em> as though there were one
+          answer. There are 175 storefronts and the answer differs in each — difficulty
+          tracks the <strong>language a term is searched in</strong> more than the size of
+          the country. That makes it a launch decision: which locale to write first, which
+          language to localise screenshots into.
+        </p>
 
-  <div id="compStatus" class="status"></div>
-  <div id="compResults"></div>
-</section>
+        <div class="toolbar">
+          <div class="field" style="flex:1;min-width:15rem">
+            <label for="marketsKeyword">Search term</label>
+            <input id="marketsKeyword" type="text" placeholder="habit tracker">
+          </div>
+          <div class="field" style="flex:1;min-width:15rem">
+            <label for="marketsCountries">Storefronts, comma-separated</label>
+            <input id="marketsCountries" type="text" placeholder="blank for the 14 majors">
+          </div>
+          <button id="marketsRun" class="primary">Scan</button>
+        </div>
+        <p class="note">
+          Deliberately slow: one request per storefront against a free endpoint that
+          rate-limits, spaced politely apart. Cached afterwards.
+        </p>
 
-<!-- ================= rank ================= -->
-<section class="view" id="view-rank">
-  <p class="lead">
-    Where your app sits in the public catalogue's results for each term.
-  </p>
-  <div class="callout">
-    <strong>This is not the App Store's ranking.</strong> The public endpoint returns
-    results in its own relevance order, and that is what this reports — a real,
-    repeatable signal that moves when your metadata moves. The App Store app serves
-    search through a different path, with personalisation and paid placements, so
-    the two can disagree. History is kept in this browser only.
-  </div>
+        <div id="marketsStatus" class="status"></div>
+        <div id="marketsResults"></div>
+      </section>
 
-  <div class="controls">
-    <div class="field" style="min-width:14rem">
-      <label for="rankApp">App Store id or bundle id</label>
-      <input id="rankApp" type="text" placeholder="1438388363 or com.example.app">
-    </div>
-    <div class="field" style="flex:1;min-width:14rem">
-      <label for="rankKeywords">Search terms, one per line</label>
-      <textarea id="rankKeywords" rows="3" placeholder="habit tracker&#10;daily habits"></textarea>
-    </div>
-    <div class="field">
-      <label for="rankCountry">Storefront</label>
-      <select id="rankCountry"></select>
-    </div>
-    <button id="rankRun" class="primary">Check</button>
-  </div>
+      <!-- ==================== competitors ==================== -->
+      <section class="view" id="view-competitors">
+        <p class="lead">
+          Who holds a term, what the field does with its screenshots, and the vocabulary
+          everyone agrees on. Dimensions are read from the screenshot URLs themselves — the
+          catalogue encodes the served size — so describing a whole gallery costs no
+          bandwidth.
+        </p>
+        <div class="callout">
+          <strong>Screenshot availability is partial.</strong> Across a 55-app sample the
+          catalogue exposed iPhone screenshots for 47% of apps. Apps it withheld are marked
+          <code>n/a</code> rather than shown as having none, and they are excluded from the
+          medians instead of counted as zeros. Only names and descriptions are public —
+          subtitles and keyword fields are not — so the vocabulary below is a floor on what
+          rivals target, not the whole of it.
+        </div>
 
-  <div id="rankStatus" class="status"></div>
-  <div id="rankResults"></div>
-</section>
+        <div class="toolbar">
+          <div class="field" style="flex:1;min-width:14rem">
+            <label for="compKeyword">Search term</label>
+            <input id="compKeyword" type="text" placeholder="gratitude journal">
+          </div>
+          <div class="field">
+            <label for="compCountry">Storefront</label>
+            <select id="compCountry"></select>
+          </div>
+          <div class="field">
+            <label for="compTop">Show</label>
+            <input id="compTop" type="number" min="3" max="30" value="10" style="width:5rem">
+          </div>
+          <div class="field" style="flex:1;min-width:12rem">
+            <label for="compMine">Your title, optional</label>
+            <input id="compMine" type="text" placeholder="Kaizen: Gratitude">
+          </div>
+          <button id="compRun" class="primary">Analyse</button>
+        </div>
 
-<!-- ================= testers ================= -->
-<section class="view" id="view-testers">
-  <p class="lead">
-    Personal Play developer accounts created after 13 November 2023 need 12 testers
-    opted in <strong>continuously</strong> for 14 days before applying for production
-    access. The word that costs people two weeks is <em>continuously</em>: if your
-    count drops to 11 on day nine, Google restarts the clock.
-  </p>
+        <div id="compStatus" class="status"></div>
+        <div id="compResults"></div>
+      </section>
 
-  <div class="controls">
-    <div class="field">
-      <label for="testDays">Days passed</label>
-      <input id="testDays" type="number" min="0" max="120" value="9" style="width:6rem">
-    </div>
-    <div class="field">
-      <label for="testCount">Testers opted in</label>
-      <input id="testCount" type="number" min="0" max="500" value="12" style="width:7rem">
-    </div>
-    <div class="field">
-      <label for="testApproved">Release approved</label>
-      <select id="testApproved">
-        <option value="yes" selected>Yes</option>
-        <option value="no">Not yet</option>
-      </select>
-    </div>
-  </div>
+      <!-- ==================== rank ==================== -->
+      <section class="view" id="view-rank">
+        <div class="callout">
+          <strong>This is not the App Store's ranking.</strong> The public endpoint returns
+          results in its own relevance order, and that is what this reports — a real,
+          repeatable signal that moves when your metadata moves. The App Store app serves
+          search through a different path, with personalisation and paid placements, so the
+          two can disagree. History is kept in this browser only.
+        </div>
 
-  <div id="testResults"></div>
+        <div class="toolbar">
+          <div class="field" style="min-width:15rem">
+            <label for="rankApp">App Store id or bundle id</label>
+            <input id="rankApp" type="text" placeholder="1438388363">
+          </div>
+          <div class="field" style="flex:1;min-width:15rem">
+            <label for="rankKeywords">Search terms, one per line</label>
+            <textarea id="rankKeywords" rows="3" placeholder="habit tracker&#10;daily habits"></textarea>
+          </div>
+          <div class="field">
+            <label for="rankCountry">Storefront</label>
+            <select id="rankCountry"></select>
+          </div>
+          <button id="rankRun" class="primary">Check</button>
+        </div>
 
-  <h3>Day-by-day timeline</h3>
-  <p class="lead">
-    The flat form above cannot see a dip by construction. Paste a real timeline and
-    the reset is detected.
-  </p>
-  <textarea id="testHistory" rows="6" style="width:100%;max-width:36rem" placeholder='[
+        <div id="rankStatus" class="status"></div>
+        <div id="rankResults"></div>
+      </section>
+
+      <!-- ==================== testers ==================== -->
+      <section class="view" id="view-testers">
+        <p class="lead">
+          Personal Play developer accounts created after 13 November 2023 need 12 testers
+          opted in <strong>continuously</strong> for 14 days before applying for production
+          access. The word that costs people two weeks is <em>continuously</em>: if your
+          count drops to 11 on day nine, Google restarts the clock.
+        </p>
+
+        <div class="toolbar">
+          <div class="field">
+            <label for="testDays">Days passed</label>
+            <input id="testDays" type="number" min="0" max="120" value="9" style="width:6rem">
+          </div>
+          <div class="field">
+            <label for="testCount">Testers opted in</label>
+            <input id="testCount" type="number" min="0" max="500" value="12" style="width:7rem">
+          </div>
+          <div class="field">
+            <label for="testApproved">Release approved</label>
+            <select id="testApproved">
+              <option value="yes" selected>Yes</option>
+              <option value="no">Not yet</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="testResults"></div>
+
+        <h3>Day-by-day timeline</h3>
+        <p class="note">
+          The flat form above cannot see a dip by construction. Paste a real timeline and
+          the reset is detected.
+        </p>
+        <textarea id="testHistory" rows="5" style="width:100%;max-width:40rem" placeholder='[
   { "date": "2026-07-01", "opted_in": 12 },
   { "date": "2026-07-02", "opted_in": 11 },
   { "date": "2026-07-03", "opted_in": 13 }
 ]'></textarea>
-  <div id="testHistoryStatus" class="status"></div>
-</section>
+        <div id="testHistoryStatus" class="status"></div>
+      </section>
 
-<!-- ================= specs ================= -->
-<section class="view" id="view-specs">
-  <p class="lead">
-    The bundled specification catalogue, with the date each store's rules were last
-    verified against its official documentation. These numbers are generated from
-    one source and drive both this page and the command-line tool.
-  </p>
-  <div id="specsBody"></div>
-</section>
+      <!-- ==================== specs ==================== -->
+      <section class="view" id="view-specs">
+        <p class="lead">
+          The bundled specification catalogue, with the date each store's rules were last
+          verified against its official documentation. These numbers are generated from one
+          source and drive both this page and the command-line tool.
+        </p>
+        <div id="specsBody"></div>
+      </section>
 
-</main>
+      <footer class="note" style="margin-top:3rem;border-left:none;padding-left:0">
+        <span id="provenance"></span><br>
+        Same rules and finding codes as the
+        <a href="https://github.com/pP4010/launchpilot">LaunchPilot CLI</a> — specification
+        data is generated from one source and both engines are tested against each other on
+        every commit.
+      </footer>
 
-<footer>
-  <p id="provenance"></p>
-  <p>
-    Same rules, same finding codes as the
-    <a href="https://github.com/pP4010/launchpilot">LaunchPilot CLI</a> — the
-    specification data is generated from one source and both engines are tested
-    against each other on every commit.
-  </p>
-</footer>
+    </div>
+  </div>
+</div>
 
 <script type="module" src="./app.js"></script>
 </body>

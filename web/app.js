@@ -23,29 +23,35 @@ import { initRank } from './views/rank.js';
 import { initTesters } from './views/testers.js';
 import { initSpecs } from './views/specs.js';
 
-const VIEWS = [
-  'screenshots',
-  'keywords',
-  'metadata',
-  'niche',
-  'markets',
-  'competitors',
-  'rank',
-  'testers',
-  'specs',
-];
+/** Title and one-line purpose per view, shown in the top bar. */
+const VIEWS = {
+  screenshots: ['Screenshots', 'Validate and repair store assets'],
+  keywords: ['Keyword field', 'Audit the 100 characters nobody sees'],
+  metadata: ['Listing text', 'Field limits for both stores'],
+  niche: ['Niche', 'Is this market worth entering?'],
+  markets: ['Markets', 'Which storefront is it winnable in?'],
+  competitors: ['Competitors', 'Who holds the term, and how they present'],
+  rank: ['Rank', 'Your position per keyword, tracked locally'],
+  testers: ['Play testers', 'The 12-for-14-days production gate'],
+  specs: ['Specs', 'The bundled catalogue and its provenance'],
+};
 
 function route() {
   const name = (location.hash || '#screenshots').slice(1);
-  const active = VIEWS.includes(name) ? name : 'screenshots';
+  const active = name in VIEWS ? name : 'screenshots';
 
-  for (const view of VIEWS) {
+  for (const view of Object.keys(VIEWS)) {
     document.getElementById(`view-${view}`)?.classList.toggle('active', view === active);
   }
-  for (const link of document.querySelectorAll('.nav a')) {
+  for (const link of document.querySelectorAll('.nav-item')) {
     link.classList.toggle('active', link.getAttribute('href') === `#${active}`);
   }
-  document.title = `LaunchPilot — ${active}`;
+
+  const [title, sub] = VIEWS[active];
+  document.getElementById('viewTitle').textContent = title;
+  document.getElementById('viewSub').textContent = sub;
+  document.title = `LaunchPilot — ${title}`;
+  window.scrollTo({ top: 0 });
 }
 
 /** Populate every storefront picker from the generated spec. */
