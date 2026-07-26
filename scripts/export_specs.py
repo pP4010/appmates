@@ -36,11 +36,19 @@ def build() -> dict[str, object]:
         payload.pop("store", None)
         stores[store.value] = payload
 
-    aso = load_aso_spec().model_dump(mode="json")
-    # Sets serialise in arbitrary order; sort so the generated file is stable
-    # and `--check` does not fail on a reordering that changes nothing.
-    for key in ("noise_words", "category_words", "trademark_words"):
-        aso[key] = sorted(aso[key])
+    aso_spec = load_aso_spec()
+    aso = aso_spec.model_dump(mode="json")
+
+    # Sets serialise in arbitrary order — Python randomises string hashing per
+    # process — so an unsorted set makes this file differ on every run and the
+    # CI staleness check fail for no reason.
+    #
+    # Derived from the model rather than hard-coded: an earlier version listed
+    # the set fields by name, and adding `prose_stopwords` without remembering
+    # to extend that list is exactly how this broke.
+    for name, value in vars(aso_spec).items():
+        if isinstance(value, set):
+            aso[name] = sorted(value)
 
     return {"_comment": BANNER, "stores": stores, "aso": aso}
 
