@@ -25,6 +25,7 @@ from launchpilot.core.services.competitor_analyzer import (
     RankHistory,
     count_by,
     download_screenshots,
+    extract_terms,
 )
 
 
@@ -98,6 +99,48 @@ def _render_strategy(report: CompetitorReport) -> None:
     )
 
 
+def _render_terms(report: CompetitorReport) -> None:
+    if not report.terms:
+        return
+
+    table = Table(box=None, pad_edge=False, padding=(0, 2))
+    table.add_column("Term", style="bold")
+    table.add_column("Consensus", justify="right")
+    table.add_column("In app names", justify="right")
+    table.add_column("In descriptions", justify="right")
+    table.add_column("Yours", justify="center")
+
+    for term in report.terms:
+        table.add_row(
+            term.term,
+            f"{term.score:.0f}",
+            f"{term.apps_in_name}/{term.apps_total}",
+            f"{term.apps_in_description}/{term.apps_total}",
+            Text("yes", style="success") if term.in_your_listing else Text("—", style="muted"),
+        )
+
+    console.print()
+    console.print("[bold]What this field targets[/bold]")
+    console.print(table)
+    console.print(
+        "[muted]App names weigh four times descriptions: a word in a 30-character "
+        "name is a decision, the same word in paragraph four may be prose.[/muted]"
+    )
+    console.print(
+        "[muted]Only names and descriptions are public — subtitles and keyword "
+        "fields are not, so this is a floor on what rivals target, not the whole.[/muted]"
+    )
+
+    missing = [t.term for t in report.missing_terms][:10]
+    if missing:
+        console.print()
+        console.print(f"  Not in your listing: [warning]{', '.join(missing)}[/warning]")
+        console.print(
+            f"  [muted]launchpilot keywords --title '…' "
+            f"{' '.join(f'-t {t!r}' for t in missing[:3])}[/muted]"
+        )
+
+
 def _render_screenshot_urls(report: CompetitorReport) -> None:
     console.print()
     console.print("[bold]Screenshots[/bold]")
@@ -116,6 +159,14 @@ def competitors(
     top: Annotated[
         int, typer.Option("--top", "-n", min=1, max=50, help="How many competitors to show.")
     ] = DEFAULT_TOP_N,
+    show_terms: Annotated[
+        bool,
+        typer.Option("--terms", help="Show the vocabulary this field agrees on."),
+    ] = False,
+    your_listing: Annotated[
+        str | None,
+        typer.Option("--mine", help="Your own title/subtitle, to mark terms you already have."),
+    ] = None,
     show_screenshots: Annotated[
         bool, typer.Option("--screenshots", help="List every screenshot URL.")
     ] = False,
@@ -149,6 +200,9 @@ def competitors(
     except MarketDataError as exc:
         raise fail(str(exc)) from exc
 
+    if show_terms or as_json:
+        report.terms = extract_terms(report.apps, your_text=your_listing or "")
+
     if as_json:
         emit_json(report)
         raise typer.Exit(int(ExitCode.OK))
@@ -160,6 +214,9 @@ def competitors(
     )
     _render_competitors(report)
     _render_strategy(report)
+
+    if show_terms:
+        _render_terms(report)
 
     for note in report.notes:
         console.print(f"\n  [warning]![/warning] [muted]{note}[/muted]")

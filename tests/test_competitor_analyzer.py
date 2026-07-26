@@ -24,6 +24,7 @@ from launchpilot.core.services.competitor_analyzer import (
     competitor_from_entry,
     count_by,
     download_screenshots,
+    extract_terms,
     find_position,
     median_or_zero,
     parse_screenshot,
@@ -441,3 +442,109 @@ def test_count_by_builds_a_sorted_frequency_table() -> None:
 def test_median_or_zero_handles_an_empty_sequence() -> None:
     assert median_or_zero([]) == 0.0
     assert median_or_zero([1, 2, 3]) == 2.0
+
+
+# --- term extraction -----------------------------------------------------
+
+
+def app_with(name: str, description: str = "", position: int = 1) -> Any:
+    return competitor_from_entry(
+        {"trackId": position, "trackName": name, "description": description}, position
+    )
+
+
+def test_terms_are_counted_once_per_app_not_per_occurrence() -> None:
+    """One verbose description must not outvote the rest of the field."""
+    apps = [
+        app_with("Alpha", "budget budget budget budget budget", 1),
+        app_with("Beta", "savings tool", 2),
+    ]
+    terms = {t.term: t for t in extract_terms([a for a in apps if a], min_apps=1)}
+    assert terms["budget"].apps_in_description == 1
+
+
+def test_app_name_usage_outweighs_description_usage() -> None:
+    """A word inside a 30-character name is a decision; prose may be incidental."""
+    named = [app_with(f"Habit {i}", "unrelated copy", i) for i in range(4)]
+    described = [app_with(f"App {i}", "habit " * 5, i) for i in range(4)]
+
+    in_names = {t.term: t.score for t in extract_terms([a for a in named if a], min_apps=1)}
+    in_prose = {t.term: t.score for t in extract_terms([a for a in described if a], min_apps=1)}
+    assert in_names["habit"] > in_prose["habit"]
+
+
+def test_plural_variants_are_merged_into_one_term() -> None:
+    """Otherwise the term everyone agrees on splits and neither half ranks."""
+    apps = [
+        app_with("Habit Tracker", "", 1),
+        app_with("Daily Habits", "", 2),
+        app_with("My Habit", "", 3),
+    ]
+    terms = {t.term for t in extract_terms([a for a in apps if a], min_apps=1)}
+    assert "habit" in terms
+    assert "habits" not in terms
+
+
+def test_an_app_using_both_forms_still_counts_once() -> None:
+    apps = [app_with("Habit and Habits", "", 1)]
+    terms = {t.term: t for t in extract_terms([a for a in apps if a], min_apps=1)}
+    assert terms["habit"].apps_in_name == 1
+
+
+def test_prose_stopwords_are_excluded() -> None:
+    apps = [app_with(f"App {i}", "you will want more from this", i) for i in range(5)]
+    terms = {t.term for t in extract_terms([a for a in apps if a], min_apps=1)}
+    assert not ({"you", "will", "want", "more", "from", "this"} & terms)
+
+
+def test_urls_and_emails_do_not_become_terms() -> None:
+    """Nearly every listing links to support, so these would look like consensus."""
+    apps = [
+        app_with(f"App {i}", "Great tool. https://example.com/help mail@example.com", i)
+        for i in range(6)
+    ]
+    terms = {t.term for t in extract_terms([a for a in apps if a], min_apps=1)}
+    assert not ({"http", "https", "www", "example", "com"} & terms)
+
+
+def test_a_term_used_by_one_app_is_not_a_convention() -> None:
+    apps = [app_with("Solo Snowflake", "", 1), app_with("Other Thing", "", 2)]
+    terms = {t.term for t in extract_terms([a for a in apps if a], min_apps=2)}
+    assert "snowflake" not in terms
+
+
+def test_your_own_terms_are_marked() -> None:
+    apps = [app_with(f"Habit Tracker {i}", "", i) for i in range(3)]
+    terms = {t.term: t for t in extract_terms([a for a in apps if a], your_text="My Habit App")}
+    assert terms["habit"].in_your_listing is True
+    assert terms["tracker"].in_your_listing is False
+
+
+def test_your_plural_counts_as_having_the_term() -> None:
+    apps = [app_with(f"Habit {i}", "", i) for i in range(3)]
+    terms = {t.term: t for t in extract_terms([a for a in apps if a], your_text="Habits Daily")}
+    assert terms["habit"].in_your_listing is True
+
+
+def test_missing_terms_are_the_ones_you_lack() -> None:
+    from launchpilot.core.models.competitors import CompetitorReport
+
+    apps = [app_with(f"Habit Tracker {i}", "", i) for i in range(3)]
+    report = CompetitorReport(keyword="x", country="US", result_count=3)
+    report.terms = extract_terms([a for a in apps if a], your_text="Habit")
+    assert [t.term for t in report.missing_terms] == ["tracker"]
+
+
+def test_short_words_and_bare_numbers_are_dropped() -> None:
+    apps = [app_with(f"Go 42 Ab {i}", "", i) for i in range(3)]
+    terms = {t.term for t in extract_terms([a for a in apps if a], min_apps=1)}
+    assert not ({"go", "42", "ab"} & terms)
+
+
+def test_extraction_of_an_empty_field_is_empty() -> None:
+    assert extract_terms([]) == []
+
+
+def test_the_result_is_capped() -> None:
+    apps = [app_with(f"Alpha Beta Gamma Delta Epsilon Zeta {i}", "", i) for i in range(4)]
+    assert len(extract_terms([a for a in apps if a], top_n=3, min_apps=1)) == 3

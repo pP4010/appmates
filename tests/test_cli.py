@@ -712,3 +712,85 @@ def test_rank_writes_and_reads_its_history(offline_competitors: None, tmp_path: 
     data = payload(run("rank", "2", "habit tracker", "--history", str(history), "--json"))
     assert data["positions"][0]["previous_position"] == 3
     assert data["positions"][0]["movement"] == 0
+
+
+# --- markets -------------------------------------------------------------
+
+
+@pytest.fixture
+def offline_markets(monkeypatch: pytest.MonkeyPatch) -> None:
+    import launchpilot.cli.commands.markets as module
+
+    class ByCountry:
+        def search(self, term: str, *, country: str, limit: int) -> tuple[int, list[Any]]:
+            # The US field is entrenched; France is wide open.
+            ratings = 200_000 if country == "us" else 20
+            count = 60 if country == "us" else 3
+            entries = [
+                {
+                    "trackId": i,
+                    "trackName": f"App {i}",
+                    "sellerName": f"Dev {i}",
+                    "userRatingCount": ratings,
+                    "averageUserRating": 4.8,
+                    "price": 0.0,
+                    "currentVersionReleaseDate": "2026-07-20T00:00:00Z",
+                }
+                for i in range(count)
+            ]
+            return len(entries), entries
+
+    monkeypatch.setattr(module, "ITunesSearchClient", lambda **kwargs: ByCountry())
+
+
+def test_markets_scans_the_requested_storefronts(offline_markets: None) -> None:
+    data = payload(run("markets", "habit tracker", "--countries", "us,fr", "--json"))
+    assert {r["country"] for r in data["results"]} == {"us", "fr"}
+
+
+def test_markets_ranks_the_open_storefront_first(offline_markets: None) -> None:
+    data = payload(run("markets", "x", "--countries", "us,fr", "--json"))
+    assert data["best_country"] == "fr"
+    assert data["spread"] > 0
+
+
+def test_markets_reports_when_verdicts_differ(offline_markets: None) -> None:
+    data = payload(run("markets", "x", "--countries", "us,fr", "--json"))
+    assert data["verdicts_differ"] is True
+
+
+def test_markets_renders_a_table(offline_markets: None) -> None:
+    result = run("markets", "x", "--countries", "us,fr")
+    assert result.exit_code == int(ExitCode.OK)
+    text = plain(result)
+    assert "France" in text and "United States" in text
+
+
+def test_markets_defaults_to_the_curated_set(offline_markets: None) -> None:
+    from launchpilot.core.services.market_scanner import DEFAULT_STOREFRONTS
+
+    data = payload(run("markets", "x", "--json"))
+    assert len(data["results"]) == len(DEFAULT_STOREFRONTS)
+
+
+# --- competitor terms ----------------------------------------------------
+
+
+def test_competitors_terms_are_absent_unless_asked_for_or_json(
+    offline_competitors: None,
+) -> None:
+    assert "What this field targets" not in plain(run("competitors", "x"))
+
+
+def test_competitors_terms_flag_shows_the_shared_vocabulary(
+    offline_competitors: None,
+) -> None:
+    result = run("competitors", "x", "--terms")
+    assert result.exit_code == int(ExitCode.OK)
+    assert "What this field targets" in plain(result)
+
+
+def test_competitors_json_marks_terms_you_already_have(offline_competitors: None) -> None:
+    data = payload(run("competitors", "x", "--json", "--mine", "Rival Tracker"))
+    marked = {t["term"]: t["in_your_listing"] for t in data["terms"]}
+    assert marked.get("rival") is True

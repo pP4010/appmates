@@ -14,6 +14,7 @@ import typer
 from launchpilot import __version__
 from launchpilot.cli.commands.competitors import competitors, rank
 from launchpilot.cli.commands.keywords import keywords
+from launchpilot.cli.commands.markets import markets
 from launchpilot.cli.commands.metadata import validate_metadata
 from launchpilot.cli.commands.niche import niche
 from launchpilot.cli.commands.screenshots import fix_screenshots, validate_screenshots
@@ -37,6 +38,7 @@ app.command("fix-screenshots")(fix_screenshots)
 app.command("validate-metadata")(validate_metadata)
 app.command("check-testers")(check_testers)
 app.command("niche")(niche)
+app.command("markets")(markets)
 app.command("keywords")(keywords)
 app.command("competitors")(competitors)
 app.command("rank")(rank)

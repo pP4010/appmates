@@ -25,6 +25,7 @@ import datetime as dt
 import json
 import re
 import statistics
+from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any
@@ -37,12 +38,22 @@ from launchpilot.core.models.competitors import (
     RankReport,
     Screenshot,
     ScreenshotStrategy,
+    TermUsage,
 )
+from launchpilot.core.services.keyword_builder import looks_plural, tokenize
+from launchpilot.core.specs.registry import load_aso_spec
 
 DEFAULT_TOP_N = 10
 
 # The catalogue's resize directive, e.g. ".../Screen_1.png/392x696bb.png".
 _SIZE_RE = re.compile(r"/(\d+)x(\d+)[a-z]*\.(?:png|jpg|jpeg)$", re.IGNORECASE)
+
+_URL_RE = re.compile(r"\b(?:https?://|www\.)\S+", re.IGNORECASE)
+_EMAIL_RE = re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b")
+
+
+def _strip_urls(text: str) -> str:
+    return _EMAIL_RE.sub(" ", _URL_RE.sub(" ", text))
 
 
 def parse_screenshot(url: str, device: Device) -> Screenshot:
@@ -83,6 +94,7 @@ def competitor_from_entry(entry: dict[str, Any], position: int) -> CompetitorApp
         position=position,
         track_id=track_id,
         name=name,
+        description=str(entry.get("description") or ""),
         seller=str(entry.get("sellerName") or entry.get("artistName") or "unknown"),
         rating_count=int(entry.get("userRatingCount") or 0),
         rating=float(entry["averageUserRating"]) if entry.get("averageUserRating") else None,
@@ -167,6 +179,87 @@ def analyse_competitors(
         strategy=strategy,
         notes=notes,
     )
+
+
+def extract_terms(
+    apps: Sequence[CompetitorApp],
+    *,
+    your_text: str = "",
+    top_n: int = 25,
+    min_apps: int = 2,
+) -> list[TermUsage]:
+    """Find the vocabulary a field of competitors agrees on.
+
+    Only the app name and the description are visible: the App Store does not
+    expose subtitles or keyword fields through the public catalogue, so this
+    sees roughly half of what a competitor actually targets. That is a floor on
+    their vocabulary, not a complete picture, and the CLI says so.
+
+    Terms are counted once per app. Ranking by raw occurrences would let a
+    single wordy description dominate the whole analysis.
+    """
+    spec = load_aso_spec()
+    ignored = spec.noise_words | spec.category_words | spec.prose_stopwords
+
+    # Sets of app indices rather than counts, so merging plural variants below
+    # is a union: an app that says both "habit" and "habits" must still count
+    # once, which summing counters cannot express.
+    in_name: dict[str, set[int]] = defaultdict(set)
+    in_description: dict[str, set[int]] = defaultdict(set)
+
+    def keep(word: str) -> bool:
+        return word not in ignored and len(word) > 2 and not word.isdigit()
+
+    for index, app in enumerate(apps):
+        name_words = {w for w in tokenize(app.name) if keep(w)}
+        # Descriptions run to thousands of words; the set collapses repetition
+        # so an app contributes each term exactly once. URLs are stripped first
+        # — nearly every listing links to a support page, so "http", "www" and
+        # the domain would otherwise read as terms the whole field agrees on.
+        desc_words = {w for w in tokenize(_strip_urls(app.description)) if keep(w)}
+        for word in name_words:
+            in_name[word].add(index)
+        for word in desc_words - name_words:
+            in_description[word].add(index)
+
+    _merge_plurals(in_name, in_description)
+
+    yours = set(tokenize(your_text))
+    terms = set(in_name) | set(in_description)
+
+    usages = [
+        TermUsage(
+            term=term,
+            apps_in_name=len(in_name.get(term, set())),
+            apps_in_description=len(in_description.get(term, set())),
+            apps_total=len(apps),
+            in_your_listing=term in yours or any(looks_plural(y, term) for y in yours),
+        )
+        for term in terms
+    ]
+
+    # A term one competitor uses is that competitor's vocabulary, not the
+    # field's. Two is the lowest count that can be called a convention.
+    usages = [u for u in usages if (u.apps_in_name + u.apps_in_description) >= min_apps]
+    usages.sort(key=lambda u: (-u.score, -u.apps_in_name, u.term))
+    return usages[:top_n]
+
+
+def _merge_plurals(in_name: dict[str, set[int]], in_description: dict[str, set[int]]) -> None:
+    """Fold "habits" into "habit" so one concept does not split its own signal.
+
+    Without this, a field where every app says both forms reports each at half
+    strength and neither reaches the top of the list — the term everyone agrees
+    on looks like two terms nobody prioritises.
+    """
+    singulars = set(in_name) | set(in_description)
+    for plural in sorted(singulars):
+        for singular in (plural[:-1], plural[:-2]):
+            if singular in singulars and looks_plural(plural, singular):
+                for mapping in (in_name, in_description):
+                    if plural in mapping:
+                        mapping[singular] |= mapping.pop(plural)
+                break
 
 
 def find_position(track_id: int, entries: Sequence[dict[str, Any]]) -> int | None:

@@ -78,6 +78,13 @@ class CompetitorApp(BaseModel):
     price: float = 0.0
     updated: dt.date | None = None
     genres: list[str] = Field(default_factory=list)
+    description: str = Field(default="", exclude=True)
+    """Long-form listing copy, kept out of serialised output.
+
+    Needed for term extraction, but several kilobytes per app — emitting it in
+    ``--json`` would bury the analysis under the raw material it came from.
+    """
+
     screenshots: list[Screenshot] = Field(default_factory=list)
     screenshots_exposed: bool = False
     """Whether the catalogue returned any screenshot URLs at all.
@@ -155,13 +162,56 @@ class ScreenshotStrategy(BaseModel):
         return sum(1 for c in self.counts if c >= 10)
 
 
+class TermUsage(BaseModel):
+    """How widely one term is used across a field of competitors.
+
+    Counted per *app*, not per occurrence. "Seven of ten leaders put this word
+    in their name" is a signal about the market; "one verbose app said it forty
+    times" is a signal about that app's copywriter.
+    """
+
+    term: str
+    apps_in_name: int = 0
+    apps_in_description: int = 0
+    apps_total: int = 0
+    in_your_listing: bool = False
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def score(self) -> float:
+        """Consensus weight, 0-100.
+
+        A word in an app name is a deliberate ASO decision made against a
+        30-character budget. The same word in paragraph four of a description
+        may be incidental prose. Name usage is therefore weighted four times
+        description usage rather than being pooled with it.
+        """
+        if not self.apps_total:
+            return 0.0
+        weighted = (4 * self.apps_in_name) + self.apps_in_description
+        return round(100 * weighted / (5 * self.apps_total), 1)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def name_share(self) -> float:
+        if not self.apps_total:
+            return 0.0
+        return round(100 * self.apps_in_name / self.apps_total, 1)
+
+
 class CompetitorReport(BaseModel):
     keyword: str
     country: str
     result_count: int
     apps: list[CompetitorApp] = Field(default_factory=list)
     strategy: ScreenshotStrategy | None = None
+    terms: list[TermUsage] = Field(default_factory=list)
     notes: list[str] = Field(default_factory=list)
+
+    @property
+    def missing_terms(self) -> list[TermUsage]:
+        """Terms the field agrees on that your own listing does not carry."""
+        return [t for t in self.terms if not t.in_your_listing]
 
 
 class RankPosition(BaseModel):

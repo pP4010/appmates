@@ -197,6 +197,7 @@ class AsoSpec(BaseModel):
     field: KeywordFieldSpec = Field(default_factory=KeywordFieldSpec)
     noise_words: set[str] = Field(default_factory=set)
     category_words: set[str] = Field(default_factory=set)
+    prose_stopwords: set[str] = Field(default_factory=set)
     trademark_words: set[str] = Field(default_factory=set)
     findings: dict[str, str] = Field(default_factory=dict)
 

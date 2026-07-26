@@ -53,6 +53,7 @@ Three things break releases, and all three are mechanically checkable:
 | **Building an app into a market that cannot be won** | Scores a niche from the public catalogue before you write any code |
 | **Designing screenshots with no idea what the field does** | Summarises competitors' screenshot conventions, and saves theirs for reference |
 | **No idea whether your listing is indexed at all** | Reports your position per keyword and tracks it over time, locally |
+| **Launching into the one storefront where the term is locked** | Scores the same keyword across 14 storefronts and ranks them |
 
 ## Install
 
@@ -195,6 +196,49 @@ reasoning written next to each number. Edit them and re-run.
 > with real traction separates the same keywords by 1 to 149. The result count is
 > still reported as context, but it is not scored.
 
+### `markets`
+
+```bash
+launchpilot markets "habit tracker"
+launchpilot markets "budget app" --countries us,fr,de,jp,br
+launchpilot markets "gratitude journal" --json | jq '.best_country'
+```
+
+```
+habit tracker across 8 storefront(s)
+
+  Storefront            Score              Verdict     Credible rivals
+  France          FR       51  ██████░░░░  CONTESTED                12
+  Italy           IT       50  ██████░░░░  CONTESTED                15
+  Japan           JP       48  ██████░░░░  CONTESTED                23
+  Germany         DE       41  █████░░░░░  CONTESTED                36
+  United States   US       31  ████░░░░░░  LOCKED                   49
+
+  This term is CONTESTED in France and LOCKED in United States.
+  Which storefront you lead with is a bigger lever here than anything you
+  can do to the listing itself.
+```
+
+Every ASO tool asks *how hard is this keyword?* as though there were one answer.
+There are 175 storefronts and the answer differs in each — difficulty tracks the
+**language a term is searched in** more than the size of the country. "habit
+tracker" faces 49 credible rivals in the US and 12 in France.
+
+That makes it a launch decision — which locale to write first, which language to
+localise screenshots into — and almost nobody asks it before shipping. It uses
+the same six signals as `niche`, one storefront at a time.
+
+The summary keys off whether the **verdict** changes, not the numeric spread. A
+19-point gap that moves a term from LOCKED to CONTESTED changes what you should
+do; a 30-point gap entirely inside CONTESTED does not. An earlier version
+summarised on the spread alone and reported "about as hard everywhere" for a
+term that was locked in the US and contested in France.
+
+This is deliberately slow: one request per storefront against a free endpoint
+that rate-limits, spaced politely apart. A 14-country sweep takes about a minute
+the first time, then comes from cache. A storefront that fails is recorded and
+skipped rather than aborting the sweep.
+
 ### `competitors`
 
 ```bash
@@ -237,6 +281,38 @@ offline reference.
 > folding them in would halve every figure for a reason that has nothing to do
 > with your competitors. iPhone and iPad counts are separate for the same
 > reason: an app can expose ten iPad screenshots and no iPhone ones.
+
+
+#### `--terms`: what the field agrees on
+
+```bash
+launchpilot competitors "gratitude journal" --terms --mine "Kaizen: Gratitude"
+```
+
+```
+  Term        Consensus   In app names   In descriptions   Yours
+  habit              92            9/10             10/10     yes
+  tracker            70            8/10              3/10     yes
+  goal               30            2/10              7/10       —
+  routine            18            1/10              5/10       —
+
+  Not in your listing: goal, routine, daily, streak
+  launchpilot keywords --title '…' -t 'goal' -t 'routine' -t 'daily'
+```
+
+Closes the loop: find the vocabulary your rivals share, then feed what you lack
+straight into `keywords`.
+
+Terms are counted **once per app**, not per occurrence — otherwise one verbose
+description outvotes the field. App-name usage weighs four times description
+usage, because a word inside a 30-character name is a deliberate decision while
+the same word in paragraph four may be prose. Plural variants are merged, since
+a field where every app says both "habit" and "habits" would otherwise report
+each at half strength and neither would rank.
+
+> **This sees roughly half of what rivals target.** The public catalogue exposes
+> app names and descriptions. It does **not** expose subtitles or keyword
+> fields. Treat the result as a floor on their vocabulary, not the whole of it.
 
 ### `rank`
 
@@ -446,6 +522,8 @@ binary fixtures cannot be diffed in review, and they hide the very properties
 - [x] Keyword field in the browser, conformance-tested against the CLI
 - [x] `competitors` — the field for a term, and what it does with screenshots
 - [x] `rank` — search position per keyword, with local history tracking
+- [x] `markets` — which storefront a term is actually winnable in
+- [x] `competitors --terms` — the vocabulary a field shares, and what you lack
 - [ ] `launchpilot init` — scaffold a `launchpilot.toml` per project
 - [ ] Play graphic assets (icon, feature graphic) as first-class checks
 - [ ] Device-frame screenshot generation
