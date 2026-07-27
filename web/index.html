@@ -58,7 +58,15 @@
         <h1 id="viewTitle">Screenshots</h1>
         <div class="sub" id="viewSub">Validate and repair store assets</div>
       </div>
-      <div class="topbar-actions" id="topbarActions"></div>
+      <div class="topbar-actions" id="topbarActions">
+        <div class="fav-tray hidden" id="favTray">
+          <button type="button" class="fav-tray-toggle" id="favTrayToggle"
+            aria-haspopup="true" aria-expanded="false" title="Favorite apps">
+            <span class="icon-stack" id="favTrayIcons"></span>
+          </button>
+          <div class="fav-dropdown hidden" id="favDropdown"></div>
+        </div>
+      </div>
     </header>
 
     <div class="content">

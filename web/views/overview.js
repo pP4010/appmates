@@ -8,6 +8,7 @@
  */
 
 import { checkAppHealth, profileFromEntry } from '../lib/app-profile.js';
+import { favorites, onFavoritesChange } from '../lib/favorites.js';
 import {
   el, empty, escapeHtml, findingsPanel, pill, ring, tablePanel, withStatus,
 } from './shared.js';
@@ -16,6 +17,9 @@ const STORAGE_KEY = 'launchpilot:app';
 
 let client = null;
 let onChange = null;
+/** The app currently rendered, so the star can be kept in sync when a
+ * favorite is removed elsewhere (the top-bar tray), not just from here. */
+let displayedTrackId = null;
 
 /** The app the whole session is about. Null until one is chosen. */
 export function selectedApp() {
@@ -62,6 +66,15 @@ export function initOverview(itunesClient, { onAppChange } = {}) {
     if (e.key === 'Enter') load();
   });
 
+  // Keeps the star in sync when a favorite is added or removed from the
+  // top-bar tray rather than from this button.
+  onFavoritesChange(() => {
+    const btn = el('ovFavorite');
+    if (btn && displayedTrackId !== null) {
+      setStarButton(btn, favorites.has(displayedTrackId));
+    }
+  });
+
   const saved = selectedApp();
   if (saved) {
     el('ovApp').value = String(saved.bundleId || saved.trackId);
@@ -80,6 +93,14 @@ function renderEmpty() {
   );
 }
 
+/** Selects an app and loads it, the same way typing it in and hitting Load
+ * would — used by the favorites tray to jump straight to a starred app. */
+export function loadApp(appId, country = 'us') {
+  el('ovApp').value = appId;
+  el('ovCountry').value = country;
+  return load();
+}
+
 async function load() {
   const appId = el('ovApp').value.trim();
   const country = el('ovCountry').value;
@@ -90,15 +111,27 @@ async function load() {
     return;
   }
 
+  let recoveredScreenshots = false;
+
   const report = await withStatus(el('ovStatus'), el('ovLoad'), results, async (say) => {
     say('Fetching the listing');
-    const entry = await client.lookup(appId, { country });
+    let entry = await client.lookup(appId, { country });
     if (!entry) {
       throw new Error(
         `No app found for "${appId}" in the ${country.toUpperCase()} storefront. ` +
           'Use a numeric App Store id or a bundle id.',
       );
     }
+
+    if (!entry.screenshotUrls?.length && !entry.ipadScreenshotUrls?.length) {
+      say('Checking the product page for screenshots the catalogue withheld');
+      const pageShots = await client.fetchPageScreenshots(entry.trackId, { country });
+      if (pageShots) {
+        entry = { ...entry, screenshotUrls: pageShots.iphone, ipadScreenshotUrls: pageShots.ipad };
+        recoveredScreenshots = true;
+      }
+    }
+
     return checkAppHealth(profileFromEntry(entry));
   });
 
@@ -106,17 +139,39 @@ async function load() {
 
   remember(report.profile, country);
   onChange?.();
-  results.innerHTML = render(report);
+  displayedTrackId = report.profile.trackId;
+  results.innerHTML = render(report, recoveredScreenshots);
 
   el('ovForget')?.addEventListener('click', () => {
     forgetApp();
     el('ovApp').value = '';
     renderEmpty();
   });
+
+  el('ovFavorite')?.addEventListener('click', () => {
+    const p = report.profile;
+    const nowFavorite = favorites.toggle({
+      trackId: p.trackId,
+      bundleId: p.bundleId,
+      name: p.name,
+      seller: p.seller,
+      artwork: p.artwork,
+      country,
+    });
+    setStarButton(el('ovFavorite'), nowFavorite);
+  });
 }
 
-function render(report) {
+function setStarButton(button, isFavorite) {
+  button.classList.toggle('active', isFavorite);
+  button.textContent = isFavorite ? '★' : '☆';
+  button.setAttribute('aria-pressed', String(isFavorite));
+  button.title = isFavorite ? 'Remove from favorites' : 'Add to favorites';
+}
+
+function render(report, recoveredScreenshots) {
   return (
+    (recoveredScreenshots ? recoveredNote() : '') +
     header(report) +
     identity(report.profile) +
     checklist(report) +
@@ -127,6 +182,15 @@ function render(report) {
   );
 }
 
+function recoveredNote() {
+  return `
+    <p class="note">
+      Screenshots recovered from the App Store product page — the catalogue did not
+      return them. This uses an undocumented Apple structure and may stop working
+      without notice.
+    </p>`;
+}
+
 function header(report) {
   const p = report.profile;
   const tone = report.score >= 80 ? 'ok' : report.score >= 50 ? 'warn' : 'bad';
@@ -135,7 +199,14 @@ function header(report) {
     <div class="app-header">
       ${p.artwork ? `<img class="app-hero" src="${escapeHtml(p.artwork)}" alt="">` : ''}
       <div class="app-header-body">
-        <h2 style="margin:0">${escapeHtml(p.name)}</h2>
+        <h2 style="margin:0">
+          ${escapeHtml(p.name)}
+          <button type="button" id="ovFavorite" class="star-btn ${favorites.has(p.trackId) ? 'active' : ''}"
+            aria-pressed="${favorites.has(p.trackId)}"
+            title="${favorites.has(p.trackId) ? 'Remove from favorites' : 'Add to favorites'}">${
+              favorites.has(p.trackId) ? '★' : '☆'
+            }</button>
+        </h2>
         <div class="muted">${escapeHtml(p.seller)}</div>
         <div class="app-header-meta">
           ${p.rating ? pill(`${p.rating.toFixed(1)}★ · ${p.ratingCount.toLocaleString('en-US')}`, 'neutral') : ''}

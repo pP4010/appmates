@@ -211,6 +211,49 @@ code, .mono, .num {
 .topbar .sub { color: var(--muted); font-size: .8rem; }
 .topbar-actions { margin-left: auto; display: flex; gap: .5rem; align-items: center; }
 
+/* ============================ favorites tray ============================ */
+
+.fav-tray { position: relative; }
+.fav-tray-toggle {
+  display: flex; align-items: center;
+  border: 1px solid var(--border); background: var(--surface);
+  border-radius: var(--r-pill); padding: .28rem .5rem;
+  cursor: pointer;
+}
+.fav-tray-toggle:hover { border-color: var(--border-strong); background: var(--surface-2); }
+.fav-tray-toggle .icon-stack img { width: 22px; height: 22px; }
+
+.fav-dropdown {
+  position: absolute; top: calc(100% + .5rem); right: 0;
+  width: 260px; max-height: 340px; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-md); box-shadow: var(--shadow-md);
+  z-index: 30; padding: .35rem;
+}
+.fav-dropdown-head {
+  font-size: .72rem; font-weight: 650; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .04em;
+  padding: .4rem .55rem .3rem;
+}
+.fav-item {
+  display: flex; align-items: center; gap: .55rem;
+  padding: .4rem .5rem; border-radius: var(--r-sm);
+  color: var(--text);
+}
+.fav-item:hover { background: var(--surface-2); text-decoration: none; }
+.fav-item-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.fav-item-body strong {
+  font-size: .85rem; font-weight: 550;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fav-item-body .muted { font-size: .72rem; }
+.fav-remove {
+  border: none; background: none; color: var(--muted); cursor: pointer;
+  font-size: 1rem; line-height: 1; padding: .15rem .35rem; border-radius: var(--r-sm);
+  flex: 0 0 auto;
+}
+.fav-remove:hover { color: var(--bad); background: var(--bad-soft); }
+
 .content { padding: 1.5rem; max-width: 1400px; width: 100%; }
 .view { display: none; }
 .view.active { display: block; animation: fade .18s ease-out; }
@@ -610,6 +653,14 @@ a.brand:hover { background: var(--surface-3); border-color: var(--border-strong)
   flex: 0 0 auto; box-shadow: var(--shadow-sm);
 }
 .app-header-body { flex: 1; min-width: 12rem; }
+.star-btn {
+  border: none; background: none; cursor: pointer;
+  font-size: 1.2rem; line-height: 1; padding: 0 .15rem;
+  color: var(--muted); vertical-align: middle;
+  transition: color .12s, transform .12s;
+}
+.star-btn:hover { color: var(--warn); transform: scale(1.12); }
+.star-btn.active { color: var(--warn); }
 .app-header-meta {
   display: flex; flex-wrap: wrap; gap: .4rem; align-items: center;
   margin-top: .5rem; font-size: .8rem;

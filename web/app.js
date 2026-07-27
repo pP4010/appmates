@@ -23,7 +23,8 @@ import { initCompetitors } from './views/competitors.js';
 import { initRank } from './views/rank.js';
 import { initTesters } from './views/testers.js';
 import { initSpecs } from './views/specs.js';
-import { initOverview, selectedApp } from './views/overview.js';
+import { initOverview, selectedApp, loadApp } from './views/overview.js';
+import { initFavoritesTray } from './views/favorites-tray.js';
 
 /** Title and one-line purpose per view, shown in the top bar. */
 const VIEWS = {
@@ -122,6 +123,13 @@ async function boot() {
   initSpecs(specs);
   initOverview(client, { onAppChange: refreshAppCard });
   refreshAppCard();
+
+  initFavoritesTray({
+    onSelectApp: (appId, country) => {
+      location.hash = '#overview';
+      loadApp(appId, country);
+    },
+  });
 
   const apple = specs.stores.apple;
   const google = specs.stores.google;

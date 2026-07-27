@@ -41,6 +41,19 @@ byte gives the right one.
 with `access-control-allow-origin: *`, so the page can query it from the browser.
 No proxy, no API key, no request of yours passing through anything we run.
 
+### The one exception
+
+`itunes.apple.com` withholds `screenshotUrls` for some apps — confirmed by
+hand, in every storefront and on both its endpoints, against a real listing.
+The real product page at `apps.apple.com` has the same images, but it sends no
+CORS headers, so the browser cannot fetch it the way it fetches the catalogue.
+
+`worker/` is a small Cloudflare Worker that does that one fetch server-side and
+returns the screenshot URLs it finds — nothing else. It is opt-in: until you
+deploy it and set `SCREENSHOT_RELAY_URL` in `lib/itunes.js`, the Overview page
+behaves exactly as before, reporting withheld screenshots as "not exposed"
+rather than fetching them from anywhere. See `worker/README.md`.
+
 ## Keeping it honest
 
 The browser reimplements logic that already exists in Python. Two

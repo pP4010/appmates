@@ -13,6 +13,19 @@
 export const SEARCH_URL = 'https://itunes.apple.com/search';
 export const LOOKUP_URL = 'https://itunes.apple.com/lookup';
 
+/**
+ * The screenshot relay's URL, once you have deployed `worker/` — see its
+ * README. `null` disables the fallback entirely: the page then behaves
+ * exactly as it did before, reporting withheld screenshots as "not exposed"
+ * rather than fetching them from anywhere.
+ *
+ * This is the one request this page ever sends anywhere other than Apple.
+ * It carries only a track id and a country code, both already public — set
+ * this only once you have read `worker/README.md` and are comfortable with
+ * what it does.
+ */
+export const SCREENSHOT_RELAY_URL = null;
+
 /** Apple publishes no rate limit; ~20/minute is the understood ceiling. */
 export const MIN_REQUEST_INTERVAL_MS = 1200;
 
@@ -88,10 +101,16 @@ class ResponseCache {
 }
 
 export class ITunesClient {
-  constructor({ cache = new ResponseCache(), minInterval = MIN_REQUEST_INTERVAL_MS, fetchImpl } = {}) {
+  constructor({
+    cache = new ResponseCache(),
+    minInterval = MIN_REQUEST_INTERVAL_MS,
+    fetchImpl,
+    screenshotRelayUrl = SCREENSHOT_RELAY_URL,
+  } = {}) {
     this.cache = cache;
     this.minInterval = minInterval;
     this.fetchImpl = fetchImpl ?? ((...args) => globalThis.fetch(...args));
+    this.screenshotRelayUrl = screenshotRelayUrl;
     this.lastRequestAt = null;
   }
 
@@ -204,6 +223,46 @@ export class ITunesClient {
 
     const payload = await this.get(LOOKUP_URL, params, { subject: appId });
     return payload.results?.[0] ?? null;
+  }
+
+  /**
+   * Recover screenshots via the relay when the catalogue withheld them.
+   *
+   * Returns `null` when the relay is not configured, unreachable, or found
+   * nothing — every case degrades to "not exposed", never an error, since a
+   * developer whose relay is down should see the same page they saw before
+   * one existed, not a broken tool.
+   */
+  async fetchPageScreenshots(trackId, { country = 'us' } = {}) {
+    if (!this.screenshotRelayUrl) return null;
+
+    const key = `${this.screenshotRelayUrl}/screenshots?id=${trackId}&country=${country.toLowerCase()}`;
+    const cached = this.cache?.get(key);
+    if (cached) return cached;
+
+    const query = new URLSearchParams({ id: String(trackId), country: country.toLowerCase() });
+    let response;
+    try {
+      response = await this.fetchImpl(`${this.screenshotRelayUrl}/screenshots?${query}`);
+    } catch {
+      return null;
+    }
+    if (!response.ok) return null;
+
+    let payload;
+    try {
+      payload = await response.json();
+    } catch {
+      return null;
+    }
+
+    const iphone = Array.isArray(payload?.iphone) ? payload.iphone : [];
+    const ipad = Array.isArray(payload?.ipad) ? payload.ipad : [];
+    if (!iphone.length && !ipad.length) return null;
+
+    const result = { iphone, ipad };
+    this.cache?.set(key, result);
+    return result;
   }
 }
 
