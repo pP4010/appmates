@@ -24,7 +24,7 @@ export const LOOKUP_URL = 'https://itunes.apple.com/lookup';
  * this only once you have read `worker/README.md` and are comfortable with
  * what it does.
  */
-export const SCREENSHOT_RELAY_URL = null;
+export const SCREENSHOT_RELAY_URL = 'https://launchpilot-screenshot-relay.kaizenapp-contact.workers.dev';
 
 /** Apple publishes no rate limit; ~20/minute is the understood ceiling. */
 export const MIN_REQUEST_INTERVAL_MS = 1200;

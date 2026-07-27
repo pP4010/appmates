@@ -120,13 +120,18 @@ def app_overview(
             "Use a numeric App Store id or a bundle id."
         )
 
+    # Triggered on iPhone specifically, not "both empty": the catalogue often
+    # returns iPad shots without iPhone ones (roughly half of apps), and that
+    # partial answer must not stop the one device iPhone-first developers
+    # actually came here to check from being recovered.
     recovered_screenshots = False
-    if not entry.get("screenshotUrls") and not entry.get("ipadScreenshotUrls"):
+    if not entry.get("screenshotUrls"):
         with contextlib.suppress(MarketDataError):
             page_shots = client.fetch_page_screenshots(int(entry["trackId"]), country=country)
-            if page_shots is not None:
+            if page_shots and page_shots["iphone"]:
                 entry = {**entry, "screenshotUrls": page_shots["iphone"]}
-                entry["ipadScreenshotUrls"] = page_shots["ipad"]
+                if not entry.get("ipadScreenshotUrls"):
+                    entry["ipadScreenshotUrls"] = page_shots["ipad"]
                 recovered_screenshots = True
 
     report = AppHealthChecker().check(profile_from_entry(entry))

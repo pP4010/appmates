@@ -876,6 +876,25 @@ def test_app_stays_unanswerable_when_the_page_fallback_finds_nothing(
     assert "recovered from the App Store product page" not in plain(result)
 
 
+def test_app_recovers_iphone_shots_even_when_the_catalogue_has_ipad_ones(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The catalogue returning iPad shots without iPhone ones is a known,
+    common quirk (roughly half of apps) — not a reason to skip recovering the
+    iPhone set a developer actually came here to check."""
+    _offline_app(
+        monkeypatch,
+        _app_entry(screenshotUrls=[], ipadScreenshotUrls=["https://cdn/pad.jpg/2048x2732bb.jpg"]),
+        {"iphone": ["https://cdn/a.jpg/1242x2688bb.jpg"] * 3, "ipad": []},
+    )
+    data = payload(run("app", "6768688178", "--json"))
+    assert data["screenshots_recovered_from_page"] is True
+    assert len(data["profile"]["iphone_screenshots"]) == 3
+    # The catalogue's own iPad shots are kept rather than overwritten by the
+    # page fallback's (empty, in this case) iPad set.
+    assert data["profile"]["ipad_screenshots"] == ["https://cdn/pad.jpg/2048x2732bb.jpg"]
+
+
 def test_app_does_not_call_the_fallback_when_the_catalogue_has_screenshots(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

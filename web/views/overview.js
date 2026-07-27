@@ -123,11 +123,21 @@ async function load() {
       );
     }
 
-    if (!entry.screenshotUrls?.length && !entry.ipadScreenshotUrls?.length) {
+    // Triggered on iPhone specifically, not "both empty": the catalogue often
+    // returns iPad shots without iPhone ones (roughly half of apps), and that
+    // partial answer must not stop the one device iPhone-first developers
+    // actually came here to check from being recovered.
+    if (!entry.screenshotUrls?.length) {
       say('Checking the product page for screenshots the catalogue withheld');
       const pageShots = await client.fetchPageScreenshots(entry.trackId, { country });
-      if (pageShots) {
-        entry = { ...entry, screenshotUrls: pageShots.iphone, ipadScreenshotUrls: pageShots.ipad };
+      if (pageShots?.iphone?.length) {
+        entry = {
+          ...entry,
+          screenshotUrls: pageShots.iphone,
+          ipadScreenshotUrls: entry.ipadScreenshotUrls?.length
+            ? entry.ipadScreenshotUrls
+            : pageShots.ipad,
+        };
         recoveredScreenshots = true;
       }
     }
