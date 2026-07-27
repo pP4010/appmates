@@ -236,3 +236,204 @@ def test_cache_keys_are_stable_across_processes(tmp_path: Path) -> None:
     cache = ResponseCache(tmp_path)
     cache.set(json.dumps({"a": 1, "b": 2}, sort_keys=True), PAYLOAD)
     assert cache.get(json.dumps({"b": 2, "a": 1}, sort_keys=True)) == PAYLOAD
+
+
+# --- page-screenshot fallback ---------------------------------------------
+
+_SERVER_DATA = {
+    "data": [
+        {
+            "data": {
+                "shelfMapping": {
+                    "product_media_phone_": {
+                        "items": [
+                            {
+                                "screenshot": {
+                                    "template": "https://is1-ssl.mzstatic.com/x/Page1.jpg/{w}x{h}{c}.{f}",
+                                    "width": 1242,
+                                    "height": 2688,
+                                }
+                            },
+                            {
+                                "screenshot": {
+                                    "template": "https://is1-ssl.mzstatic.com/x/Page2.jpg/{w}x{h}{c}.{f}",
+                                    "width": 1242,
+                                    "height": 2688,
+                                }
+                            },
+                        ]
+                    },
+                    "product_media_pad_": {
+                        "items": [
+                            {
+                                "screenshot": {
+                                    "template": "https://is1-ssl.mzstatic.com/x/Pad1.jpg/{w}x{h}{c}.{f}",
+                                    "width": 2048,
+                                    "height": 2732,
+                                }
+                            }
+                        ]
+                    },
+                }
+            }
+        }
+    ]
+}
+
+
+def _page_html(server_data: dict[str, Any] | None) -> str:
+    blob = json.dumps(server_data) if server_data is not None else "not json"
+    script = f'<script type="application/json" id="serialized-server-data">{blob}</script>'
+    return f"<html><head>{script}</head><body></body></html>"
+
+
+def test_page_screenshots_are_extracted_from_the_embedded_blob() -> None:
+    c = ITunesSearchClient(
+        client=httpx.Client(transport=transport(text=_page_html(_SERVER_DATA))), min_interval=0.0
+    )
+    result = c.fetch_page_screenshots(123, country="us")
+    assert result == {
+        "iphone": [
+            "https://is1-ssl.mzstatic.com/x/Page1.jpg/1242x2688bb.jpg",
+            "https://is1-ssl.mzstatic.com/x/Page2.jpg/1242x2688bb.jpg",
+        ],
+        "ipad": ["https://is1-ssl.mzstatic.com/x/Pad1.jpg/2048x2732bb.jpg"],
+    }
+
+
+def test_page_screenshots_are_none_when_the_blob_is_missing() -> None:
+    c = ITunesSearchClient(
+        client=httpx.Client(transport=transport(text="<html><body>nope</body></html>")),
+        min_interval=0.0,
+    )
+    assert c.fetch_page_screenshots(123, country="us") is None
+
+
+def test_page_screenshots_are_none_when_the_blob_is_not_json() -> None:
+    c = ITunesSearchClient(
+        client=httpx.Client(transport=transport(text=_page_html(None))), min_interval=0.0
+    )
+    assert c.fetch_page_screenshots(123, country="us") is None
+
+
+def test_page_screenshots_are_none_on_an_unexpected_shape() -> None:
+    """Apple's internal structure is free to change; a mismatch degrades to
+    "nothing found" rather than raising."""
+    c = ITunesSearchClient(
+        client=httpx.Client(transport=transport(text=_page_html({"data": []}))), min_interval=0.0
+    )
+    assert c.fetch_page_screenshots(123, country="us") is None
+
+
+def test_page_screenshots_are_none_on_a_request_failure() -> None:
+    def boom(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("no route to host")
+
+    c = ITunesSearchClient(client=httpx.Client(transport=transport(boom)), min_interval=0.0)
+    assert c.fetch_page_screenshots(123, country="us") is None
+
+
+def test_page_screenshots_are_none_on_an_http_error_status() -> None:
+    c = ITunesSearchClient(
+        client=httpx.Client(transport=transport(status=404, text="not found")), min_interval=0.0
+    )
+    assert c.fetch_page_screenshots(123, country="us") is None
+
+
+def test_page_screenshots_are_cached(tmp_path: Path) -> None:
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(200, text=_page_html(_SERVER_DATA))
+
+    cache = ResponseCache(tmp_path)
+    for _ in range(3):
+        ITunesSearchClient(
+            cache=cache, client=httpx.Client(transport=transport(handler)), min_interval=0.0
+        ).fetch_page_screenshots(123, country="us")
+
+    assert calls == 1
+
+
+def test_page_screenshots_are_none_when_both_shelves_are_empty() -> None:
+    empty = {
+        "data": [
+            {
+                "data": {
+                    "shelfMapping": {
+                        "product_media_phone_": {"items": []},
+                        "product_media_pad_": {"items": []},
+                    }
+                }
+            }
+        ]
+    }
+    c = ITunesSearchClient(
+        client=httpx.Client(transport=transport(text=_page_html(empty))), min_interval=0.0
+    )
+    assert c.fetch_page_screenshots(123, country="us") is None
+
+
+def test_page_screenshots_skip_items_missing_dimensions() -> None:
+    partial = {
+        "data": [
+            {
+                "data": {
+                    "shelfMapping": {
+                        "product_media_phone_": {
+                            "items": [
+                                {"screenshot": {"template": "https://x/{w}x{h}{c}.{f}"}},
+                                {
+                                    "screenshot": {
+                                        "template": "https://x/Page.jpg/{w}x{h}{c}.{f}",
+                                        "width": 1242,
+                                        "height": 2688,
+                                    }
+                                },
+                            ]
+                        },
+                        "product_media_pad_": {"items": []},
+                    }
+                }
+            }
+        ]
+    }
+    c = ITunesSearchClient(
+        client=httpx.Client(transport=transport(text=_page_html(partial))), min_interval=0.0
+    )
+    result = c.fetch_page_screenshots(123, country="us")
+    assert result == {"iphone": ["https://x/Page.jpg/1242x2688bb.jpg"], "ipad": []}
+
+
+def test_page_screenshots_follow_the_redirect_to_the_slugged_url() -> None:
+    """Apple 301s the bare `/app/id{id}` URL to a slugged canonical one.
+
+    A client that does not follow it gets a redirect body instead of the
+    page — the real bug this guards against.
+    """
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if str(request.url) == "https://apps.apple.com/us/app/id123":
+            return httpx.Response(
+                301, headers={"location": "https://apps.apple.com/us/app/kaizen/id123"}
+            )
+        return httpx.Response(200, text=_page_html(_SERVER_DATA))
+
+    c = ITunesSearchClient(client=httpx.Client(transport=transport(handler)), min_interval=0.0)
+    assert c.fetch_page_screenshots(123, country="us") is not None
+
+
+def test_page_screenshots_use_the_app_page_url() -> None:
+    seen: dict[str, Any] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["url"] = str(request.url)
+        return httpx.Response(200, text=_page_html(_SERVER_DATA))
+
+    ITunesSearchClient(
+        client=httpx.Client(transport=transport(handler)), min_interval=0.0
+    ).fetch_page_screenshots(6768688178, country="FR")
+
+    assert seen["url"] == "https://apps.apple.com/fr/app/id6768688178"

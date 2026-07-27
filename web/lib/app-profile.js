@@ -261,18 +261,30 @@ export function checkAppHealth(profile, { today = new Date() } = {}) {
   );
 
   // --- reach --------------------------------------------------------------
+  // `languageCodesISO2A` is the least reliable field the catalogue serves: apps
+  // confirmed to have several App Store Connect localizations have been observed
+  // reporting only English here, in every storefront and both catalogue
+  // endpoints. A low count only ever indicates the field under-reporting, not a
+  // real single-language listing, so it is treated as unanswerable rather than
+  // scored — the same asymmetry as screenshots above. A count over the
+  // threshold is still trustworthy: the catalogue has no reason to fabricate
+  // extra languages.
+  const fewLocales = profile.locales.length <= limits.few_locales;
   add(
     'APP_FEW_LOCALES',
     'Localised beyond one language',
-    profile.locales.length > limits.few_locales,
-    profile.locales.length
-      ? `${profile.locales.length} language(s): ${profile.locales.slice(0, 8).join(', ')}`
-      : 'None listed.',
+    !fewLocales,
+    fewLocales
+      ? `The catalogue reports only ${profile.locales.length} language(s)` +
+        (profile.locales.length ? `: ${profile.locales.join(', ')}` : '') +
+        ', but this field is known to under-report real localizations, so it cannot be trusted here.'
+      : `${profile.locales.length} language(s): ${profile.locales.slice(0, 8).join(', ')}`,
     {
-      fixHint:
-        profile.locales.length <= limits.few_locales
-          ? 'A term locked in English is routinely open in another language — see the Markets tool.'
-          : null,
+      fixHint: fewLocales
+        ? 'Check your actual localizations in App Store Connect, or view the listing on ' +
+          'another storefront directly (e.g. apps.apple.com/fr/app/id...) — see the Markets tool.'
+        : null,
+      checkable: !fewLocales,
     },
   );
 

@@ -260,18 +260,33 @@ class AppHealthChecker:
             else None,
         )
 
-        # --- reach ----------------------------------------------------------
+        # --- reach ------------------------------------------------------------
+        # `languageCodesISO2A` is the least reliable field the catalogue serves:
+        # apps confirmed to have several App Store Connect localizations have
+        # been observed reporting only English here, in every storefront and
+        # both catalogue endpoints. A low count only ever indicates the field
+        # under-reporting, not a real single-language listing, so it is treated
+        # as unanswerable rather than scored — the same asymmetry as
+        # screenshots above. A count over the threshold is still trustworthy:
+        # the catalogue has no reason to fabricate extra languages.
+        locale_count = len(profile.locales)
+        few_locales = locale_count <= limits.few_locales
         add(
             "APP_FEW_LOCALES",
             "Localised beyond one language",
-            len(profile.locales) > limits.few_locales,
-            f"{len(profile.locales)} language(s): {', '.join(profile.locales[:8])}"
-            if profile.locales
-            else "None listed.",
-            fix_hint="A term locked in English is routinely open in another language — "
-            "see the Markets tool."
-            if len(profile.locales) <= limits.few_locales
+            not few_locales,
+            f"The catalogue reports only {locale_count} language(s)"
+            f"{': ' + ', '.join(profile.locales) if profile.locales else ''}, but this "
+            "field is known to under-report real localizations, so it cannot be trusted "
+            "here."
+            if few_locales
+            else f"{locale_count} language(s): {', '.join(profile.locales[:8])}",
+            fix_hint="Check your actual localizations in App Store Connect, or view the "
+            "listing on another storefront directly (e.g. apps.apple.com/fr/app/id...) "
+            "— see the Markets tool."
+            if few_locales
             else None,
+            checkable=not few_locales,
         )
 
         add(

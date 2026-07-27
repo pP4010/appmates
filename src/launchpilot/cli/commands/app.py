@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 from typing import Annotated
 
@@ -95,8 +96,11 @@ def app_overview(
     worked around. Screenshot URLs serve a downscaled image that preserves the
     aspect ratio but not the resolution, so the device family is inferred and
     the uploaded pixel size is never claimed. The catalogue exposes iPhone
-    screenshots for roughly half of apps, so an empty set means it withheld
-    them. Subtitles and the keyword field are not public at all.
+    screenshots for roughly half of apps; when it withholds them, this command
+    falls back to the real product page, which embeds them at full resolution.
+    That fallback uses an undocumented Apple structure, so it can silently stop
+    working — an empty set still means "not exposed", not "none shipped".
+    Subtitles and the keyword field are not public at all.
 
     Checks that cannot be answered are marked [bold]?[/bold] and excluded from
     the score — an app whose screenshots the catalogue happened to withhold
@@ -116,15 +120,33 @@ def app_overview(
             "Use a numeric App Store id or a bundle id."
         )
 
+    recovered_screenshots = False
+    if not entry.get("screenshotUrls") and not entry.get("ipadScreenshotUrls"):
+        with contextlib.suppress(MarketDataError):
+            page_shots = client.fetch_page_screenshots(int(entry["trackId"]), country=country)
+            if page_shots is not None:
+                entry = {**entry, "screenshotUrls": page_shots["iphone"]}
+                entry["ipadScreenshotUrls"] = page_shots["ipad"]
+                recovered_screenshots = True
+
     report = AppHealthChecker().check(profile_from_entry(entry))
 
     if as_json:
-        emit_json(report)
+        payload = report.model_dump()
+        if recovered_screenshots:
+            payload["screenshots_recovered_from_page"] = True
+        emit_json(payload)
         raise typer.Exit(int(ExitCode.OK))
 
     p = report.profile
     console.print()
     console.print(f"[bold]{p.name}[/bold]  [muted]{p.store_url or ''}[/muted]")
+    if recovered_screenshots:
+        console.print(
+            "[muted]Screenshots recovered from the App Store product page — the "
+            "catalogue API did not return them. This uses an undocumented Apple "
+            "structure and may stop working without notice.[/muted]"
+        )
     _render_identity(report)
     _render_checks(report)
 

@@ -794,3 +794,109 @@ def test_competitors_json_marks_terms_you_already_have(offline_competitors: None
     data = payload(run("competitors", "x", "--json", "--mine", "Rival Tracker"))
     marked = {t["term"]: t["in_your_listing"] for t in data["terms"]}
     assert marked.get("rival") is True
+
+
+# --- app -------------------------------------------------------------------
+
+
+def _app_entry(**overrides: Any) -> dict[str, Any]:
+    base: dict[str, Any] = {
+        "trackId": 6768688178,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. " * 20,
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on the first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+        "userRatingCount": 500,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": ["Productivity"],
+        "fileSizeBytes": 50 * 1024 * 1024,
+        "languageCodesISO2A": ["EN"],
+        "supportedDevices": ["iPhone13-iPhone13"],
+        "screenshotUrls": [],
+        "ipadScreenshotUrls": [],
+    }
+    base.update(overrides)
+    return base
+
+
+class _FakeAppSource:
+    def __init__(self, entry: dict[str, Any], page_shots: dict[str, list[str]] | None) -> None:
+        self.entry = entry
+        self.page_shots = page_shots
+
+    def lookup(self, app_id: str, *, country: str) -> dict[str, Any] | None:
+        return self.entry
+
+    def fetch_page_screenshots(self, track_id: int, *, country: str) -> dict[str, list[str]] | None:
+        return self.page_shots
+
+
+def _offline_app(monkeypatch: pytest.MonkeyPatch, entry: dict[str, Any], page_shots: Any) -> None:
+    import launchpilot.cli.commands.app as module
+
+    monkeypatch.setattr(
+        module, "ITunesSearchClient", lambda **kwargs: _FakeAppSource(entry, page_shots)
+    )
+
+
+def test_app_falls_back_to_the_page_when_the_catalogue_withholds_screenshots(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _offline_app(
+        monkeypatch,
+        _app_entry(),
+        {"iphone": ["https://cdn/a.jpg/1242x2688bb.jpg"] * 3, "ipad": []},
+    )
+    result = run("app", "6768688178")
+    assert result.exit_code == int(ExitCode.OK)
+    assert "recovered from the App Store product page" in plain(result)
+
+
+def test_app_json_marks_recovered_screenshots(monkeypatch: pytest.MonkeyPatch) -> None:
+    _offline_app(
+        monkeypatch,
+        _app_entry(),
+        {"iphone": ["https://cdn/a.jpg/1242x2688bb.jpg"] * 3, "ipad": []},
+    )
+    data = payload(run("app", "6768688178", "--json"))
+    assert data["screenshots_recovered_from_page"] is True
+    assert data["profile"]["screenshots_exposed"] is True
+
+
+def test_app_stays_unanswerable_when_the_page_fallback_finds_nothing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _offline_app(monkeypatch, _app_entry(), None)
+    result = run("app", "6768688178")
+    assert result.exit_code == int(ExitCode.OK)
+    assert "recovered from the App Store product page" not in plain(result)
+
+
+def test_app_does_not_call_the_fallback_when_the_catalogue_has_screenshots(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = 0
+
+    class _CountingSource(_FakeAppSource):
+        def fetch_page_screenshots(
+            self, track_id: int, *, country: str
+        ) -> dict[str, list[str]] | None:
+            nonlocal calls
+            calls += 1
+            return super().fetch_page_screenshots(track_id, country=country)
+
+    import launchpilot.cli.commands.app as module
+
+    monkeypatch.setattr(
+        module,
+        "ITunesSearchClient",
+        lambda **kwargs: _CountingSource(
+            _app_entry(screenshotUrls=["https://cdn/a.jpg/1242x2688bb.jpg"] * 3), None
+        ),
+    )
+    run("app", "6768688178")
+    assert calls == 0

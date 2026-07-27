@@ -200,8 +200,21 @@ def test_missing_release_notes_are_flagged() -> None:
     assert check(report(releaseNotes=""), "APP_NO_RELEASE_NOTES").passed is False
 
 
-def test_a_single_locale_is_flagged() -> None:
-    assert check(report(languageCodesISO2A=["EN"]), "APP_FEW_LOCALES").passed is False
+def test_a_single_locale_is_unanswerable_not_failed() -> None:
+    """The catalogue's language field has been observed reporting only English
+    for apps confirmed to have several App Store Connect localizations.
+
+    Scoring that as a defect would tell a developer to fix something that was
+    never broken.
+    """
+    assert check(report(languageCodesISO2A=["EN"]), "APP_FEW_LOCALES").checkable is False
+
+
+def test_several_locales_still_pass_and_are_checkable() -> None:
+    rep = report(languageCodesISO2A=["EN", "FR", "DE"])
+    entry_check = check(rep, "APP_FEW_LOCALES")
+    assert entry_check.checkable is True
+    assert entry_check.passed is True
 
 
 def test_low_ratings_are_flagged() -> None:

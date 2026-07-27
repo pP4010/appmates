@@ -23455,10 +23455,10 @@
         ]
       },
       "today": "2026-07-27",
-      "expectedScore": 81.8,
+      "expectedScore": 90.0,
       "expectedPassed": 9,
-      "expectedChecked": 11,
-      "expectedUnknown": 0,
+      "expectedChecked": 10,
+      "expectedUnknown": 1,
       "expectedStatus": "pass",
       "expectedChecks": [
         {
@@ -23520,8 +23520,8 @@
         {
           "code": "APP_FEW_LOCALES",
           "passed": false,
-          "checkable": true,
-          "detail": "1 language(s): EN",
+          "checkable": false,
+          "detail": "The catalogue reports only 1 language(s): EN, but this field is known to under-report real localizations, so it cannot be trusted here.",
           "severity": "info"
         },
         {

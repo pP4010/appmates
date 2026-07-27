@@ -19,6 +19,7 @@ import contextlib
 import datetime as dt
 import hashlib
 import json
+import re
 import time
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
@@ -29,6 +30,15 @@ from launchpilot.core.errors import LaunchPilotError
 
 SEARCH_URL = "https://itunes.apple.com/search"
 LOOKUP_URL = "https://itunes.apple.com/lookup"
+APP_PAGE_URL = "https://apps.apple.com/{country}/app/id{track_id}"
+
+# The product page embeds its data as a JSON blob for the frontend that
+# renders it — not documented, not versioned, and free to change shape without
+# notice. Extraction failures of any kind are treated as "nothing found", the
+# same outcome as the catalogue withholding screenshots, never as an error.
+_SERVER_DATA_RE = re.compile(
+    r'<script type="application/json" id="serialized-server-data">(.*?)</script>', re.DOTALL
+)
 
 # Apple does not publish a rate limit for this endpoint; ~20 requests/minute is
 # the community-understood ceiling. Stay well under it.
@@ -195,6 +205,83 @@ class ITunesSearchClient:
         payload = self._get(LOOKUP_URL, params, subject=app_id)
         results = payload.get("results") or []
         return dict(results[0]) if results else None
+
+    def fetch_page_screenshots(
+        self, track_id: int, *, country: str = "us"
+    ) -> dict[str, list[str]] | None:
+        """Recover screenshots from the real product page when the catalogue
+        withheld them from ``lookup``/``search``.
+
+        The public JSON endpoints have been observed returning an empty
+        ``screenshotUrls`` for apps that plainly have screenshots — confirmed
+        by hand against a real listing, in every storefront, on both
+        endpoints. The product page Apple actually serves embeds the same
+        images at full resolution in an internal data blob that backs its
+        current web frontend.
+
+        That blob is not a public contract. Returns ``None`` on any request
+        failure or shape mismatch rather than raising, so a change on Apple's
+        side degrades this back to "not exposed" instead of breaking the
+        caller.
+        """
+        cache_key = json.dumps(
+            {"url": APP_PAGE_URL, "id": track_id, "country": country.lower()}, sort_keys=True
+        )
+        if self._cache is not None:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                return {
+                    "iphone": list(cached.get("iphone", [])),
+                    "ipad": list(cached.get("ipad", [])),
+                }
+
+        self._throttle()
+        # Apple 301s `/app/id{id}` to the slugged canonical URL; both branches
+        # must follow it or every request returns a redirect body, not the page.
+        url = APP_PAGE_URL.format(country=country.lower(), track_id=track_id)
+        try:
+            if self._client is not None:
+                response = self._client.get(url, follow_redirects=True)
+            else:
+                response = httpx.get(
+                    url,
+                    timeout=self._timeout,
+                    headers={"User-Agent": USER_AGENT},
+                    follow_redirects=True,
+                )
+            self._last_request_at = time.monotonic()
+            response.raise_for_status()
+        except httpx.HTTPError:
+            return None
+
+        match = _SERVER_DATA_RE.search(response.text)
+        if match is None:
+            return None
+        try:
+            payload = json.loads(match.group(1))
+            shelf = payload["data"][0]["data"]["shelfMapping"]
+        except (json.JSONDecodeError, KeyError, IndexError, TypeError):
+            return None
+
+        def urls(shelf_key: str) -> list[str]:
+            items = (shelf.get(shelf_key) or {}).get("items") or []
+            found: list[str] = []
+            for item in items:
+                shot = (item or {}).get("screenshot") or {}
+                template = shot.get("template")
+                width, height = shot.get("width"), shot.get("height")
+                if isinstance(template, str) and width and height:
+                    with contextlib.suppress(KeyError, IndexError):
+                        found.append(template.format(w=width, h=height, c="bb", f="jpg"))
+            return found
+
+        result = {"iphone": urls("product_media_phone_"), "ipad": urls("product_media_pad_")}
+        if not result["iphone"] and not result["ipad"]:
+            return None
+
+        if self._cache is not None:
+            self._cache.set(cache_key, result)
+        return result
 
 
 def default_cache_dir() -> Path:
