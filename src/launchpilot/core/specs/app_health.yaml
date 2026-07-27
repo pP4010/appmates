@@ -1,0 +1,65 @@
+# Listing health thresholds for a published app.
+#
+# Everything here is checked against the public catalogue entry for one app, so
+# the boundaries of what can be known matter as much as the rules:
+#
+#   * Screenshot URLs serve a downscaled image that preserves the original
+#     aspect ratio but not its resolution. Device class is therefore inferred
+#     from the ratio; the uploaded pixel size is not visible and is not claimed.
+#   * The catalogue exposes iPhone screenshots for roughly half of apps. An
+#     empty set means "not exposed", never "none shipped".
+#   * Subtitles and the keyword field are not public at all.
+source_url: https://developer.apple.com/app-store/product-page/
+last_verified: 2026-07-27
+
+thresholds:
+  title_max: 30
+
+  # Apple accepts one screenshot; three is the practical floor for a listing
+  # that reads as finished.
+  min_screenshots: 3
+  max_screenshots: 10
+
+  stale_days_warning: 120
+  stale_days_error: 365
+
+  # Downloads above this need Wi-Fi unless the user has opted in, which is
+  # friction at exactly the moment someone decided to install.
+  # https://www.idownloadblog.com/2019/10/25/about-app-store-cellular-download-limit/
+  cellular_download_bytes: 209715200 # 200 MB
+  max_binary_bytes: 4294967296 # 4 GB uncompressed
+
+  low_rating_count: 100
+  few_locales: 2
+  release_notes_min_length: 20
+
+  # Aspect-ratio tolerance when inferring which device a screenshot targets.
+  ratio_tolerance: 0.02
+
+# Ratio of long side to short side, per device family.
+device_ratios:
+  - name: iPhone 6.9" / 6.5"
+    ratio: 2.1727 # 2868 / 1320
+  - name: iPhone 6.3" / 6.1"
+    ratio: 2.1741 # 2622 / 1206
+  - name: 'iPhone 5.5"'
+    ratio: 1.7778 # 2208 / 1242
+  - name: iPad 13" / 12.9"
+    ratio: 1.3333 # 2752 / 2064
+  - name: 'iPad 11"'
+    ratio: 1.4508 # 2420 / 1668
+
+findings:
+  APP_TITLE_TOO_LONG: error
+  APP_SCREENSHOTS_NOT_EXPOSED: info
+  APP_TOO_FEW_SCREENSHOTS: warning
+  APP_UNUSED_SCREENSHOT_SLOTS: info
+  APP_SCREENSHOT_RATIO_UNKNOWN: warning
+  APP_NO_IPAD_SCREENSHOTS: info
+  APP_STALE: warning
+  APP_VERY_STALE: error
+  APP_NO_RELEASE_NOTES: warning
+  APP_OVER_CELLULAR_LIMIT: warning
+  APP_FEW_LOCALES: info
+  APP_LOW_RATINGS: info
+  APP_NO_DESCRIPTION: error

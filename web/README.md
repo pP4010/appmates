@@ -5,6 +5,7 @@ account, and no server of ours is involved at any point.
 
 | Tool | Needs the network? |
 |---|---|
+| **Overview** — your app, and what is left to fix | yes |
 | **Screenshots** — validate and repair | no |
 | **Keyword field** — audit the 100 characters | no |
 | **Listing text** — both stores' field limits | no |
@@ -57,6 +58,7 @@ thing:
 
 | Engine | What is compared |
 |---|---|
+| Listing health | score, per-check pass/fail/unanswerable, details, device support, inferred family |
 | Screenshot rules | finding codes, status, device class — 939 cases |
 | Keyword field | codes, per-word character costs, coverage, rebuilt field |
 | Niche scoring | winnability, verdict, and every signal's observation, score, band and rationale sentence |

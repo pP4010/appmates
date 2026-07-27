@@ -20,6 +20,11 @@ import { loadAso, auditField, buildField, tokenize } from '../lib/keywords.js';
 import { analyseCompetitors, extractTerms } from '../lib/competitors.js';
 import { evaluateTesting, loadTestingSpec } from '../lib/testers.js';
 import {
+  checkAppHealth,
+  loadAppHealthSpec,
+  profileFromEntry,
+} from '../lib/app-profile.js';
+import {
   analyseKeyword,
   interpolate,
   keywordInName,
@@ -34,6 +39,7 @@ loadSpecs(specs);
 loadAso(specs);
 loadMarketSpec(specs);
 loadTestingSpec(specs);
+loadAppHealthSpec(specs);
 
 function describeCase(c) {
   const f = c.facts;
@@ -423,4 +429,70 @@ test('competitor notes match the Python analyser', () => {
   for (const c of corpus.competitorCases) {
     assert.deepEqual(competitorReport(c).notes, c.expectedNotes, `${c.name}: notes`);
   }
+});
+
+// --- listing health ------------------------------------------------------
+
+function healthReport(c) {
+  return checkAppHealth(profileFromEntry(c.entry), {
+    today: new Date(`${c.today}T00:00:00Z`),
+  });
+}
+
+test('listing health scores match the Python checker', () => {
+  for (const c of corpus.healthCases) {
+    const rep = healthReport(c);
+    assert.equal(rep.score, c.expectedScore, `${c.name}: score`);
+    assert.equal(rep.passedCount, c.expectedPassed, `${c.name}: passed`);
+    assert.equal(rep.checkedCount, c.expectedChecked, `${c.name}: checked`);
+    assert.equal(rep.unknownCount, c.expectedUnknown, `${c.name}: unknown`);
+    assert.equal(rep.status, c.expectedStatus, `${c.name}: status`);
+  }
+});
+
+test('every listing check matches the Python checker', () => {
+  for (const c of corpus.healthCases) {
+    assert.deepEqual(
+      healthReport(c).checks.map((x) => ({
+        code: x.code,
+        passed: x.passed,
+        checkable: x.checkable,
+        detail: x.detail,
+        severity: x.severity,
+      })),
+      c.expectedChecks,
+      `${c.name}: checks`,
+    );
+  }
+});
+
+test('profile parsing matches the Python side', () => {
+  for (const c of corpus.healthCases) {
+    const { profile } = healthReport(c);
+    assert.deepEqual(
+      {
+        supportsIphone: profile.supportsIphone,
+        supportsIpad: profile.supportsIpad,
+        inferredDevice: profile.inferredDevice,
+        screenshotsExposed: profile.screenshotsExposed,
+        sizeMb: profile.sizeMb,
+      },
+      c.expectedProfile,
+      `${c.name}: profile`,
+    );
+  }
+});
+
+test('a withheld screenshot set never lowers the score', () => {
+  // The property the whole answerability design exists to hold.
+  const withheld = corpus.healthCases.find((c) => c.name === 'all shots withheld');
+  const typical = corpus.healthCases.find((c) => c.name === 'typical listing');
+  assert.ok(healthReport(withheld).score >= healthReport(typical).score);
+  assert.ok(healthReport(withheld).unknownCount > 0);
+});
+
+test('the health corpus covers both answerable and unanswerable outcomes', () => {
+  assert.ok(corpus.healthCases.some((c) => c.expectedUnknown > 0));
+  assert.ok(corpus.healthCases.some((c) => c.expectedUnknown === 0));
+  assert.ok(corpus.healthCases.some((c) => c.expectedStatus === 'fail'));
 });

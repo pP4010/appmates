@@ -13,16 +13,19 @@
 
   <!-- ============================ sidebar ============================ -->
   <aside class="sidebar">
-    <div class="brand">
-      <span class="brand-mark" aria-hidden="true">◈</span>
-      <span>
-        <span class="brand-name">LaunchPilot</span><br>
-        <span class="brand-sub">Pre-flight checks</span>
+    <a class="brand" href="#overview" id="appCard" title="Your app">
+      <span class="brand-mark" id="appMark" aria-hidden="true">◈</span>
+      <span class="brand-text">
+        <span class="brand-name" id="appName">Select your app</span>
+        <span class="brand-sub" id="appSeller">LaunchPilot · pre-flight checks</span>
       </span>
-    </div>
+    </a>
 
     <!-- Grouped by when in the workflow you reach for them, not alphabetically:
          the ordering is the argument that this is a pre-launch tool. -->
+    <div class="nav-section">Your app</div>
+    <a class="nav-item" href="#overview"><span class="nav-icon">◈</span> Overview</a>
+
     <div class="nav-section">Prepare</div>
     <a class="nav-item" href="#screenshots"><span class="nav-icon">▢</span> Screenshots</a>
     <a class="nav-item" href="#keywords"><span class="nav-icon">⌗</span> Keyword field</a>
@@ -59,6 +62,30 @@
     </header>
 
     <div class="content">
+
+      <!-- ==================== overview ==================== -->
+      <section class="view" id="view-overview">
+        <p class="lead">
+          Point LaunchPilot at your app once and every other tool uses it: the rank check,
+          the competitor comparison, the keyword builder. What the public catalogue knows
+          about your listing is below, along with what is left to fix.
+        </p>
+
+        <div class="toolbar">
+          <div class="field" style="flex:1;min-width:16rem">
+            <label for="ovApp">App Store id or bundle id</label>
+            <input id="ovApp" type="text" placeholder="1438388363 or com.example.app">
+          </div>
+          <div class="field">
+            <label for="ovCountry">Storefront</label>
+            <select id="ovCountry"></select>
+          </div>
+          <button id="ovLoad" class="primary">Load</button>
+        </div>
+
+        <div id="ovStatus" class="status"></div>
+        <div id="ovResults"></div>
+      </section>
 
       <!-- ==================== screenshots ==================== -->
       <section class="view" id="view-screenshots">

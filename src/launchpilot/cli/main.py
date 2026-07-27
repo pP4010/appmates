@@ -12,6 +12,7 @@ from typing import Annotated
 import typer
 
 from launchpilot import __version__
+from launchpilot.cli.commands.app import app_overview
 from launchpilot.cli.commands.competitors import competitors, rank
 from launchpilot.cli.commands.keywords import keywords
 from launchpilot.cli.commands.markets import markets
@@ -33,6 +34,7 @@ app = typer.Typer(
     rich_markup_mode="rich",
 )
 
+app.command("app")(app_overview)
 app.command("validate-screenshots")(validate_screenshots)
 app.command("fix-screenshots")(fix_screenshots)
 app.command("validate-metadata")(validate_metadata)

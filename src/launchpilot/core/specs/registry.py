@@ -202,6 +202,41 @@ class AsoSpec(BaseModel):
     findings: dict[str, str] = Field(default_factory=dict)
 
 
+class HealthThresholds(BaseModel):
+    title_max: int = 30
+    min_screenshots: int = 3
+    max_screenshots: int = 10
+    stale_days_warning: int = 120
+    stale_days_error: int = 365
+    cellular_download_bytes: int = 209_715_200
+    max_binary_bytes: int = 4_294_967_296
+    low_rating_count: int = 100
+    few_locales: int = 2
+    release_notes_min_length: int = 20
+    ratio_tolerance: float = 0.02
+
+
+class DeviceRatio(BaseModel):
+    name: str
+    ratio: float
+
+
+class AppHealthSpec(BaseModel):
+    """Thresholds for judging one published listing."""
+
+    source_url: str
+    last_verified: dt.date
+    thresholds: HealthThresholds = Field(default_factory=HealthThresholds)
+    device_ratios: list[DeviceRatio] = Field(default_factory=list)
+    findings: dict[str, str] = Field(default_factory=dict)
+
+
+@functools.cache
+def load_app_health_spec() -> AppHealthSpec:
+    """Load and cache the listing-health thresholds."""
+    return AppHealthSpec(**_load_yaml("app_health.yaml"))
+
+
 @functools.cache
 def load_aso_spec() -> AsoSpec:
     """Load and cache the keyword-field rules."""

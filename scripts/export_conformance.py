@@ -26,6 +26,7 @@ from typing import Any
 
 from launchpilot.core.models.report import ImageFacts, Store
 from launchpilot.core.models.testing import DailyTesterCount
+from launchpilot.core.services.app_profile import AppHealthChecker, profile_from_entry
 from launchpilot.core.services.competitor_analyzer import analyse_competitors, extract_terms
 from launchpilot.core.services.google_play import evaluate
 from launchpilot.core.services.image_validator import ScreenshotValidator
@@ -648,6 +649,103 @@ def build_competitor_cases() -> list[dict[str, Any]]:
     return cases
 
 
+HEALTH_TODAY = dt.date(2026, 7, 27)
+
+IPHONE_SHOT = "https://cdn/a/{i}.png/392x852bb.png"
+IPAD_SHOT = "https://cdn/p/{i}.png/576x768bb.png"
+
+
+def _health_entry(**overrides: Any) -> dict[str, Any]:
+    base: dict[str, Any] = {
+        "trackId": 1,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. " * 20,
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+        "userRatingCount": 500,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": ["Productivity"],
+        "fileSizeBytes": 50 * 1024 * 1024,
+        "languageCodesISO2A": ["EN", "FR", "DE"],
+        "supportedDevices": ["iPhone13-iPhone13", "iPadAir-iPadAir"],
+        "screenshotUrls": [IPHONE_SHOT.format(i=i) for i in range(6)],
+        "ipadScreenshotUrls": [IPAD_SHOT.format(i=i) for i in range(4)],
+    }
+    base.update(overrides)
+    return base
+
+
+HEALTH_SCENARIOS: list[tuple[str, dict[str, Any]]] = [
+    (
+        "healthy listing",
+        {"screenshotUrls": [IPHONE_SHOT.format(i=i) for i in range(10)], "userRatingCount": 5000},
+    ),
+    ("typical listing", {}),
+    ("name too long", {"trackName": "K" * 40}),
+    ("no description", {"description": ""}),
+    # The asymmetry the whole module exists for.
+    ("iphone shots withheld", {"screenshotUrls": []}),
+    ("all shots withheld", {"screenshotUrls": [], "ipadScreenshotUrls": []}),
+    ("ipad only app", {"screenshotUrls": [], "supportedDevices": ["iPadAir-iPadAir"]}),
+    ("iphone only app", {"ipadScreenshotUrls": [], "supportedDevices": ["iPhone13-iPhone13"]}),
+    ("stale", {"currentVersionReleaseDate": "2026-01-01T00:00:00Z"}),
+    ("very stale", {"currentVersionReleaseDate": "2024-01-01T00:00:00Z"}),
+    ("no update date", {"currentVersionReleaseDate": None}),
+    ("oversized binary", {"fileSizeBytes": 300 * 1024 * 1024}),
+    ("no size reported", {"fileSizeBytes": 0}),
+    ("single locale", {"languageCodesISO2A": ["EN"]}),
+    ("no release notes", {"releaseNotes": ""}),
+    ("few ratings", {"userRatingCount": 12}),
+    ("unrecognised ratio", {"screenshotUrls": ["https://cdn/a/1.png/100x100bb.png"]}),
+]
+
+
+def build_health_cases() -> list[dict[str, Any]]:
+    """Listing-health scenarios, evaluated by the Python checker.
+
+    ``today`` is pinned because the freshness check reads a date difference.
+    """
+    checker = AppHealthChecker()
+    cases = []
+    for name, overrides in HEALTH_SCENARIOS:
+        entry = _health_entry(**overrides)
+        report = checker.check(profile_from_entry(entry), today=HEALTH_TODAY)
+        cases.append(
+            {
+                "name": name,
+                "entry": entry,
+                "today": HEALTH_TODAY.isoformat(),
+                "expectedScore": report.score,
+                "expectedPassed": report.passed_count,
+                "expectedChecked": report.checked_count,
+                "expectedUnknown": report.unknown_count,
+                "expectedStatus": report.status.value,
+                "expectedChecks": [
+                    {
+                        "code": c.code,
+                        "passed": c.passed,
+                        "checkable": c.checkable,
+                        "detail": c.detail,
+                        "severity": c.severity.value,
+                    }
+                    for c in report.checks
+                ],
+                "expectedProfile": {
+                    "supportsIphone": report.profile.supports_iphone,
+                    "supportsIpad": report.profile.supports_ipad,
+                    "inferredDevice": report.profile.inferred_device,
+                    "screenshotsExposed": report.profile.screenshots_exposed,
+                    "sizeMb": report.profile.size_mb,
+                },
+            }
+        )
+    return cases
+
+
 def render() -> str:
     payload = {
         "_comment": (
@@ -661,6 +759,7 @@ def render() -> str:
         "marketCases": build_market_cases(),
         "testingCases": build_testing_cases(),
         "competitorCases": build_competitor_cases(),
+        "healthCases": build_health_cases(),
     }
     return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
 

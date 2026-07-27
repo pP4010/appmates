@@ -239,6 +239,57 @@ that rate-limits, spaced politely apart. A 14-country sweep takes about a minute
 the first time, then comes from cache. A storefront that fails is recorded and
 skipped rather than aborting the sweep.
 
+### `app`
+
+```bash
+launchpilot app 1438388363
+launchpilot app com.example.myapp --country fr --json
+```
+
+```
+Habit Tracker
+
+  Publisher       Inner Grow Limited
+  Version         2.14.18 · shipped 2026-07-10
+  Rating          4.79★ from 144,369
+  Size            321.7 MB
+  Languages       10 — EN, FR, DE, IT, JA, PT, RU, ZH, ES, KO
+
+Listing health
+  ✓  App name within 30 characters      13 of 30 characters used.
+  ?  At least three iPhone screenshots  The catalogue returned iPad screenshots but not
+                                        iPhone ones, which it does for about half of apps.
+  ✓  Recently updated                   Last shipped 17 days ago.
+  ✗  Downloadable over cellular         321.7 MB.
+                                        → Over 200 MB needs Wi-Fi unless the user has
+                                          opted in — friction at the moment they decided
+                                          to install.
+
+  89/100 — 8 of 9 answerable checks passed, 2 could not be answered
+```
+
+Eleven checks over one published listing: name length, description, screenshot
+count and aspect ratio, update recency, release notes, localisation, download
+size, rating volume.
+
+> **The interesting part is what it refuses to conclude.** A check that cannot
+> be answered is marked `?` and **excluded from the score** — an app whose
+> screenshots the catalogue happened to withhold must not rank below one whose
+> it happened to return. That distinction needs the device list: an app that
+> supports iPhone but exposed no iPhone screenshots has almost certainly shipped
+> them, while an iPad-only app genuinely has none. Without it, the first would
+> be reported as a defect and a developer would go "fix" something that was
+> never broken.
+>
+> Two further limits are stated rather than worked around. Screenshot URLs serve
+> a downscaled image that preserves the aspect ratio but **not the resolution**,
+> so the device family is inferred and the uploaded pixel size is never claimed.
+> Subtitles and the keyword field are not public at all, so neither is checked.
+
+In the web app this is the **Overview** page, and the app you load there becomes
+the app the whole session is about — its id prefills the rank check, its name
+prefills the competitor comparison and the keyword builder.
+
 ### `competitors`
 
 ```bash
@@ -532,6 +583,7 @@ binary fixtures cannot be diffed in review, and they hide the very properties
 - [x] `competitors` — the field for a term, and what it does with screenshots
 - [x] `rank` — search position per keyword, with local history tracking
 - [x] `markets` — which storefront a term is actually winnable in
+- [x] `app` — one listing's health, and an Overview page that anchors the session
 - [x] `competitors --terms` — the vocabulary a field shares, and what you lack
 - [ ] `launchpilot init` — scaffold a `launchpilot.toml` per project
 - [ ] Play graphic assets (icon, feature graphic) as first-class checks

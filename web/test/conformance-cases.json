@@ -21707,5 +21707,2245 @@
         "No apps returned for 'habit tracker'."
       ]
     }
+  ],
+  "healthCases": [
+    {
+      "name": "healthy listing",
+      "entry": {
+        "trackId": 1,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. ",
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+        "userRatingCount": 5000,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": [
+          "Productivity"
+        ],
+        "fileSizeBytes": 52428800,
+        "languageCodesISO2A": [
+          "EN",
+          "FR",
+          "DE"
+        ],
+        "supportedDevices": [
+          "iPhone13-iPhone13",
+          "iPadAir-iPadAir"
+        ],
+        "screenshotUrls": [
+          "https://cdn/a/0.png/392x852bb.png",
+          "https://cdn/a/1.png/392x852bb.png",
+          "https://cdn/a/2.png/392x852bb.png",
+          "https://cdn/a/3.png/392x852bb.png",
+          "https://cdn/a/4.png/392x852bb.png",
+          "https://cdn/a/5.png/392x852bb.png",
+          "https://cdn/a/6.png/392x852bb.png",
+          "https://cdn/a/7.png/392x852bb.png",
+          "https://cdn/a/8.png/392x852bb.png",
+          "https://cdn/a/9.png/392x852bb.png"
+        ],
+        "ipadScreenshotUrls": [
+          "https://cdn/p/0.png/576x768bb.png",
+          "https://cdn/p/1.png/576x768bb.png",
+          "https://cdn/p/2.png/576x768bb.png",
+          "https://cdn/p/3.png/576x768bb.png"
+        ]
+      },
+      "today": "2026-07-27",
+      "expectedScore": 100.0,
+      "expectedPassed": 11,
+      "expectedChecked": 11,
+      "expectedUnknown": 0,
+      "expectedStatus": "pass",
+      "expectedChecks": [
+        {
+          "code": "APP_TITLE_TOO_LONG",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 of 30 characters used.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_DESCRIPTION",
+          "passed": true,
+          "checkable": true,
+          "detail": "340 characters.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_TOO_FEW_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "10 exposed.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_UNUSED_SCREENSHOT_SLOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "10 of 10 slots used.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_SCREENSHOT_RATIO_UNKNOWN",
+          "passed": true,
+          "checkable": true,
+          "detail": "Matches iPhone 6.9\" / 6.5\".",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_IPAD_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "4 exposed.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_STALE",
+          "passed": true,
+          "checkable": true,
+          "detail": "Last shipped 26 days ago.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_RELEASE_NOTES",
+          "passed": true,
+          "checkable": true,
+          "detail": "50 characters.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_FEW_LOCALES",
+          "passed": true,
+          "checkable": true,
+          "detail": "3 language(s): EN, FR, DE",
+          "severity": "info"
+        },
+        {
+          "code": "APP_OVER_CELLULAR_LIMIT",
+          "passed": true,
+          "checkable": true,
+          "detail": "50.0 MB.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_LOW_RATINGS",
+          "passed": true,
+          "checkable": true,
+          "detail": "5,000 rating(s) at 4.6★.",
+          "severity": "info"
+        }
+      ],
+      "expectedProfile": {
+        "supportsIphone": true,
+        "supportsIpad": true,
+        "inferredDevice": "iPhone 6.9\" / 6.5\"",
+        "screenshotsExposed": true,
+        "sizeMb": 50.0
+      }
+    },
+    {
+      "name": "typical listing",
+      "entry": {
+        "trackId": 1,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. ",
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+        "userRatingCount": 500,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": [
+          "Productivity"
+        ],
+        "fileSizeBytes": 52428800,
+        "languageCodesISO2A": [
+          "EN",
+          "FR",
+          "DE"
+        ],
+        "supportedDevices": [
+          "iPhone13-iPhone13",
+          "iPadAir-iPadAir"
+        ],
+        "screenshotUrls": [
+          "https://cdn/a/0.png/392x852bb.png",
+          "https://cdn/a/1.png/392x852bb.png",
+          "https://cdn/a/2.png/392x852bb.png",
+          "https://cdn/a/3.png/392x852bb.png",
+          "https://cdn/a/4.png/392x852bb.png",
+          "https://cdn/a/5.png/392x852bb.png"
+        ],
+        "ipadScreenshotUrls": [
+          "https://cdn/p/0.png/576x768bb.png",
+          "https://cdn/p/1.png/576x768bb.png",
+          "https://cdn/p/2.png/576x768bb.png",
+          "https://cdn/p/3.png/576x768bb.png"
+        ]
+      },
+      "today": "2026-07-27",
+      "expectedScore": 90.9,
+      "expectedPassed": 10,
+      "expectedChecked": 11,
+      "expectedUnknown": 0,
+      "expectedStatus": "pass",
+      "expectedChecks": [
+        {
+          "code": "APP_TITLE_TOO_LONG",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 of 30 characters used.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_DESCRIPTION",
+          "passed": true,
+          "checkable": true,
+          "detail": "340 characters.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_TOO_FEW_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 exposed.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_UNUSED_SCREENSHOT_SLOTS",
+          "passed": false,
+          "checkable": true,
+          "detail": "6 of 10 slots used.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_SCREENSHOT_RATIO_UNKNOWN",
+          "passed": true,
+          "checkable": true,
+          "detail": "Matches iPhone 6.9\" / 6.5\".",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_IPAD_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "4 exposed.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_STALE",
+          "passed": true,
+          "checkable": true,
+          "detail": "Last shipped 26 days ago.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_RELEASE_NOTES",
+          "passed": true,
+          "checkable": true,
+          "detail": "50 characters.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_FEW_LOCALES",
+          "passed": true,
+          "checkable": true,
+          "detail": "3 language(s): EN, FR, DE",
+          "severity": "info"
+        },
+        {
+          "code": "APP_OVER_CELLULAR_LIMIT",
+          "passed": true,
+          "checkable": true,
+          "detail": "50.0 MB.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_LOW_RATINGS",
+          "passed": true,
+          "checkable": true,
+          "detail": "500 rating(s) at 4.6★.",
+          "severity": "info"
+        }
+      ],
+      "expectedProfile": {
+        "supportsIphone": true,
+        "supportsIpad": true,
+        "inferredDevice": "iPhone 6.9\" / 6.5\"",
+        "screenshotsExposed": true,
+        "sizeMb": 50.0
+      }
+    },
+    {
+      "name": "name too long",
+      "entry": {
+        "trackId": 1,
+        "trackName": "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. ",
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+        "userRatingCount": 500,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": [
+          "Productivity"
+        ],
+        "fileSizeBytes": 52428800,
+        "languageCodesISO2A": [
+          "EN",
+          "FR",
+          "DE"
+        ],
+        "supportedDevices": [
+          "iPhone13-iPhone13",
+          "iPadAir-iPadAir"
+        ],
+        "screenshotUrls": [
+          "https://cdn/a/0.png/392x852bb.png",
+          "https://cdn/a/1.png/392x852bb.png",
+          "https://cdn/a/2.png/392x852bb.png",
+          "https://cdn/a/3.png/392x852bb.png",
+          "https://cdn/a/4.png/392x852bb.png",
+          "https://cdn/a/5.png/392x852bb.png"
+        ],
+        "ipadScreenshotUrls": [
+          "https://cdn/p/0.png/576x768bb.png",
+          "https://cdn/p/1.png/576x768bb.png",
+          "https://cdn/p/2.png/576x768bb.png",
+          "https://cdn/p/3.png/576x768bb.png"
+        ]
+      },
+      "today": "2026-07-27",
+      "expectedScore": 81.8,
+      "expectedPassed": 9,
+      "expectedChecked": 11,
+      "expectedUnknown": 0,
+      "expectedStatus": "fail",
+      "expectedChecks": [
+        {
+          "code": "APP_TITLE_TOO_LONG",
+          "passed": false,
+          "checkable": true,
+          "detail": "40 of 30 characters used.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_DESCRIPTION",
+          "passed": true,
+          "checkable": true,
+          "detail": "340 characters.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_TOO_FEW_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 exposed.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_UNUSED_SCREENSHOT_SLOTS",
+          "passed": false,
+          "checkable": true,
+          "detail": "6 of 10 slots used.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_SCREENSHOT_RATIO_UNKNOWN",
+          "passed": true,
+          "checkable": true,
+          "detail": "Matches iPhone 6.9\" / 6.5\".",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_IPAD_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "4 exposed.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_STALE",
+          "passed": true,
+          "checkable": true,
+          "detail": "Last shipped 26 days ago.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_RELEASE_NOTES",
+          "passed": true,
+          "checkable": true,
+          "detail": "50 characters.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_FEW_LOCALES",
+          "passed": true,
+          "checkable": true,
+          "detail": "3 language(s): EN, FR, DE",
+          "severity": "info"
+        },
+        {
+          "code": "APP_OVER_CELLULAR_LIMIT",
+          "passed": true,
+          "checkable": true,
+          "detail": "50.0 MB.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_LOW_RATINGS",
+          "passed": true,
+          "checkable": true,
+          "detail": "500 rating(s) at 4.6★.",
+          "severity": "info"
+        }
+      ],
+      "expectedProfile": {
+        "supportsIphone": true,
+        "supportsIpad": true,
+        "inferredDevice": "iPhone 6.9\" / 6.5\"",
+        "screenshotsExposed": true,
+        "sizeMb": 50.0
+      }
+    },
+    {
+      "name": "no description",
+      "entry": {
+        "trackId": 1,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "",
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+        "userRatingCount": 500,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": [
+          "Productivity"
+        ],
+        "fileSizeBytes": 52428800,
+        "languageCodesISO2A": [
+          "EN",
+          "FR",
+          "DE"
+        ],
+        "supportedDevices": [
+          "iPhone13-iPhone13",
+          "iPadAir-iPadAir"
+        ],
+        "screenshotUrls": [
+          "https://cdn/a/0.png/392x852bb.png",
+          "https://cdn/a/1.png/392x852bb.png",
+          "https://cdn/a/2.png/392x852bb.png",
+          "https://cdn/a/3.png/392x852bb.png",
+          "https://cdn/a/4.png/392x852bb.png",
+          "https://cdn/a/5.png/392x852bb.png"
+        ],
+        "ipadScreenshotUrls": [
+          "https://cdn/p/0.png/576x768bb.png",
+          "https://cdn/p/1.png/576x768bb.png",
+          "https://cdn/p/2.png/576x768bb.png",
+          "https://cdn/p/3.png/576x768bb.png"
+        ]
+      },
+      "today": "2026-07-27",
+      "expectedScore": 81.8,
+      "expectedPassed": 9,
+      "expectedChecked": 11,
+      "expectedUnknown": 0,
+      "expectedStatus": "fail",
+      "expectedChecks": [
+        {
+          "code": "APP_TITLE_TOO_LONG",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 of 30 characters used.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_DESCRIPTION",
+          "passed": false,
+          "checkable": true,
+          "detail": "The catalogue returned no description.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_TOO_FEW_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 exposed.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_UNUSED_SCREENSHOT_SLOTS",
+          "passed": false,
+          "checkable": true,
+          "detail": "6 of 10 slots used.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_SCREENSHOT_RATIO_UNKNOWN",
+          "passed": true,
+          "checkable": true,
+          "detail": "Matches iPhone 6.9\" / 6.5\".",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_IPAD_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "4 exposed.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_STALE",
+          "passed": true,
+          "checkable": true,
+          "detail": "Last shipped 26 days ago.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_RELEASE_NOTES",
+          "passed": true,
+          "checkable": true,
+          "detail": "50 characters.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_FEW_LOCALES",
+          "passed": true,
+          "checkable": true,
+          "detail": "3 language(s): EN, FR, DE",
+          "severity": "info"
+        },
+        {
+          "code": "APP_OVER_CELLULAR_LIMIT",
+          "passed": true,
+          "checkable": true,
+          "detail": "50.0 MB.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_LOW_RATINGS",
+          "passed": true,
+          "checkable": true,
+          "detail": "500 rating(s) at 4.6★.",
+          "severity": "info"
+        }
+      ],
+      "expectedProfile": {
+        "supportsIphone": true,
+        "supportsIpad": true,
+        "inferredDevice": "iPhone 6.9\" / 6.5\"",
+        "screenshotsExposed": true,
+        "sizeMb": 50.0
+      }
+    },
+    {
+      "name": "iphone shots withheld",
+      "entry": {
+        "trackId": 1,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. ",
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+        "userRatingCount": 500,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": [
+          "Productivity"
+        ],
+        "fileSizeBytes": 52428800,
+        "languageCodesISO2A": [
+          "EN",
+          "FR",
+          "DE"
+        ],
+        "supportedDevices": [
+          "iPhone13-iPhone13",
+          "iPadAir-iPadAir"
+        ],
+        "screenshotUrls": [],
+        "ipadScreenshotUrls": [
+          "https://cdn/p/0.png/576x768bb.png",
+          "https://cdn/p/1.png/576x768bb.png",
+          "https://cdn/p/2.png/576x768bb.png",
+          "https://cdn/p/3.png/576x768bb.png"
+        ]
+      },
+      "today": "2026-07-27",
+      "expectedScore": 100.0,
+      "expectedPassed": 9,
+      "expectedChecked": 9,
+      "expectedUnknown": 2,
+      "expectedStatus": "pass",
+      "expectedChecks": [
+        {
+          "code": "APP_TITLE_TOO_LONG",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 of 30 characters used.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_DESCRIPTION",
+          "passed": true,
+          "checkable": true,
+          "detail": "340 characters.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_TOO_FEW_SCREENSHOTS",
+          "passed": false,
+          "checkable": false,
+          "detail": "The catalogue returned iPad screenshots but not iPhone ones, which it does for about half of apps. Nothing can be concluded from that.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_UNUSED_SCREENSHOT_SLOTS",
+          "passed": false,
+          "checkable": false,
+          "detail": "Not visible.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_SCREENSHOT_RATIO_UNKNOWN",
+          "passed": true,
+          "checkable": true,
+          "detail": "Matches iPad 13\" / 12.9\".",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_IPAD_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "4 exposed.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_STALE",
+          "passed": true,
+          "checkable": true,
+          "detail": "Last shipped 26 days ago.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_RELEASE_NOTES",
+          "passed": true,
+          "checkable": true,
+          "detail": "50 characters.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_FEW_LOCALES",
+          "passed": true,
+          "checkable": true,
+          "detail": "3 language(s): EN, FR, DE",
+          "severity": "info"
+        },
+        {
+          "code": "APP_OVER_CELLULAR_LIMIT",
+          "passed": true,
+          "checkable": true,
+          "detail": "50.0 MB.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_LOW_RATINGS",
+          "passed": true,
+          "checkable": true,
+          "detail": "500 rating(s) at 4.6★.",
+          "severity": "info"
+        }
+      ],
+      "expectedProfile": {
+        "supportsIphone": true,
+        "supportsIpad": true,
+        "inferredDevice": "iPad 13\" / 12.9\"",
+        "screenshotsExposed": true,
+        "sizeMb": 50.0
+      }
+    },
+    {
+      "name": "all shots withheld",
+      "entry": {
+        "trackId": 1,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. ",
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+        "userRatingCount": 500,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": [
+          "Productivity"
+        ],
+        "fileSizeBytes": 52428800,
+        "languageCodesISO2A": [
+          "EN",
+          "FR",
+          "DE"
+        ],
+        "supportedDevices": [
+          "iPhone13-iPhone13",
+          "iPadAir-iPadAir"
+        ],
+        "screenshotUrls": [],
+        "ipadScreenshotUrls": []
+      },
+      "today": "2026-07-27",
+      "expectedScore": 100.0,
+      "expectedPassed": 7,
+      "expectedChecked": 7,
+      "expectedUnknown": 1,
+      "expectedStatus": "pass",
+      "expectedChecks": [
+        {
+          "code": "APP_TITLE_TOO_LONG",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 of 30 characters used.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_DESCRIPTION",
+          "passed": true,
+          "checkable": true,
+          "detail": "340 characters.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_SCREENSHOTS_NOT_EXPOSED",
+          "passed": false,
+          "checkable": false,
+          "detail": "The catalogue did not return screenshot URLs for this app, so they cannot be checked here. This happens for roughly half of apps and says nothing about whether yours are correct.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_STALE",
+          "passed": true,
+          "checkable": true,
+          "detail": "Last shipped 26 days ago.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_RELEASE_NOTES",
+          "passed": true,
+          "checkable": true,
+          "detail": "50 characters.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_FEW_LOCALES",
+          "passed": true,
+          "checkable": true,
+          "detail": "3 language(s): EN, FR, DE",
+          "severity": "info"
+        },
+        {
+          "code": "APP_OVER_CELLULAR_LIMIT",
+          "passed": true,
+          "checkable": true,
+          "detail": "50.0 MB.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_LOW_RATINGS",
+          "passed": true,
+          "checkable": true,
+          "detail": "500 rating(s) at 4.6★.",
+          "severity": "info"
+        }
+      ],
+      "expectedProfile": {
+        "supportsIphone": true,
+        "supportsIpad": true,
+        "inferredDevice": null,
+        "screenshotsExposed": false,
+        "sizeMb": 50.0
+      }
+    },
+    {
+      "name": "ipad only app",
+      "entry": {
+        "trackId": 1,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. ",
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+        "userRatingCount": 500,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": [
+          "Productivity"
+        ],
+        "fileSizeBytes": 52428800,
+        "languageCodesISO2A": [
+          "EN",
+          "FR",
+          "DE"
+        ],
+        "supportedDevices": [
+          "iPadAir-iPadAir"
+        ],
+        "screenshotUrls": [],
+        "ipadScreenshotUrls": [
+          "https://cdn/p/0.png/576x768bb.png",
+          "https://cdn/p/1.png/576x768bb.png",
+          "https://cdn/p/2.png/576x768bb.png",
+          "https://cdn/p/3.png/576x768bb.png"
+        ]
+      },
+      "today": "2026-07-27",
+      "expectedScore": 90.9,
+      "expectedPassed": 10,
+      "expectedChecked": 11,
+      "expectedUnknown": 0,
+      "expectedStatus": "pass",
+      "expectedChecks": [
+        {
+          "code": "APP_TITLE_TOO_LONG",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 of 30 characters used.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_DESCRIPTION",
+          "passed": true,
+          "checkable": true,
+          "detail": "340 characters.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_TOO_FEW_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "The catalogue returned iPad screenshots but not iPhone ones, which it does for about half of apps. Nothing can be concluded from that.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_UNUSED_SCREENSHOT_SLOTS",
+          "passed": false,
+          "checkable": true,
+          "detail": "Not visible.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_SCREENSHOT_RATIO_UNKNOWN",
+          "passed": true,
+          "checkable": true,
+          "detail": "Matches iPad 13\" / 12.9\".",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_IPAD_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "4 exposed.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_STALE",
+          "passed": true,
+          "checkable": true,
+          "detail": "Last shipped 26 days ago.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_RELEASE_NOTES",
+          "passed": true,
+          "checkable": true,
+          "detail": "50 characters.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_FEW_LOCALES",
+          "passed": true,
+          "checkable": true,
+          "detail": "3 language(s): EN, FR, DE",
+          "severity": "info"
+        },
+        {
+          "code": "APP_OVER_CELLULAR_LIMIT",
+          "passed": true,
+          "checkable": true,
+          "detail": "50.0 MB.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_LOW_RATINGS",
+          "passed": true,
+          "checkable": true,
+          "detail": "500 rating(s) at 4.6★.",
+          "severity": "info"
+        }
+      ],
+      "expectedProfile": {
+        "supportsIphone": false,
+        "supportsIpad": true,
+        "inferredDevice": "iPad 13\" / 12.9\"",
+        "screenshotsExposed": true,
+        "sizeMb": 50.0
+      }
+    },
+    {
+      "name": "iphone only app",
+      "entry": {
+        "trackId": 1,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. ",
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+        "userRatingCount": 500,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": [
+          "Productivity"
+        ],
+        "fileSizeBytes": 52428800,
+        "languageCodesISO2A": [
+          "EN",
+          "FR",
+          "DE"
+        ],
+        "supportedDevices": [
+          "iPhone13-iPhone13"
+        ],
+        "screenshotUrls": [
+          "https://cdn/a/0.png/392x852bb.png",
+          "https://cdn/a/1.png/392x852bb.png",
+          "https://cdn/a/2.png/392x852bb.png",
+          "https://cdn/a/3.png/392x852bb.png",
+          "https://cdn/a/4.png/392x852bb.png",
+          "https://cdn/a/5.png/392x852bb.png"
+        ],
+        "ipadScreenshotUrls": []
+      },
+      "today": "2026-07-27",
+      "expectedScore": 90.9,
+      "expectedPassed": 10,
+      "expectedChecked": 11,
+      "expectedUnknown": 0,
+      "expectedStatus": "pass",
+      "expectedChecks": [
+        {
+          "code": "APP_TITLE_TOO_LONG",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 of 30 characters used.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_DESCRIPTION",
+          "passed": true,
+          "checkable": true,
+          "detail": "340 characters.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_TOO_FEW_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 exposed.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_UNUSED_SCREENSHOT_SLOTS",
+          "passed": false,
+          "checkable": true,
+          "detail": "6 of 10 slots used.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_SCREENSHOT_RATIO_UNKNOWN",
+          "passed": true,
+          "checkable": true,
+          "detail": "Matches iPhone 6.9\" / 6.5\".",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_IPAD_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "The app does not run on iPad.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_STALE",
+          "passed": true,
+          "checkable": true,
+          "detail": "Last shipped 26 days ago.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_RELEASE_NOTES",
+          "passed": true,
+          "checkable": true,
+          "detail": "50 characters.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_FEW_LOCALES",
+          "passed": true,
+          "checkable": true,
+          "detail": "3 language(s): EN, FR, DE",
+          "severity": "info"
+        },
+        {
+          "code": "APP_OVER_CELLULAR_LIMIT",
+          "passed": true,
+          "checkable": true,
+          "detail": "50.0 MB.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_LOW_RATINGS",
+          "passed": true,
+          "checkable": true,
+          "detail": "500 rating(s) at 4.6★.",
+          "severity": "info"
+        }
+      ],
+      "expectedProfile": {
+        "supportsIphone": true,
+        "supportsIpad": false,
+        "inferredDevice": "iPhone 6.9\" / 6.5\"",
+        "screenshotsExposed": true,
+        "sizeMb": 50.0
+      }
+    },
+    {
+      "name": "stale",
+      "entry": {
+        "trackId": 1,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. ",
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2026-01-01T00:00:00Z",
+        "userRatingCount": 500,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": [
+          "Productivity"
+        ],
+        "fileSizeBytes": 52428800,
+        "languageCodesISO2A": [
+          "EN",
+          "FR",
+          "DE"
+        ],
+        "supportedDevices": [
+          "iPhone13-iPhone13",
+          "iPadAir-iPadAir"
+        ],
+        "screenshotUrls": [
+          "https://cdn/a/0.png/392x852bb.png",
+          "https://cdn/a/1.png/392x852bb.png",
+          "https://cdn/a/2.png/392x852bb.png",
+          "https://cdn/a/3.png/392x852bb.png",
+          "https://cdn/a/4.png/392x852bb.png",
+          "https://cdn/a/5.png/392x852bb.png"
+        ],
+        "ipadScreenshotUrls": [
+          "https://cdn/p/0.png/576x768bb.png",
+          "https://cdn/p/1.png/576x768bb.png",
+          "https://cdn/p/2.png/576x768bb.png",
+          "https://cdn/p/3.png/576x768bb.png"
+        ]
+      },
+      "today": "2026-07-27",
+      "expectedScore": 81.8,
+      "expectedPassed": 9,
+      "expectedChecked": 11,
+      "expectedUnknown": 0,
+      "expectedStatus": "warn",
+      "expectedChecks": [
+        {
+          "code": "APP_TITLE_TOO_LONG",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 of 30 characters used.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_DESCRIPTION",
+          "passed": true,
+          "checkable": true,
+          "detail": "340 characters.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_TOO_FEW_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 exposed.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_UNUSED_SCREENSHOT_SLOTS",
+          "passed": false,
+          "checkable": true,
+          "detail": "6 of 10 slots used.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_SCREENSHOT_RATIO_UNKNOWN",
+          "passed": true,
+          "checkable": true,
+          "detail": "Matches iPhone 6.9\" / 6.5\".",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_IPAD_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "4 exposed.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_STALE",
+          "passed": false,
+          "checkable": true,
+          "detail": "Last shipped 207 days ago.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_RELEASE_NOTES",
+          "passed": true,
+          "checkable": true,
+          "detail": "50 characters.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_FEW_LOCALES",
+          "passed": true,
+          "checkable": true,
+          "detail": "3 language(s): EN, FR, DE",
+          "severity": "info"
+        },
+        {
+          "code": "APP_OVER_CELLULAR_LIMIT",
+          "passed": true,
+          "checkable": true,
+          "detail": "50.0 MB.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_LOW_RATINGS",
+          "passed": true,
+          "checkable": true,
+          "detail": "500 rating(s) at 4.6★.",
+          "severity": "info"
+        }
+      ],
+      "expectedProfile": {
+        "supportsIphone": true,
+        "supportsIpad": true,
+        "inferredDevice": "iPhone 6.9\" / 6.5\"",
+        "screenshotsExposed": true,
+        "sizeMb": 50.0
+      }
+    },
+    {
+      "name": "very stale",
+      "entry": {
+        "trackId": 1,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. ",
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2024-01-01T00:00:00Z",
+        "userRatingCount": 500,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": [
+          "Productivity"
+        ],
+        "fileSizeBytes": 52428800,
+        "languageCodesISO2A": [
+          "EN",
+          "FR",
+          "DE"
+        ],
+        "supportedDevices": [
+          "iPhone13-iPhone13",
+          "iPadAir-iPadAir"
+        ],
+        "screenshotUrls": [
+          "https://cdn/a/0.png/392x852bb.png",
+          "https://cdn/a/1.png/392x852bb.png",
+          "https://cdn/a/2.png/392x852bb.png",
+          "https://cdn/a/3.png/392x852bb.png",
+          "https://cdn/a/4.png/392x852bb.png",
+          "https://cdn/a/5.png/392x852bb.png"
+        ],
+        "ipadScreenshotUrls": [
+          "https://cdn/p/0.png/576x768bb.png",
+          "https://cdn/p/1.png/576x768bb.png",
+          "https://cdn/p/2.png/576x768bb.png",
+          "https://cdn/p/3.png/576x768bb.png"
+        ]
+      },
+      "today": "2026-07-27",
+      "expectedScore": 81.8,
+      "expectedPassed": 9,
+      "expectedChecked": 11,
+      "expectedUnknown": 0,
+      "expectedStatus": "fail",
+      "expectedChecks": [
+        {
+          "code": "APP_TITLE_TOO_LONG",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 of 30 characters used.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_DESCRIPTION",
+          "passed": true,
+          "checkable": true,
+          "detail": "340 characters.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_TOO_FEW_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 exposed.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_UNUSED_SCREENSHOT_SLOTS",
+          "passed": false,
+          "checkable": true,
+          "detail": "6 of 10 slots used.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_SCREENSHOT_RATIO_UNKNOWN",
+          "passed": true,
+          "checkable": true,
+          "detail": "Matches iPhone 6.9\" / 6.5\".",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_IPAD_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "4 exposed.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_VERY_STALE",
+          "passed": false,
+          "checkable": true,
+          "detail": "Last shipped 938 days ago.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_RELEASE_NOTES",
+          "passed": true,
+          "checkable": true,
+          "detail": "50 characters.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_FEW_LOCALES",
+          "passed": true,
+          "checkable": true,
+          "detail": "3 language(s): EN, FR, DE",
+          "severity": "info"
+        },
+        {
+          "code": "APP_OVER_CELLULAR_LIMIT",
+          "passed": true,
+          "checkable": true,
+          "detail": "50.0 MB.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_LOW_RATINGS",
+          "passed": true,
+          "checkable": true,
+          "detail": "500 rating(s) at 4.6★.",
+          "severity": "info"
+        }
+      ],
+      "expectedProfile": {
+        "supportsIphone": true,
+        "supportsIpad": true,
+        "inferredDevice": "iPhone 6.9\" / 6.5\"",
+        "screenshotsExposed": true,
+        "sizeMb": 50.0
+      }
+    },
+    {
+      "name": "no update date",
+      "entry": {
+        "trackId": 1,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. ",
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": null,
+        "userRatingCount": 500,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": [
+          "Productivity"
+        ],
+        "fileSizeBytes": 52428800,
+        "languageCodesISO2A": [
+          "EN",
+          "FR",
+          "DE"
+        ],
+        "supportedDevices": [
+          "iPhone13-iPhone13",
+          "iPadAir-iPadAir"
+        ],
+        "screenshotUrls": [
+          "https://cdn/a/0.png/392x852bb.png",
+          "https://cdn/a/1.png/392x852bb.png",
+          "https://cdn/a/2.png/392x852bb.png",
+          "https://cdn/a/3.png/392x852bb.png",
+          "https://cdn/a/4.png/392x852bb.png",
+          "https://cdn/a/5.png/392x852bb.png"
+        ],
+        "ipadScreenshotUrls": [
+          "https://cdn/p/0.png/576x768bb.png",
+          "https://cdn/p/1.png/576x768bb.png",
+          "https://cdn/p/2.png/576x768bb.png",
+          "https://cdn/p/3.png/576x768bb.png"
+        ]
+      },
+      "today": "2026-07-27",
+      "expectedScore": 90.0,
+      "expectedPassed": 9,
+      "expectedChecked": 10,
+      "expectedUnknown": 1,
+      "expectedStatus": "pass",
+      "expectedChecks": [
+        {
+          "code": "APP_TITLE_TOO_LONG",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 of 30 characters used.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_DESCRIPTION",
+          "passed": true,
+          "checkable": true,
+          "detail": "340 characters.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_TOO_FEW_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 exposed.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_UNUSED_SCREENSHOT_SLOTS",
+          "passed": false,
+          "checkable": true,
+          "detail": "6 of 10 slots used.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_SCREENSHOT_RATIO_UNKNOWN",
+          "passed": true,
+          "checkable": true,
+          "detail": "Matches iPhone 6.9\" / 6.5\".",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_IPAD_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "4 exposed.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_STALE",
+          "passed": false,
+          "checkable": false,
+          "detail": "No update date in the catalogue.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_RELEASE_NOTES",
+          "passed": true,
+          "checkable": true,
+          "detail": "50 characters.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_FEW_LOCALES",
+          "passed": true,
+          "checkable": true,
+          "detail": "3 language(s): EN, FR, DE",
+          "severity": "info"
+        },
+        {
+          "code": "APP_OVER_CELLULAR_LIMIT",
+          "passed": true,
+          "checkable": true,
+          "detail": "50.0 MB.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_LOW_RATINGS",
+          "passed": true,
+          "checkable": true,
+          "detail": "500 rating(s) at 4.6★.",
+          "severity": "info"
+        }
+      ],
+      "expectedProfile": {
+        "supportsIphone": true,
+        "supportsIpad": true,
+        "inferredDevice": "iPhone 6.9\" / 6.5\"",
+        "screenshotsExposed": true,
+        "sizeMb": 50.0
+      }
+    },
+    {
+      "name": "oversized binary",
+      "entry": {
+        "trackId": 1,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. ",
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+        "userRatingCount": 500,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": [
+          "Productivity"
+        ],
+        "fileSizeBytes": 314572800,
+        "languageCodesISO2A": [
+          "EN",
+          "FR",
+          "DE"
+        ],
+        "supportedDevices": [
+          "iPhone13-iPhone13",
+          "iPadAir-iPadAir"
+        ],
+        "screenshotUrls": [
+          "https://cdn/a/0.png/392x852bb.png",
+          "https://cdn/a/1.png/392x852bb.png",
+          "https://cdn/a/2.png/392x852bb.png",
+          "https://cdn/a/3.png/392x852bb.png",
+          "https://cdn/a/4.png/392x852bb.png",
+          "https://cdn/a/5.png/392x852bb.png"
+        ],
+        "ipadScreenshotUrls": [
+          "https://cdn/p/0.png/576x768bb.png",
+          "https://cdn/p/1.png/576x768bb.png",
+          "https://cdn/p/2.png/576x768bb.png",
+          "https://cdn/p/3.png/576x768bb.png"
+        ]
+      },
+      "today": "2026-07-27",
+      "expectedScore": 81.8,
+      "expectedPassed": 9,
+      "expectedChecked": 11,
+      "expectedUnknown": 0,
+      "expectedStatus": "warn",
+      "expectedChecks": [
+        {
+          "code": "APP_TITLE_TOO_LONG",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 of 30 characters used.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_DESCRIPTION",
+          "passed": true,
+          "checkable": true,
+          "detail": "340 characters.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_TOO_FEW_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 exposed.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_UNUSED_SCREENSHOT_SLOTS",
+          "passed": false,
+          "checkable": true,
+          "detail": "6 of 10 slots used.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_SCREENSHOT_RATIO_UNKNOWN",
+          "passed": true,
+          "checkable": true,
+          "detail": "Matches iPhone 6.9\" / 6.5\".",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_IPAD_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "4 exposed.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_STALE",
+          "passed": true,
+          "checkable": true,
+          "detail": "Last shipped 26 days ago.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_RELEASE_NOTES",
+          "passed": true,
+          "checkable": true,
+          "detail": "50 characters.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_FEW_LOCALES",
+          "passed": true,
+          "checkable": true,
+          "detail": "3 language(s): EN, FR, DE",
+          "severity": "info"
+        },
+        {
+          "code": "APP_OVER_CELLULAR_LIMIT",
+          "passed": false,
+          "checkable": true,
+          "detail": "300.0 MB.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_LOW_RATINGS",
+          "passed": true,
+          "checkable": true,
+          "detail": "500 rating(s) at 4.6★.",
+          "severity": "info"
+        }
+      ],
+      "expectedProfile": {
+        "supportsIphone": true,
+        "supportsIpad": true,
+        "inferredDevice": "iPhone 6.9\" / 6.5\"",
+        "screenshotsExposed": true,
+        "sizeMb": 300.0
+      }
+    },
+    {
+      "name": "no size reported",
+      "entry": {
+        "trackId": 1,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. ",
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+        "userRatingCount": 500,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": [
+          "Productivity"
+        ],
+        "fileSizeBytes": 0,
+        "languageCodesISO2A": [
+          "EN",
+          "FR",
+          "DE"
+        ],
+        "supportedDevices": [
+          "iPhone13-iPhone13",
+          "iPadAir-iPadAir"
+        ],
+        "screenshotUrls": [
+          "https://cdn/a/0.png/392x852bb.png",
+          "https://cdn/a/1.png/392x852bb.png",
+          "https://cdn/a/2.png/392x852bb.png",
+          "https://cdn/a/3.png/392x852bb.png",
+          "https://cdn/a/4.png/392x852bb.png",
+          "https://cdn/a/5.png/392x852bb.png"
+        ],
+        "ipadScreenshotUrls": [
+          "https://cdn/p/0.png/576x768bb.png",
+          "https://cdn/p/1.png/576x768bb.png",
+          "https://cdn/p/2.png/576x768bb.png",
+          "https://cdn/p/3.png/576x768bb.png"
+        ]
+      },
+      "today": "2026-07-27",
+      "expectedScore": 90.0,
+      "expectedPassed": 9,
+      "expectedChecked": 10,
+      "expectedUnknown": 1,
+      "expectedStatus": "pass",
+      "expectedChecks": [
+        {
+          "code": "APP_TITLE_TOO_LONG",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 of 30 characters used.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_DESCRIPTION",
+          "passed": true,
+          "checkable": true,
+          "detail": "340 characters.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_TOO_FEW_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 exposed.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_UNUSED_SCREENSHOT_SLOTS",
+          "passed": false,
+          "checkable": true,
+          "detail": "6 of 10 slots used.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_SCREENSHOT_RATIO_UNKNOWN",
+          "passed": true,
+          "checkable": true,
+          "detail": "Matches iPhone 6.9\" / 6.5\".",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_IPAD_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "4 exposed.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_STALE",
+          "passed": true,
+          "checkable": true,
+          "detail": "Last shipped 26 days ago.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_RELEASE_NOTES",
+          "passed": true,
+          "checkable": true,
+          "detail": "50 characters.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_FEW_LOCALES",
+          "passed": true,
+          "checkable": true,
+          "detail": "3 language(s): EN, FR, DE",
+          "severity": "info"
+        },
+        {
+          "code": "APP_OVER_CELLULAR_LIMIT",
+          "passed": false,
+          "checkable": false,
+          "detail": "No size reported.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_LOW_RATINGS",
+          "passed": true,
+          "checkable": true,
+          "detail": "500 rating(s) at 4.6★.",
+          "severity": "info"
+        }
+      ],
+      "expectedProfile": {
+        "supportsIphone": true,
+        "supportsIpad": true,
+        "inferredDevice": "iPhone 6.9\" / 6.5\"",
+        "screenshotsExposed": true,
+        "sizeMb": 0.0
+      }
+    },
+    {
+      "name": "single locale",
+      "entry": {
+        "trackId": 1,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. ",
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+        "userRatingCount": 500,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": [
+          "Productivity"
+        ],
+        "fileSizeBytes": 52428800,
+        "languageCodesISO2A": [
+          "EN"
+        ],
+        "supportedDevices": [
+          "iPhone13-iPhone13",
+          "iPadAir-iPadAir"
+        ],
+        "screenshotUrls": [
+          "https://cdn/a/0.png/392x852bb.png",
+          "https://cdn/a/1.png/392x852bb.png",
+          "https://cdn/a/2.png/392x852bb.png",
+          "https://cdn/a/3.png/392x852bb.png",
+          "https://cdn/a/4.png/392x852bb.png",
+          "https://cdn/a/5.png/392x852bb.png"
+        ],
+        "ipadScreenshotUrls": [
+          "https://cdn/p/0.png/576x768bb.png",
+          "https://cdn/p/1.png/576x768bb.png",
+          "https://cdn/p/2.png/576x768bb.png",
+          "https://cdn/p/3.png/576x768bb.png"
+        ]
+      },
+      "today": "2026-07-27",
+      "expectedScore": 81.8,
+      "expectedPassed": 9,
+      "expectedChecked": 11,
+      "expectedUnknown": 0,
+      "expectedStatus": "pass",
+      "expectedChecks": [
+        {
+          "code": "APP_TITLE_TOO_LONG",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 of 30 characters used.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_DESCRIPTION",
+          "passed": true,
+          "checkable": true,
+          "detail": "340 characters.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_TOO_FEW_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 exposed.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_UNUSED_SCREENSHOT_SLOTS",
+          "passed": false,
+          "checkable": true,
+          "detail": "6 of 10 slots used.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_SCREENSHOT_RATIO_UNKNOWN",
+          "passed": true,
+          "checkable": true,
+          "detail": "Matches iPhone 6.9\" / 6.5\".",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_IPAD_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "4 exposed.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_STALE",
+          "passed": true,
+          "checkable": true,
+          "detail": "Last shipped 26 days ago.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_RELEASE_NOTES",
+          "passed": true,
+          "checkable": true,
+          "detail": "50 characters.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_FEW_LOCALES",
+          "passed": false,
+          "checkable": true,
+          "detail": "1 language(s): EN",
+          "severity": "info"
+        },
+        {
+          "code": "APP_OVER_CELLULAR_LIMIT",
+          "passed": true,
+          "checkable": true,
+          "detail": "50.0 MB.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_LOW_RATINGS",
+          "passed": true,
+          "checkable": true,
+          "detail": "500 rating(s) at 4.6★.",
+          "severity": "info"
+        }
+      ],
+      "expectedProfile": {
+        "supportsIphone": true,
+        "supportsIpad": true,
+        "inferredDevice": "iPhone 6.9\" / 6.5\"",
+        "screenshotsExposed": true,
+        "sizeMb": 50.0
+      }
+    },
+    {
+      "name": "no release notes",
+      "entry": {
+        "trackId": 1,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. ",
+        "version": "1.0.0",
+        "releaseNotes": "",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+        "userRatingCount": 500,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": [
+          "Productivity"
+        ],
+        "fileSizeBytes": 52428800,
+        "languageCodesISO2A": [
+          "EN",
+          "FR",
+          "DE"
+        ],
+        "supportedDevices": [
+          "iPhone13-iPhone13",
+          "iPadAir-iPadAir"
+        ],
+        "screenshotUrls": [
+          "https://cdn/a/0.png/392x852bb.png",
+          "https://cdn/a/1.png/392x852bb.png",
+          "https://cdn/a/2.png/392x852bb.png",
+          "https://cdn/a/3.png/392x852bb.png",
+          "https://cdn/a/4.png/392x852bb.png",
+          "https://cdn/a/5.png/392x852bb.png"
+        ],
+        "ipadScreenshotUrls": [
+          "https://cdn/p/0.png/576x768bb.png",
+          "https://cdn/p/1.png/576x768bb.png",
+          "https://cdn/p/2.png/576x768bb.png",
+          "https://cdn/p/3.png/576x768bb.png"
+        ]
+      },
+      "today": "2026-07-27",
+      "expectedScore": 81.8,
+      "expectedPassed": 9,
+      "expectedChecked": 11,
+      "expectedUnknown": 0,
+      "expectedStatus": "warn",
+      "expectedChecks": [
+        {
+          "code": "APP_TITLE_TOO_LONG",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 of 30 characters used.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_DESCRIPTION",
+          "passed": true,
+          "checkable": true,
+          "detail": "340 characters.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_TOO_FEW_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 exposed.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_UNUSED_SCREENSHOT_SLOTS",
+          "passed": false,
+          "checkable": true,
+          "detail": "6 of 10 slots used.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_SCREENSHOT_RATIO_UNKNOWN",
+          "passed": true,
+          "checkable": true,
+          "detail": "Matches iPhone 6.9\" / 6.5\".",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_IPAD_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "4 exposed.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_STALE",
+          "passed": true,
+          "checkable": true,
+          "detail": "Last shipped 26 days ago.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_RELEASE_NOTES",
+          "passed": false,
+          "checkable": true,
+          "detail": "None returned.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_FEW_LOCALES",
+          "passed": true,
+          "checkable": true,
+          "detail": "3 language(s): EN, FR, DE",
+          "severity": "info"
+        },
+        {
+          "code": "APP_OVER_CELLULAR_LIMIT",
+          "passed": true,
+          "checkable": true,
+          "detail": "50.0 MB.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_LOW_RATINGS",
+          "passed": true,
+          "checkable": true,
+          "detail": "500 rating(s) at 4.6★.",
+          "severity": "info"
+        }
+      ],
+      "expectedProfile": {
+        "supportsIphone": true,
+        "supportsIpad": true,
+        "inferredDevice": "iPhone 6.9\" / 6.5\"",
+        "screenshotsExposed": true,
+        "sizeMb": 50.0
+      }
+    },
+    {
+      "name": "few ratings",
+      "entry": {
+        "trackId": 1,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. ",
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+        "userRatingCount": 12,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": [
+          "Productivity"
+        ],
+        "fileSizeBytes": 52428800,
+        "languageCodesISO2A": [
+          "EN",
+          "FR",
+          "DE"
+        ],
+        "supportedDevices": [
+          "iPhone13-iPhone13",
+          "iPadAir-iPadAir"
+        ],
+        "screenshotUrls": [
+          "https://cdn/a/0.png/392x852bb.png",
+          "https://cdn/a/1.png/392x852bb.png",
+          "https://cdn/a/2.png/392x852bb.png",
+          "https://cdn/a/3.png/392x852bb.png",
+          "https://cdn/a/4.png/392x852bb.png",
+          "https://cdn/a/5.png/392x852bb.png"
+        ],
+        "ipadScreenshotUrls": [
+          "https://cdn/p/0.png/576x768bb.png",
+          "https://cdn/p/1.png/576x768bb.png",
+          "https://cdn/p/2.png/576x768bb.png",
+          "https://cdn/p/3.png/576x768bb.png"
+        ]
+      },
+      "today": "2026-07-27",
+      "expectedScore": 81.8,
+      "expectedPassed": 9,
+      "expectedChecked": 11,
+      "expectedUnknown": 0,
+      "expectedStatus": "pass",
+      "expectedChecks": [
+        {
+          "code": "APP_TITLE_TOO_LONG",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 of 30 characters used.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_DESCRIPTION",
+          "passed": true,
+          "checkable": true,
+          "detail": "340 characters.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_TOO_FEW_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 exposed.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_UNUSED_SCREENSHOT_SLOTS",
+          "passed": false,
+          "checkable": true,
+          "detail": "6 of 10 slots used.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_SCREENSHOT_RATIO_UNKNOWN",
+          "passed": true,
+          "checkable": true,
+          "detail": "Matches iPhone 6.9\" / 6.5\".",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_IPAD_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "4 exposed.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_STALE",
+          "passed": true,
+          "checkable": true,
+          "detail": "Last shipped 26 days ago.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_RELEASE_NOTES",
+          "passed": true,
+          "checkable": true,
+          "detail": "50 characters.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_FEW_LOCALES",
+          "passed": true,
+          "checkable": true,
+          "detail": "3 language(s): EN, FR, DE",
+          "severity": "info"
+        },
+        {
+          "code": "APP_OVER_CELLULAR_LIMIT",
+          "passed": true,
+          "checkable": true,
+          "detail": "50.0 MB.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_LOW_RATINGS",
+          "passed": false,
+          "checkable": true,
+          "detail": "12 rating(s) at 4.6★.",
+          "severity": "info"
+        }
+      ],
+      "expectedProfile": {
+        "supportsIphone": true,
+        "supportsIpad": true,
+        "inferredDevice": "iPhone 6.9\" / 6.5\"",
+        "screenshotsExposed": true,
+        "sizeMb": 50.0
+      }
+    },
+    {
+      "name": "unrecognised ratio",
+      "entry": {
+        "trackId": 1,
+        "trackName": "Kaizen",
+        "sellerName": "Paolo",
+        "description": "A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. A habit tracker. ",
+        "version": "1.0.0",
+        "releaseNotes": "Fixed a crash when adding a habit on first launch.",
+        "releaseDate": "2024-01-01T00:00:00Z",
+        "currentVersionReleaseDate": "2026-07-01T00:00:00Z",
+        "userRatingCount": 500,
+        "averageUserRating": 4.6,
+        "price": 0.0,
+        "genres": [
+          "Productivity"
+        ],
+        "fileSizeBytes": 52428800,
+        "languageCodesISO2A": [
+          "EN",
+          "FR",
+          "DE"
+        ],
+        "supportedDevices": [
+          "iPhone13-iPhone13",
+          "iPadAir-iPadAir"
+        ],
+        "screenshotUrls": [
+          "https://cdn/a/1.png/100x100bb.png"
+        ],
+        "ipadScreenshotUrls": [
+          "https://cdn/p/0.png/576x768bb.png",
+          "https://cdn/p/1.png/576x768bb.png",
+          "https://cdn/p/2.png/576x768bb.png",
+          "https://cdn/p/3.png/576x768bb.png"
+        ]
+      },
+      "today": "2026-07-27",
+      "expectedScore": 72.7,
+      "expectedPassed": 8,
+      "expectedChecked": 11,
+      "expectedUnknown": 0,
+      "expectedStatus": "warn",
+      "expectedChecks": [
+        {
+          "code": "APP_TITLE_TOO_LONG",
+          "passed": true,
+          "checkable": true,
+          "detail": "6 of 30 characters used.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_NO_DESCRIPTION",
+          "passed": true,
+          "checkable": true,
+          "detail": "340 characters.",
+          "severity": "error"
+        },
+        {
+          "code": "APP_TOO_FEW_SCREENSHOTS",
+          "passed": false,
+          "checkable": true,
+          "detail": "1 exposed.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_UNUSED_SCREENSHOT_SLOTS",
+          "passed": false,
+          "checkable": true,
+          "detail": "1 of 10 slots used.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_SCREENSHOT_RATIO_UNKNOWN",
+          "passed": false,
+          "checkable": true,
+          "detail": "The aspect ratio matches no current device family.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_IPAD_SCREENSHOTS",
+          "passed": true,
+          "checkable": true,
+          "detail": "4 exposed.",
+          "severity": "info"
+        },
+        {
+          "code": "APP_STALE",
+          "passed": true,
+          "checkable": true,
+          "detail": "Last shipped 26 days ago.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_NO_RELEASE_NOTES",
+          "passed": true,
+          "checkable": true,
+          "detail": "50 characters.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_FEW_LOCALES",
+          "passed": true,
+          "checkable": true,
+          "detail": "3 language(s): EN, FR, DE",
+          "severity": "info"
+        },
+        {
+          "code": "APP_OVER_CELLULAR_LIMIT",
+          "passed": true,
+          "checkable": true,
+          "detail": "50.0 MB.",
+          "severity": "warning"
+        },
+        {
+          "code": "APP_LOW_RATINGS",
+          "passed": true,
+          "checkable": true,
+          "detail": "500 rating(s) at 4.6★.",
+          "severity": "info"
+        }
+      ],
+      "expectedProfile": {
+        "supportsIphone": true,
+        "supportsIpad": true,
+        "inferredDevice": null,
+        "screenshotsExposed": true,
+        "sizeMb": 50.0
+      }
+    }
   ]
 }

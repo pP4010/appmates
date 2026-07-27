@@ -11,6 +11,7 @@ import { loadAso } from './lib/keywords.js';
 import { loadMarketSpec, defaultStorefronts, countryName } from './lib/market.js';
 import { loadTestingSpec } from './lib/testers.js';
 import { loadListingLimits } from './lib/metadata.js';
+import { loadAppHealthSpec } from './lib/app-profile.js';
 import { ITunesClient } from './lib/itunes.js';
 
 import { initScreenshots } from './views/screenshots.js';
@@ -22,9 +23,11 @@ import { initCompetitors } from './views/competitors.js';
 import { initRank } from './views/rank.js';
 import { initTesters } from './views/testers.js';
 import { initSpecs } from './views/specs.js';
+import { initOverview, selectedApp } from './views/overview.js';
 
 /** Title and one-line purpose per view, shown in the top bar. */
 const VIEWS = {
+  overview: ['Overview', 'Your app, and what is left to fix'],
   screenshots: ['Screenshots', 'Validate and repair store assets'],
   keywords: ['Keyword field', 'Audit the 100 characters nobody sees'],
   metadata: ['Listing text', 'Field limits for both stores'],
@@ -37,8 +40,8 @@ const VIEWS = {
 };
 
 function route() {
-  const name = (location.hash || '#screenshots').slice(1);
-  const active = name in VIEWS ? name : 'screenshots';
+  const name = (location.hash || '#overview').slice(1);
+  const active = name in VIEWS ? name : 'overview';
 
   for (const view of Object.keys(VIEWS)) {
     document.getElementById(`view-${view}`)?.classList.toggle('active', view === active);
@@ -59,7 +62,7 @@ function fillCountrySelects() {
   const options = defaultStorefronts()
     .map((code) => `<option value="${code}">${countryName(code)}</option>`)
     .join('');
-  for (const id of ['nicheCountry', 'compCountry', 'rankCountry']) {
+  for (const id of ['nicheCountry', 'compCountry', 'rankCountry', 'ovCountry']) {
     const select = document.getElementById(id);
     if (select) select.innerHTML = options;
   }
@@ -74,12 +77,39 @@ async function boot() {
   loadMarketSpec(specs);
   loadTestingSpec(specs);
   loadListingLimits(specs);
+  loadAppHealthSpec(specs);
 
   fillCountrySelects();
 
   // A single client so the throttle and cache are shared across every tool
   // rather than each view hammering Apple on its own schedule.
   const client = new ITunesClient();
+
+  // The app card doubles as the selector: choosing one here prefills the tools
+  // that need an id, which is the point of having a selection at all.
+  const refreshAppCard = () => {
+    const app = selectedApp();
+    const mark = document.getElementById('appMark');
+    document.getElementById('appName').textContent = app?.name ?? 'Select your app';
+    document.getElementById('appSeller').textContent =
+      app?.seller ?? 'LaunchPilot · pre-flight checks';
+    mark.innerHTML = app?.artwork
+      ? `<img src="${app.artwork}" alt="">`
+      : '◈';
+    if (app) {
+      const rankInput = document.getElementById('rankApp');
+      if (!rankInput.value) rankInput.value = String(app.bundleId || app.trackId);
+      const mine = document.getElementById('compMine');
+      if (!mine.value) mine.value = app.name;
+      const kwTitle = document.getElementById('kwTitle');
+      if (!kwTitle.value) kwTitle.value = app.name;
+      const mdTitle = document.getElementById('mdTitle');
+      if (!mdTitle.value) {
+        mdTitle.value = app.name;
+        mdTitle.dispatchEvent(new Event('input'));
+      }
+    }
+  };
 
   initScreenshots({ getSpec });
   initKeywords();
@@ -90,6 +120,8 @@ async function boot() {
   initRank(client);
   initTesters();
   initSpecs(specs);
+  initOverview(client, { onAppChange: refreshAppCard });
+  refreshAppCard();
 
   const apple = specs.stores.apple;
   const google = specs.stores.google;
