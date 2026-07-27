@@ -107,28 +107,52 @@ export default {
     }
 
     // Public data, keyed only by the two public inputs — a normal HTTP cache
-    // in front of Apple, not a store of anything a caller sent.
+    // in front of Apple, not a store of anything a caller sent. The Cache API
+    // is local to whichever Cloudflare data centre serves the request, not
+    // shared globally, so this only ever saves a repeat trip to Apple from
+    // the same region — it never risks papering over a real failure for
+    // callers elsewhere.
     const cache = caches.default;
     const cacheKey = new Request(new URL(`/cache/${country}/${id}`, url.origin));
     const cached = await cache.match(cacheKey);
     if (cached) return cached;
 
-    let pageResponse;
-    try {
-      pageResponse = await fetch(APP_PAGE_URL(country, id), {
-        headers: { 'user-agent': USER_AGENT },
-      });
-    } catch {
-      return json(EMPTY);
-    }
-    if (!pageResponse.ok) {
-      return json(EMPTY);
-    }
+    const html = await fetchPage(APP_PAGE_URL(country, id));
+    const result = html ? extractScreenshots(html) : EMPTY;
+    const response = json(result);
 
-    const html = await pageResponse.text();
-    const result = extractScreenshots(html);
-    const response = json(result, { headers: { 'cache-control': 'public, max-age=43200' } });
-    ctx.waitUntil(cache.put(cacheKey, response.clone()));
+    // Apple's page is rate-limited, and a rate-limited or otherwise empty
+    // result is never cached: an app that genuinely has no screenshots would
+    // always look the same, but a transient failure would otherwise get
+    // stuck as "not found" at this data centre for the full TTL. Caching
+    // only successes means the very next request retries fresh instead.
+    if (result.iphone.length || result.ipad.length) {
+      const toCache = json(result, { headers: { 'cache-control': 'public, max-age=43200' } });
+      ctx.waitUntil(cache.put(cacheKey, toCache));
+    }
     return response;
   },
 };
+
+/**
+ * Fetch the product page, retrying once on a 429.
+ *
+ * Apple throttles this page under load, and Cloudflare's own IP ranges are a
+ * shared pool every deployment of this relay fetches from — a request that
+ * lands on Apple mid-throttle is common enough to be worth one retry rather
+ * than reporting a real listing's screenshots as "not found".
+ */
+async function fetchPage(url) {
+  for (const delayMs of [0, 500]) {
+    if (delayMs) await new Promise((resolve) => setTimeout(resolve, delayMs));
+    let response;
+    try {
+      response = await fetch(url, { headers: { 'user-agent': USER_AGENT } });
+    } catch {
+      continue;
+    }
+    if (response.ok) return response.text();
+    if (response.status !== 429) return null;
+  }
+  return null;
+}
