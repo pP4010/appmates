@@ -392,15 +392,13 @@ function screenshots(p) {
   if (!shots.length) return '';
 
   const which = p.iphoneScreenshots.length ? 'iPhone' : 'iPad';
+  const shown = shots.slice(0, 10);
   return `
     <h3>Your ${which} screenshots</h3>
     <p class="note">Served downscaled by the catalogue, so this shows the ratio and the
       order — not the resolution you uploaded.</p>
-    <div class="screenshot-wall">
-      ${shots
-        .slice(0, 10)
-        .map((u) => `<img src="${escapeHtml(u)}" alt="" loading="lazy">`)
-        .join('')}
+    <div class="screenshot-wall" style="--shot-count:${shown.length}">
+      ${shown.map((u) => `<img src="${escapeHtml(u)}" alt="" loading="lazy">`).join('')}
     </div>`;
 }
 

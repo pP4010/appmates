@@ -447,13 +447,17 @@ td.tight { padding-top: .35rem; padding-bottom: .35rem; }
 .gallery-group { margin: .9rem 0 1.3rem; }
 .gallery-title { font-size: .8rem; color: var(--text-2); margin-bottom: .4rem; font-weight: 550; }
 
-/* Overview's own screenshot set: large and wrapping, unlike the small
+/* Overview's own screenshot set: large and filling the row, unlike the small
    horizontal-scroll strip `.gallery` uses to compare many competitors at
-   once. A grid lets a full set of up to 10 fill the available width instead
-   of running off-screen. */
+   once. A fixed column count — one per screenshot, set inline as
+   `--shot-count` — means a full set of up to 10 always shares the row rather
+   than wrapping once there happen to be enough of them to outrun a fixed
+   minimum size. Below `--wall-breakpoint`, that stops being viable (10 equal
+   columns on a phone screen would be slivers), so the media query switches
+   to a normal wrapping grid instead. */
 .screenshot-wall {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(var(--shot-count, 5), 1fr);
   gap: .7rem;
   padding: .1rem;
 }
@@ -466,6 +470,10 @@ td.tight { padding-top: .35rem; padding-bottom: .35rem; }
   transition: transform .15s, box-shadow .15s;
 }
 .screenshot-wall img:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+@media (max-width: 760px) {
+  .screenshot-wall { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+}
 
 /* ============================ findings ============================ */
 
