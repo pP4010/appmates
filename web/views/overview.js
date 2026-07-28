@@ -182,12 +182,13 @@ function setStarButton(button, isFavorite) {
 function render(report, recoveredScreenshots) {
   return (
     (recoveredScreenshots ? recoveredNote() : '') +
-    header(report) +
+    appHeaderCard(report) +
+    screenshots(report.profile) +
+    summaryBanner(report) +
     identity(report.profile) +
     checklist(report) +
     nextSteps(report) +
     findingsPanel(report.findings, 'What to fix') +
-    screenshots(report.profile) +
     limitations()
   );
 }
@@ -201,9 +202,8 @@ function recoveredNote() {
     </p>`;
 }
 
-function header(report) {
+function appHeaderCard(report) {
   const p = report.profile;
-  const tone = report.score >= 80 ? 'ok' : report.score >= 50 ? 'warn' : 'bad';
 
   return `
     <div class="app-header">
@@ -234,7 +234,13 @@ function header(report) {
           }
         </div>
       </div>
-    </div>
+    </div>`;
+}
+
+function summaryBanner(report) {
+  const tone = report.score >= 80 ? 'ok' : report.score >= 50 ? 'warn' : 'bad';
+
+  return `
     <div class="summary ${tone === 'ok' ? 'pass' : tone === 'warn' ? 'warn' : 'fail'}">
       <span class="verdict">${
         report.score >= 80
@@ -390,7 +396,7 @@ function screenshots(p) {
     <h3>Your ${which} screenshots</h3>
     <p class="note">Served downscaled by the catalogue, so this shows the ratio and the
       order — not the resolution you uploaded.</p>
-    <div class="gallery">
+    <div class="screenshot-wall">
       ${shots
         .slice(0, 10)
         .map((u) => `<img src="${escapeHtml(u)}" alt="" loading="lazy">`)

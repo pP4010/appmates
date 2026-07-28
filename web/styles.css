@@ -447,6 +447,26 @@ td.tight { padding-top: .35rem; padding-bottom: .35rem; }
 .gallery-group { margin: .9rem 0 1.3rem; }
 .gallery-title { font-size: .8rem; color: var(--text-2); margin-bottom: .4rem; font-weight: 550; }
 
+/* Overview's own screenshot set: large and wrapping, unlike the small
+   horizontal-scroll strip `.gallery` uses to compare many competitors at
+   once. A grid lets a full set of up to 10 fill the available width instead
+   of running off-screen. */
+.screenshot-wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: .7rem;
+  padding: .1rem;
+}
+.screenshot-wall img {
+  width: 100%; height: auto; display: block;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-sm);
+  transition: transform .15s, box-shadow .15s;
+}
+.screenshot-wall img:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
 /* ============================ findings ============================ */
 
 .findings { border-top: 1px solid var(--border); }
