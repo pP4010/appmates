@@ -1,0 +1,32 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "launchpilot-community",
+  "main": "src/index.js",
+  "compatibility_date": "2026-07-27",
+  "observability": {
+    "enabled": true,
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "launchpilot-community",
+      "database_id": "04e0ab03-b954-40a5-8418-4d5d01a94568",
+    },
+  ],
+  "send_email": [
+    {
+      "name": "EMAIL",
+    },
+  ],
+  "vars": {
+    // Must be a domain onboarded with `wrangler email sending enable <domain>` —
+    // see community/README.md. Magic links silently fail to send until this
+    // is a real, onboarded address.
+    "EMAIL_FROM_ADDRESS": "noreply@example.com",
+    "EMAIL_FROM_NAME": "LaunchPilot",
+    // The web app's origin — CORS is locked to exactly this one origin
+    // because, unlike the anonymous screenshot relay, these requests carry
+    // an auth cookie.
+    "APP_ORIGIN": "http://localhost:8123",
+  },
+}
