@@ -40,6 +40,7 @@ function remember(profile, country) {
         name: profile.name,
         seller: profile.seller,
         artwork: profile.artwork,
+        storeUrl: profile.storeUrl,
         country,
       }),
     );
@@ -369,6 +370,11 @@ function nextSteps(report) {
       href: '#screenshots',
       label: 'Check your screenshot files',
       why: 'The catalogue only serves downscaled copies; the real files can be checked here.',
+    },
+    {
+      href: '#community',
+      label: 'Get real testers',
+      why: 'Recruit closed testers before you ship, or real users for this launch or update.',
     },
   ];
 

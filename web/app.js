@@ -25,6 +25,8 @@ import { initTesters } from './views/testers.js';
 import { initSpecs } from './views/specs.js';
 import { initOverview, selectedApp, loadApp } from './views/overview.js';
 import { initFavoritesTray } from './views/favorites-tray.js';
+import { initCommunity } from './views/community.js';
+import { CommunityClient } from './lib/community.js';
 
 /** Title and one-line purpose per view, shown in the top bar. */
 const VIEWS = {
@@ -37,6 +39,7 @@ const VIEWS = {
   competitors: ['Competitors', 'Who holds the term, and how they present'],
   rank: ['Rank', 'Your position per keyword, tracked locally'],
   testers: ['Play testers', 'The 12-for-14-days production gate'],
+  community: ['Get testers', 'Real closed testers, and real users at launch'],
   specs: ['Specs', 'The bundled catalogue and its provenance'],
 };
 
@@ -130,6 +133,8 @@ async function boot() {
       loadApp(appId, country);
     },
   });
+
+  initCommunity(new CommunityClient(), { getCurrentApp: selectedApp });
 
   const apple = specs.stores.apple;
   const google = specs.stores.google;

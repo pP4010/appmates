@@ -40,6 +40,9 @@
     <a class="nav-item" href="#rank"><span class="nav-icon">↗</span> Rank</a>
     <a class="nav-item" href="#testers"><span class="nav-icon">◷</span> Play testers</a>
 
+    <div class="nav-section">Community</div>
+    <a class="nav-item" href="#community"><span class="nav-icon">◍</span> Get testers</a>
+
     <div class="nav-section">Reference</div>
     <a class="nav-item" href="#specs"><span class="nav-icon">☰</span> Specs</a>
 
@@ -372,6 +375,38 @@
   { "date": "2026-07-03", "opted_in": 13 }
 ]'></textarea>
         <div id="testHistoryStatus" class="status"></div>
+      </section>
+
+      <!-- ==================== community ==================== -->
+      <section class="view" id="view-community">
+        <p class="lead">
+          Get real closed testers before you ship, and real users for a launch or an update
+          once you have. This is the one part of LaunchPilot that needs an email — every other
+          tool here never has, and never will.
+        </p>
+        <div class="callout">
+          <strong>What this isn't.</strong> Nobody here trades App Store or Play reviews, and
+          nothing on this page ever asks a tester to leave one. Testers give you private
+          feedback on a closed build; if a launch listing earns you real users, whether they
+          review is entirely between them and the store. Tokens are earned only by actually
+          testing someone else's app — they can't be bought, and only a listing's owner
+          confirming real feedback was given can mint one.
+        </div>
+
+        <div id="commSignedOut">
+          <div class="toolbar">
+            <div class="field" style="flex:1;min-width:16rem">
+              <label for="commEmail">Email</label>
+              <input id="commEmail" type="email" placeholder="you@example.com">
+            </div>
+            <button id="commSendLink" class="primary">Send sign-in link</button>
+          </div>
+          <div id="commAuthStatus" class="status"></div>
+        </div>
+
+        <div id="commSignedIn" class="hidden">
+          <div id="commBody"></div>
+        </div>
       </section>
 
       <!-- ==================== specs ==================== -->

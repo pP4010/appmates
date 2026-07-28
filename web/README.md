@@ -14,6 +14,7 @@ account, and no server of ours is involved at any point.
 | **Competitors** — the field, their screenshots, shared vocabulary | yes |
 | **Rank** — your position per keyword | yes |
 | **Play testers** — the 12-for-14-days gate | no |
+| **Get testers** — recruit closed testers, or real users at launch | yes, and an account |
 | **Specs** — the bundled catalogue and its provenance | no |
 
 ## Running it
@@ -41,7 +42,7 @@ byte gives the right one.
 with `access-control-allow-origin: *`, so the page can query it from the browser.
 No proxy, no API key, no request of yours passing through anything we run.
 
-### The one exception
+### The two exceptions
 
 `itunes.apple.com` withholds `screenshotUrls` for some apps — confirmed by
 hand, in every storefront and on both its endpoints, against a real listing.
@@ -53,6 +54,14 @@ returns the screenshot URLs it finds — nothing else. It is opt-in: until you
 deploy it and set `SCREENSHOT_RELAY_URL` in `lib/itunes.js`, the Overview page
 behaves exactly as before, reporting withheld screenshots as "not exposed"
 rather than fetching them from anywhere. See `worker/README.md`.
+
+**Get testers** needs to know who's who — matching a real developer with a
+real tester isn't possible from data that never leaves the browser. `community/`
+is a separate Cloudflare Worker + D1 database backing exactly that one view;
+every other tool stays account-free. It is opt-in the same way: until you
+deploy it and set `COMMUNITY_API_URL` in `lib/community.js`, the "Get testers"
+nav item stays hidden. See `community/README.md` for the design rationale —
+in particular why it never touches App Store or Play reviews.
 
 ## Keeping it honest
 
@@ -86,7 +95,7 @@ hides in a `tRNS` chunk rather than the colour-type byte.
 CI fails if any generated file is stale.
 
 ```bash
-node --test "web/test/*.test.js"     # 47 tests
+node --test "web/test/*.test.js"     # 72 tests
 ```
 
 ## Two things the catalogue does that took finding
@@ -123,8 +132,12 @@ web/
 │   ├── competitors.js  # competitors + rank    ← competitor_analyzer
 │   ├── testers.js      # closed testing        ← google_play
 │   ├── itunes.js       # catalogue client      ← clients/itunes
+│   ├── favorites.js    # starred apps, local only
+│   ├── community.js    # Get testers API client ← community/
 │   ├── zip.js          # batch download
 │   └── specs.json      # GENERATED — do not edit
 ├── views/              # one module per tool; rendering only
+│   ├── favorites-tray.js
+│   └── community.js
 └── test/
 ```

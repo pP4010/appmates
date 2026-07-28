@@ -29,3 +29,8 @@ web/.fixtures/
 # Worker: installed deps and local dev state, neither of which is source
 worker/node_modules/
 worker/.wrangler/
+
+# Community backend: same, plus local-only dev secrets
+community/node_modules/
+community/.wrangler/
+community/.dev.vars
