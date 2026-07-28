@@ -319,6 +319,7 @@ function checklist(report) {
           ? pill('pass', 'ok')
           : pill(c.severity, c.severity === 'error' ? 'bad' : c.severity === 'warning' ? 'warn' : 'info')
         : pill('not knowable', 'neutral'),
+      num: true,
     },
   ]);
 
