@@ -306,7 +306,7 @@ button {
   background: var(--surface);
   color: var(--text);
   cursor: pointer;
-  transition: background .12s, border-color .12s, transform .06s, filter .12s;
+  transition: background .12s, border-color .12s, transform .06s, filter .12s, box-shadow .12s;
   white-space: nowrap;
 }
 button:hover:not(:disabled) { background: var(--surface-2); border-color: var(--muted); }
@@ -316,11 +316,13 @@ button.primary {
   color: var(--on-accent);
   border-color: transparent;
   box-shadow: var(--shadow-sm);
+  /* A gradient can't cross-fade into the flat hover colour below — trying to
+     ease that swap is exactly what caused the flicker. Dropping `background`
+     from the transitioned properties here makes the swap instant instead of
+     attempted-and-broken, which reads as clean rather than as a glitch. */
+  transition: border-color .12s, transform .06s;
 }
-/* Brightness only, never a background swap: the base state is a gradient and
-   a solid colour cannot cross-fade into one, so switching `background`
-   itself on hover reads as a flicker instead of a smooth highlight. */
-button.primary:hover:not(:disabled) { filter: brightness(1.1); }
+button.primary:hover:not(:disabled) { background: var(--accent); }
 button:disabled { opacity: .5; cursor: not-allowed; }
 button.ghost { border-color: transparent; background: none; color: var(--accent); padding: .3rem .45rem; }
 button.ghost:hover:not(:disabled) { background: var(--accent-soft); }
