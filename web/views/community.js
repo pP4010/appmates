@@ -1,28 +1,65 @@
 /**
  * Get real testers before you ship, real users at launch.
  *
- * The one view in this app that needs an account — see the callout in
- * index.html for why that's scoped to exactly this feature. Everything
- * here talks to `community/`, a separate backend from the screenshot
- * relay; if it isn't deployed and configured, this view says so instead of
- * failing silently.
+ * Three jobs live here — a marketplace, a ranking, and your own dashboard —
+ * so this is the one view in the app with tabs rather than one long scroll.
+ *
+ * Two ideas hold the feature together:
+ *
+ * Browsing, requesting to test and the leaderboard need no account; only
+ * posting or managing a listing does. Requesting to join a `testing`
+ * listing is a short reviewed pitch, not an instant join, and the owner
+ * accepts or declines before it becomes an active test.
+ *
+ * And every headline number on a listing card is *recomputed here* from the
+ * public catalogue when you look at it — the same engines the rest of this
+ * app runs on (`lib/app-profile.js`) — never a figure the person who posted
+ * the listing typed in. That is what makes a card worth trusting, and it is
+ * why the tools half of this app and the community half are one product
+ * rather than two sharing a sidebar.
+ *
+ * See `community/README.md` for the design rationale — in particular why
+ * none of this ever touches App Store/Play reviews or ratings.
  */
 
-import { el, escapeHtml, empty, withStatus, appIcon } from './shared.js';
+import { el, escapeHtml, empty, withStatus, appIcon, bar, toneFor } from './shared.js';
+import { checkAppHealth, profileFromEntry } from '../lib/app-profile.js';
+
+const MIN_MESSAGE_LENGTH = 20;
+
+/** Catalogue lookups are throttled to protect Apple's endpoint, so a page of
+ * cards enriches over a noticeable stretch of time. Capping keeps that from
+ * running for minutes on a long list — the rows below the fold simply keep
+ * their community-only numbers, which are still true. */
+const MAX_ENRICHED_CARDS = 12;
+
+const TABS = {
+  browse: 'Find testers',
+  leaderboard: 'Leaderboard',
+  mine: 'Your testing',
+};
 
 let client = null;
+let itunes = null;
 let getCurrentApp = null;
 let user = null;
+let activeTab = 'browse';
 
-export function initCommunity(communityClient, { getCurrentApp: getApp } = {}) {
+/** Bumped on every tab switch or re-render. The progressive enrichment loop
+ * carries the value it started with and stops the moment it no longer
+ * matches, so a stale pass can never write into a page it no longer owns. */
+let renderGeneration = 0;
+
+export function initCommunity(communityClient, { getCurrentApp: getApp, itunes: itunesClient } = {}) {
   client = communityClient;
   getCurrentApp = getApp || (() => null);
+  itunes = itunesClient ?? null;
 
   const navItem = document.querySelector('.nav-item[href="#community"]');
 
   if (!client.configured) {
     navItem?.classList.add('hidden');
-    el('commSignedOut').innerHTML = empty(
+    el('commBody').innerHTML = empty(
       '◍',
       'Not set up yet',
       'This deployment has no community backend configured. See community/README.md.',
@@ -30,12 +67,55 @@ export function initCommunity(communityClient, { getCurrentApp: getApp } = {}) {
     return;
   }
 
+  refreshSession();
+}
+
+async function refreshSession() {
+  try {
+    user = await client.me();
+    renderAll();
+  } catch (err) {
+    el('commBody').innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderAll() {
+  renderAuthBar();
+  renderShell();
+}
+
+/* ============================ auth bar ============================ */
+
+function renderAuthBar() {
+  const authBar = el('commAuthBar');
+  if (user) {
+    authBar.innerHTML = `
+      <div class="summary pass" style="margin-bottom:1.2rem">
+        <span class="verdict">Signed in as ${escapeHtml(user.email)}</span>
+        <span class="muted">${user.tokenBalance} token${user.tokenBalance === 1 ? '' : 's'}</span>
+        <button id="commLogout" class="ghost" style="margin-left:auto">Sign out</button>
+      </div>`;
+    el('commLogout').addEventListener('click', async () => {
+      await client.logout();
+      user = null;
+      renderAll();
+    });
+    return;
+  }
+
+  authBar.innerHTML = `
+    <div class="toolbar" style="margin-bottom:1.2rem">
+      <div class="field" style="flex:1;min-width:14rem">
+        <label for="commEmail">Already have an account?</label>
+        <input id="commEmail" type="email" placeholder="you@example.com">
+      </div>
+      <button id="commSendLink">Send sign-in link</button>
+    </div>
+    <div id="commAuthStatus" class="status"></div>`;
   el('commSendLink').addEventListener('click', sendLink);
   el('commEmail').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') sendLink();
   });
-
-  refreshSession();
 }
 
 async function sendLink() {
@@ -52,25 +132,45 @@ async function sendLink() {
   });
 }
 
-async function refreshSession() {
-  user = await client.me();
-  el('commSignedOut').classList.toggle('hidden', Boolean(user));
-  el('commSignedIn').classList.toggle('hidden', !user);
-  if (user) await renderDashboard();
+/* ============================ tabs ============================ */
+
+function renderShell() {
+  el('commBody').innerHTML = `
+    <div class="tabs" role="tablist">
+      ${Object.entries(TABS)
+        .map(
+          ([key, label]) => `
+        <button class="tab ${key === activeTab ? 'active' : ''}" role="tab"
+          aria-selected="${key === activeTab}" data-tab="${key}">${escapeHtml(label)}</button>`,
+        )
+        .join('')}
+    </div>
+    <div id="commTabPanel" role="tabpanel"></div>`;
+
+  el('commBody')
+    .querySelectorAll('.tab')
+    .forEach((btn) =>
+      btn.addEventListener('click', () => {
+        if (btn.dataset.tab === activeTab) return;
+        activeTab = btn.dataset.tab;
+        renderShell();
+      }),
+    );
+
+  renderActiveTab();
 }
 
-function renderDashboard() {
-  el('commBody').innerHTML = `
-    <div class="summary pass">
-      <span class="verdict">Signed in as ${escapeHtml(user.email)}</span>
-      <span class="muted">${user.tokenBalance} token${user.tokenBalance === 1 ? '' : 's'}</span>
-      <button id="commLogout" class="ghost" style="margin-left:auto">Sign out</button>
-    </div>
+function renderActiveTab() {
+  renderGeneration += 1;
+  if (activeTab === 'browse') renderBrowseTab();
+  else if (activeTab === 'leaderboard') renderLeaderboardTab();
+  else renderYourTestingTab();
+}
 
-    <h3>Get testers or announce a launch</h3>
-    <div id="commCreatePanel"></div>
+/* ============================ browse tab ============================ */
 
-    <h3>Browse open listings</h3>
+function renderBrowseTab() {
+  el('commTabPanel').innerHTML = `
     <div class="toolbar">
       <div class="field">
         <label for="commBrowseKind">Show</label>
@@ -80,9 +180,479 @@ function renderDashboard() {
           <option value="launch">Just launched / updated</option>
         </select>
       </div>
+      <div class="field">
+        <label for="commBrowseSort">Sort by</label>
+        <select id="commBrowseSort">
+          <option value="newest">Newest</option>
+          <option value="contributors">Top contributors</option>
+          <option value="emptiest">Needs testers most</option>
+        </select>
+      </div>
       <button id="commBrowseRefresh">Refresh</button>
     </div>
-    <div id="commBrowseResults"></div>
+    <p class="verified-note">
+      <span>◈</span>
+      <span>Listing health, rating and last-shipped are recomputed from the public
+      catalogue as you read — never entered by the developer who posted the listing.</span>
+    </p>
+    <div id="commBrowseResults"></div>`;
+
+  el('commBrowseRefresh').addEventListener('click', renderBrowse);
+  el('commBrowseKind').addEventListener('change', renderBrowse);
+  el('commBrowseSort').addEventListener('change', renderBrowse);
+  renderBrowse();
+}
+
+async function renderBrowse() {
+  const generation = ++renderGeneration;
+  const results = el('commBrowseResults');
+  results.innerHTML = '<div class="status"><span class="spinner"></span> Loading</div>';
+
+  try {
+    const [listings, mine] = await Promise.all([
+      client.browseListings(el('commBrowseKind').value || undefined, el('commBrowseSort').value),
+      user ? client.mySessions() : Promise.resolve([]),
+    ]);
+    if (generation !== renderGeneration) return;
+
+    const requestedIds = new Set(mine.map((s) => s.listing.id));
+    results.innerHTML = listings.length
+      ? listings
+          .map((l) =>
+            listingCard(l, {
+              canRequest: l.kind === 'testing',
+              alreadyRequested: requestedIds.has(l.id),
+            }),
+          )
+          .join('')
+      : empty('◍', 'Nothing here yet', 'Be the first to post a listing.');
+
+    wireRequestButtons(results, listings);
+    enrichListings(listings, generation);
+  } catch (err) {
+    if (generation === renderGeneration) {
+      results.innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
+    }
+  }
+}
+
+function reliabilityBadge(rep) {
+  if (!rep || rep.isNew) return '<span class="pill neutral">New builder</span>';
+  const tone = rep.completionRate >= 70 ? 'ok' : rep.completionRate >= 40 ? 'warn' : 'bad';
+  const resp =
+    rep.avgResponseHours == null
+      ? ''
+      : rep.avgResponseHours < 24
+        ? ` · replies in ~${Math.max(1, Math.round(rep.avgResponseHours))}h`
+        : ` · replies in ~${Math.round(rep.avgResponseHours / 24)}d`;
+  return `<span class="pill ${tone}">${rep.completionRate}% completion${resp}</span>`;
+}
+
+function contributionBadge(count) {
+  if (!count) return '';
+  return `<span class="pill info" title="Tests this developer completed for other people's apps">
+    ${count} test${count === 1 ? '' : 's'} given back</span>`;
+}
+
+/** Placeholder cells the enrichment pass fills in. Rendering them up front
+ * rather than appending later keeps the card from reflowing under the
+ * reader once the catalogue answers. */
+function metricCell(label, id, value = '…', cls = 'pending', sub = '') {
+  return `
+    <div class="card-metric">
+      <span class="metric-label">${escapeHtml(label)}</span>
+      <span class="metric-value ${cls}" ${id ? `data-metric="${id}"` : ''}>${value}</span>
+      ${sub ? `<span class="metric-sub">${escapeHtml(sub)}</span>` : ''}
+    </div>`;
+}
+
+function listingCard(l, { canRequest = false, alreadyRequested = false } = {}) {
+  const kindLabel = l.kind === 'testing' ? 'Looking for testers' : 'Launch / update';
+  const featured = l.featuredUntil && new Date(l.featuredUntil) > new Date();
+  const action = !canRequest
+    ? ''
+    : alreadyRequested
+      ? '<span class="pill neutral">Already requested</span>'
+      : `<button class="primary comm-request" data-listing="${l.id}">Request to test</button>`;
+
+  const slots =
+    l.kind === 'testing'
+      ? metricCell('Testers', null, `${l.slotsFilled}/${l.slotsWanted || '∞'}`, '')
+      : '';
+
+  return `
+    <div class="panel listing-card" data-card="${l.id}">
+      <div class="listing-head">
+        ${appIcon(l.app.artworkUrl, l.app.name)}
+        <div style="flex:1;min-width:0">
+          <div class="listing-title">
+            <strong>${escapeHtml(l.app.name)}</strong>
+            <span class="pill ${l.kind === 'testing' ? 'info' : 'ok'}">${kindLabel}</span>
+            ${featured ? '<span class="pill warn">Featured</span>' : ''}
+          </div>
+          <div style="margin-top:.35rem;display:flex;gap:.3rem;flex-wrap:wrap">
+            ${reliabilityBadge(l.ownerReliability)}
+            ${contributionBadge(l.ownerContribution)}
+          </div>
+          ${l.description ? `<div class="listing-desc">${escapeHtml(l.description)}</div>` : ''}
+        </div>
+        ${action}
+      </div>
+      <div class="card-metrics">
+        ${slots}
+        ${metricCell('Listing health', `health-${l.id}`)}
+        ${metricCell('Rating', `rating-${l.id}`)}
+        ${metricCell('Last shipped', `shipped-${l.id}`)}
+        <div class="card-metric">
+          <span class="metric-label">Link</span>
+          <span class="metric-value" style="font-size:.85rem;font-weight:500">
+            <a href="${escapeHtml(l.link)}" target="_blank" rel="noopener">Open ↗</a>
+          </span>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ------------------ verified facts, filled in progressively ------------- */
+
+function daysAgo(date) {
+  if (!date) return null;
+  return Math.floor((Date.now() - date.getTime()) / 86_400_000);
+}
+
+function setMetric(id, { text, tone = '', sub = '' }) {
+  const node = document.querySelector(`[data-metric="${id}"]`);
+  if (!node) return;
+  node.className = `metric-value ${tone}`;
+  node.textContent = text;
+  if (sub) {
+    const subNode = document.createElement('span');
+    subNode.className = 'metric-sub';
+    subNode.textContent = sub;
+    node.after(subNode);
+  }
+}
+
+/**
+ * Walks the rendered cards and replaces each placeholder with a number
+ * derived right here from the public catalogue. Deliberately sequential:
+ * `ITunesClient` throttles anyway, and firing a dozen lookups at once would
+ * only queue them behind each other while making failures harder to isolate.
+ *
+ * Every failure is per-card and silent — a listing whose app the catalogue
+ * will not answer for still shows its community numbers, which are true.
+ */
+async function enrichListings(listings, generation) {
+  if (!itunes) return;
+
+  for (const listing of listings.slice(0, MAX_ENRICHED_CARDS)) {
+    if (generation !== renderGeneration) return;
+    if (!listing.app?.trackId) continue;
+
+    try {
+      const entry = await itunes.lookup(String(listing.app.trackId), {
+        country: listing.app.country || 'us',
+      });
+      if (generation !== renderGeneration) return;
+      if (!entry) {
+        markUnavailable(listing.id);
+        continue;
+      }
+
+      const report = checkAppHealth(profileFromEntry(entry));
+      const { profile } = report;
+
+      setMetric(`health-${listing.id}`, {
+        text: `${Math.round(report.score)}/100`,
+        tone: toneFor(report.score, [80, 50]),
+      });
+
+      setMetric(`rating-${listing.id}`, {
+        text: profile.rating ? `${profile.rating.toFixed(1)}★` : 'No ratings',
+        sub: profile.ratingCount ? `${profile.ratingCount.toLocaleString('en-US')} ratings` : '',
+      });
+
+      const days = daysAgo(profile.updated);
+      setMetric(`shipped-${listing.id}`, {
+        text: days === null ? 'Unknown' : days === 0 ? 'Today' : `${days}d ago`,
+        tone: days === null ? '' : days > 180 ? 'warn' : '',
+      });
+    } catch {
+      markUnavailable(listing.id);
+    }
+  }
+}
+
+function markUnavailable(listingId) {
+  for (const key of ['health', 'rating', 'shipped']) {
+    setMetric(`${key}-${listingId}`, { text: '—' });
+  }
+}
+
+/* ============================ leaderboard tab ============================ */
+
+async function renderLeaderboardTab() {
+  const generation = renderGeneration;
+  const panel = el('commTabPanel');
+  panel.innerHTML = '<div class="status"><span class="spinner"></span> Loading</div>';
+
+  try {
+    const { windowDays, testers, contributors } = await client.leaderboard();
+    if (generation !== renderGeneration) return;
+
+    panel.innerHTML = `
+      <p class="lead">
+        Ranked by tokens earned over the last ${windowDays} days. A token exists only
+        because a developer confirmed by hand that someone's testing actually helped —
+        so the ranking recomputes itself, but nothing on it was ever self-awarded.
+      </p>
+
+      <h3>Top testers</h3>
+      ${testersBoard(testers)}
+
+      <h3>Apps from top contributors</h3>
+      <p class="note">
+        Developers who test other people's apps while recruiting for their own.
+        Contributing is what surfaces a listing here — it can't be bought.
+      </p>
+      ${contributorsSection(contributors)}`;
+
+    wireRequestButtons(panel, contributors.flatMap((c) => c.listings.map(asRequestable)));
+    enrichListings(contributors.flatMap((c) => c.listings.map(asRequestable)), generation);
+  } catch (err) {
+    if (generation === renderGeneration) {
+      panel.innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
+    }
+  }
+}
+
+/** Contributor listings arrive in a slimmer shape than `browse` returns;
+ * this is the shared subset the request modal and enrichment both need. */
+function asRequestable(listing) {
+  return { ...listing, app: listing.app };
+}
+
+const MEDALS = ['🥇', '🥈', '🥉'];
+
+function testersBoard(entries) {
+  if (!entries.length) {
+    return empty(
+      '◍',
+      'No completed tests yet',
+      'The first confirmed test session puts someone on the board.',
+    );
+  }
+
+  const leader = entries[0].tokensEarned || 1;
+  return `<div class="panel board">
+    ${entries
+      .map((e) => {
+        const share = Math.round((e.tokensEarned / leader) * 100);
+        return `
+        <div class="board-row ${e.rank <= 3 ? 'top-3' : ''}">
+          <span class="board-rank">${e.rank <= 3 ? MEDALS[e.rank - 1] : e.rank}</span>
+          <span class="board-who">
+            <div class="board-name">${escapeHtml(e.displayName)}</div>
+            <div class="board-sub">${e.completedCount} test${e.completedCount === 1 ? '' : 's'} completed</div>
+          </span>
+          ${bar(share, toneFor(share, [66, 33]))}
+          <span class="board-metric">${e.tokensEarned} <span class="unit">tokens</span></span>
+        </div>`;
+      })
+      .join('')}
+  </div>`;
+}
+
+function contributorsSection(contributors) {
+  const withListings = contributors.filter((c) => c.listings.length);
+  if (!withListings.length) {
+    return empty(
+      '◍',
+      'Nothing to show yet',
+      'When someone who tests for others posts their own listing, it appears here.',
+    );
+  }
+
+  return withListings
+    .map(
+      (c) => `
+    <div class="panel contributor-group">
+      <div class="contributor-head">
+        <span class="board-rank">${c.rank <= 3 ? MEDALS[c.rank - 1] : c.rank}</span>
+        <span style="flex:1;min-width:0">
+          <div class="board-name">${escapeHtml(c.displayName)}</div>
+          <div class="board-sub">
+            ${c.completedCount} test${c.completedCount === 1 ? '' : 's'} given back to other developers
+          </div>
+        </span>
+        <span class="board-metric">${c.tokensEarned} <span class="unit">tokens</span></span>
+      </div>
+      <div class="contributor-listings">
+        ${c.listings.map(contributorListingRow).join('')}
+      </div>
+    </div>`,
+    )
+    .join('');
+}
+
+function contributorListingRow(l) {
+  const filled = l.slotsWanted ? Math.round((l.slotsFilled / l.slotsWanted) * 100) : 0;
+  return `
+    <div class="contributor-listing" data-card="${l.id}">
+      ${appIcon(l.app.artworkUrl, l.app.name)}
+      <div class="contributor-listing-body">
+        <div class="contributor-listing-name">${escapeHtml(l.app.name)}</div>
+        <div class="board-sub">
+          ${
+            l.kind === 'testing'
+              ? `${l.slotsFilled}/${l.slotsWanted || '∞'} testers`
+              : 'Launched — open to new users'
+          }
+          · <span data-metric="health-${l.id}" class="pending">checking…</span>
+        </div>
+      </div>
+      ${l.slotsWanted ? bar(filled, toneFor(100 - filled, [66, 33])) : ''}
+      ${
+        l.kind === 'testing'
+          ? `<button class="primary comm-request" data-listing="${l.id}">Request to test</button>`
+          : `<a href="${escapeHtml(l.link)}" target="_blank" rel="noopener">Open ↗</a>`
+      }
+    </div>`;
+}
+
+/* ============================ request modal ============================ */
+
+function wireRequestButtons(container, listings) {
+  container.querySelectorAll('.comm-request').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const listing = listings.find((l) => l.id === btn.dataset.listing);
+      if (listing) openRequestModal(listing);
+    });
+  });
+}
+
+function openRequestModal(listing) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'commRequestModal';
+  overlay.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="commReqTitle">
+      <div class="modal-head">
+        <div>
+          <h3 id="commReqTitle">Request to test ${escapeHtml(listing.app.name)}</h3>
+          <p class="modal-sub">The builder reviews every request — a short, specific pitch gets picked over a one-liner.</p>
+        </div>
+        <button class="modal-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-fields">
+        ${
+          user
+            ? ''
+            : `<div class="field">
+                 <label for="commReqName">Your name</label>
+                 <input id="commReqName" type="text" placeholder="Jane Doe">
+               </div>
+               <div class="field">
+                 <label for="commReqEmail">Your email</label>
+                 <input id="commReqEmail" type="email" placeholder="you@example.com">
+               </div>`
+        }
+        <div class="field">
+          <label for="commReqMessage">Message</label>
+          <textarea id="commReqMessage" rows="4"
+            placeholder="Device/OS you'll test on, and why you're a good fit for this app."></textarea>
+        </div>
+      </div>
+      <div id="commReqStatus" class="status"></div>
+      <button id="commReqSubmit" class="primary" style="width:100%;margin-top:.5rem">Send request</button>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeModal();
+  });
+  overlay.querySelector('.modal-close').addEventListener('click', closeModal);
+  document.addEventListener('keydown', onModalKeydown);
+  el('commReqSubmit').addEventListener('click', () => submitRequest(listing));
+  el('commReqMessage').focus();
+}
+
+function closeModal() {
+  document.getElementById('commRequestModal')?.remove();
+  document.removeEventListener('keydown', onModalKeydown);
+}
+
+function onModalKeydown(e) {
+  if (e.key === 'Escape') closeModal();
+}
+
+async function submitRequest(listing) {
+  const statusEl = el('commReqStatus');
+  const message = el('commReqMessage').value.trim();
+
+  if (message.length < MIN_MESSAGE_LENGTH) {
+    statusEl.className = 'status error';
+    statusEl.textContent = `Write a bit more — at least ${MIN_MESSAGE_LENGTH} characters about your device/OS and why you're a fit.`;
+    return;
+  }
+
+  const body = { message };
+  if (!user) {
+    body.name = el('commReqName').value.trim();
+    body.email = el('commReqEmail').value.trim();
+    if (!body.name || !body.email) {
+      statusEl.className = 'status error';
+      statusEl.textContent = 'Name and email are required.';
+      return;
+    }
+  }
+
+  await withStatus(statusEl, el('commReqSubmit'), null, async () => {
+    const result = await client.requestToJoin(listing.id, body);
+    showRequestSuccess(result);
+  });
+}
+
+function showRequestSuccess(result) {
+  const modal = document.querySelector('#commRequestModal .modal');
+  if (!modal) return;
+  modal.innerHTML = `
+    <div class="modal-head">
+      <h3>Request sent</h3>
+      <button class="modal-close" type="button" aria-label="Close">✕</button>
+    </div>
+    <p class="modal-sub">
+      ${
+        result.magicLinkSent
+          ? 'The builder has your request. Check your email for a sign-in link so you can track it and submit feedback once accepted.'
+          : "The builder has your request — you'll see it under \"Your testing\" once they respond."
+      }
+    </p>
+    <button id="commReqDone" class="primary" style="width:100%">Done</button>`;
+
+  const done = () => {
+    closeModal();
+    renderActiveTab();
+  };
+  modal.querySelector('.modal-close').addEventListener('click', done);
+  el('commReqDone').addEventListener('click', done);
+}
+
+/* ============================ your testing tab ============================ */
+
+function renderYourTestingTab() {
+  if (!user) {
+    el('commTabPanel').innerHTML = empty(
+      '◍',
+      'Sign in to manage your testing',
+      'Use the box above — browsing and requesting to test need no account, only posting does.',
+    );
+    return;
+  }
+
+  el('commTabPanel').innerHTML = `
+    <h3>Get testers or announce a launch</h3>
+    <div id="commCreatePanel"></div>
 
     <h3>Your listings</h3>
     <div id="commMyListings"></div>
@@ -90,16 +660,7 @@ function renderDashboard() {
     <h3>Apps you're testing</h3>
     <div id="commMySessions"></div>`;
 
-  el('commLogout').addEventListener('click', async () => {
-    await client.logout();
-    user = null;
-    await refreshSession();
-  });
-  el('commBrowseRefresh').addEventListener('click', renderBrowse);
-  el('commBrowseKind').addEventListener('change', renderBrowse);
-
   renderCreatePanel();
-  renderBrowse();
   renderMyListings();
   renderMySessions();
 }
@@ -173,65 +734,12 @@ async function createListing(app) {
     el('commLink').value = '';
     el('commDescription').value = '';
     await renderMyListings();
-    await renderBrowse();
-  });
-}
-
-async function renderBrowse() {
-  const results = el('commBrowseResults');
-  results.innerHTML = '<div class="status"><span class="spinner"></span> Loading</div>';
-  try {
-    const kind = el('commBrowseKind').value || undefined;
-    const listings = await client.browseListings(kind);
-    results.innerHTML = listings.length
-      ? listings.map((l) => listingCard(l, { canJoin: l.kind === 'testing' })).join('')
-      : empty('◍', 'Nothing here yet', 'Be the first to post a listing.');
-    wireJoinButtons(results);
-  } catch (err) {
-    results.innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
-  }
-}
-
-function listingCard(l, { canJoin = false } = {}) {
-  const kindLabel = l.kind === 'testing' ? 'Looking for testers' : 'Launch / update';
-  const featured = l.featuredUntil && new Date(l.featuredUntil) > new Date();
-  return `
-    <div class="panel" style="padding:.9rem 1rem;margin-bottom:.6rem">
-      <div style="display:flex;gap:.7rem;align-items:flex-start">
-        ${appIcon(l.app.artworkUrl, l.app.name)}
-        <div style="flex:1;min-width:0">
-          <strong>${escapeHtml(l.app.name)}</strong>
-          <span class="pill ${l.kind === 'testing' ? 'info' : 'ok'}" style="margin-left:.4rem">${kindLabel}</span>
-          ${featured ? '<span class="pill warn" style="margin-left:.3rem">Featured</span>' : ''}
-          <div class="muted" style="font-size:.85rem;margin-top:.2rem">${escapeHtml(l.description || '')}</div>
-          <div class="muted" style="font-size:.78rem;margin-top:.3rem">
-            ${l.kind === 'testing' ? `${l.slotsFilled}/${l.slotsWanted} testers · ` : ''}
-            <a href="${escapeHtml(l.link)}" target="_blank" rel="noopener">Open link ↗</a>
-          </div>
-        </div>
-        ${canJoin ? `<button class="primary comm-join" data-listing="${l.id}">Join to test</button>` : ''}
-      </div>
-    </div>`;
-}
-
-function wireJoinButtons(container) {
-  container.querySelectorAll('.comm-join').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      btn.disabled = true;
-      try {
-        await client.joinListing(btn.dataset.listing);
-        btn.textContent = 'Joined';
-        await renderMySessions();
-      } catch (err) {
-        btn.disabled = false;
-        btn.textContent = err.message;
-      }
-    });
   });
 }
 
 async function renderMyListings() {
   const container = el('commMyListings');
+  if (!container) return;
   container.innerHTML = '<div class="status"><span class="spinner"></span> Loading</div>';
   try {
     const listings = await client.myListings();
@@ -239,9 +747,7 @@ async function renderMyListings() {
       container.innerHTML = empty('◍', 'No listings yet', 'Post one above.');
       return;
     }
-    container.innerHTML = (
-      await Promise.all(listings.map((l) => myListingCard(l)))
-    ).join('');
+    container.innerHTML = (await Promise.all(listings.map((l) => myListingCard(l)))).join('');
     wireMyListingActions(container);
   } catch (err) {
     container.innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
@@ -250,30 +756,27 @@ async function renderMyListings() {
 
 async function myListingCard(l) {
   const sessions = l.status === 'open' ? await client.listingSessions(l.id) : [];
-  const rows = sessions
-    .map(
-      (s) => `
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.4rem 0;border-top:1px solid var(--border)">
-      <div style="min-width:0">
-        <span class="mono" style="font-size:.8rem">${escapeHtml(s.testerEmail)}</span>
-        <span class="pill neutral" style="margin-left:.4rem">${s.status}</span>
-        ${s.feedback ? `<div class="muted" style="font-size:.82rem;margin-top:.2rem">"${escapeHtml(s.feedback)}"</div>` : ''}
-      </div>
-      ${
-        s.status === 'submitted'
-          ? `<button class="comm-complete" data-session="${s.id}">Mark complete</button>`
-          : ''
-      }
-    </div>`,
-    )
-    .join('');
+  const pending = sessions.filter((s) => s.status === 'requested');
+  const active = sessions.filter((s) => s.status !== 'requested');
+
+  const activeHtml = active.length
+    ? active.map(sessionRow).join('')
+    : pending.length
+      ? ''
+      : '<p class="muted" style="font-size:.82rem">No testers have joined yet.</p>';
 
   return `
     <div class="panel" style="padding:.9rem 1rem;margin-bottom:.6rem">
       ${listingCardHeader(l)}
-      <div style="margin-top:.5rem">
-        ${rows || '<p class="muted" style="font-size:.82rem">No testers have joined yet.</p>'}
-      </div>
+      ${
+        pending.length
+          ? `<div style="margin-top:.7rem">
+               <strong style="font-size:.82rem">Requests to review (${pending.length})</strong>
+               ${pending.map(requestCard).join('')}
+             </div>`
+          : ''
+      }
+      <div style="margin-top:.6rem">${activeHtml}</div>
       <div style="margin-top:.6rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
         ${
           l.status === 'open'
@@ -290,6 +793,50 @@ async function myListingCard(l) {
     </div>`;
 }
 
+function requestCard(s) {
+  const rep =
+    s.testerCompletedCount > 0
+      ? `<span class="pill ok" style="margin-left:.4rem">${s.testerCompletedCount} test${s.testerCompletedCount === 1 ? '' : 's'} completed</span>`
+      : '<span class="pill neutral" style="margin-left:.4rem">New tester</span>';
+  return `
+    <div class="request-card">
+      <div class="request-head">
+        <span class="request-who">${escapeHtml(s.testerDisplayName || s.testerEmail)}${rep}</span>
+      </div>
+      <div class="request-message">"${escapeHtml(s.requestMessage)}"</div>
+      <div class="request-actions">
+        <button class="primary comm-accept" data-session="${s.id}">Accept</button>
+        <button class="ghost comm-decline" data-session="${s.id}">Decline</button>
+      </div>
+    </div>`;
+}
+
+function sessionRow(s) {
+  const evalBadges = [];
+  if (s.bugFound !== null) {
+    evalBadges.push(
+      `<span class="pill ${s.bugFound ? 'warn' : 'ok'}">${s.bugFound ? 'Bug found' : 'No bugs'}</span>`,
+    );
+  }
+  if (s.wouldUseAgain) {
+    evalBadges.push(`<span class="pill neutral">Would use again: ${escapeHtml(s.wouldUseAgain)}</span>`);
+  }
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.4rem 0;border-top:1px solid var(--border)">
+      <div style="min-width:0">
+        <span class="mono" style="font-size:.8rem">${escapeHtml(s.testerDisplayName || s.testerEmail)}</span>
+        <span class="pill neutral" style="margin-left:.4rem">${s.status}</span>
+        ${evalBadges.length ? `<div class="eval-summary">${evalBadges.join('')}</div>` : ''}
+        ${s.feedback ? `<div class="muted" style="font-size:.82rem;margin-top:.2rem">"${escapeHtml(s.feedback)}"</div>` : ''}
+      </div>
+      ${
+        s.status === 'submitted'
+          ? `<button class="comm-complete" data-session="${s.id}">Mark complete</button>`
+          : ''
+      }
+    </div>`;
+}
+
 function listingCardHeader(l) {
   const kindLabel = l.kind === 'testing' ? 'Looking for testers' : 'Launch / update';
   return `
@@ -303,25 +850,23 @@ function listingCardHeader(l) {
     </div>`;
 }
 
-function listingStatusEl(container, listingId) {
-  return container.querySelector(`.comm-listing-status[data-listing="${listingId}"]`);
-}
-
 function showListingError(container, listingId, message) {
-  const statusEl = listingStatusEl(container, listingId);
+  const statusEl = container.querySelector(`.comm-listing-status[data-listing="${listingId}"]`);
   if (statusEl) {
     statusEl.className = 'comm-listing-status status error';
     statusEl.textContent = message;
   }
 }
 
-function wireMyListingActions(container) {
-  container.querySelectorAll('.comm-complete').forEach((btn) => {
+/** One handler shape for every per-session button: disable, call, re-render,
+ * and put the failure where the user was already looking if it throws. */
+function wireSessionAction(container, selector, call) {
+  container.querySelectorAll(selector).forEach((btn) => {
     btn.addEventListener('click', async () => {
       const statusEl = btn.closest('.panel')?.querySelector('.comm-listing-status');
       btn.disabled = true;
       try {
-        await client.completeSession(btn.dataset.session);
+        await call(btn);
         await renderMyListings();
       } catch (err) {
         btn.disabled = false;
@@ -332,18 +877,14 @@ function wireMyListingActions(container) {
       }
     });
   });
-  container.querySelectorAll('.comm-close').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      btn.disabled = true;
-      try {
-        await client.closeListing(btn.dataset.listing);
-        await renderMyListings();
-      } catch (err) {
-        btn.disabled = false;
-        showListingError(container, btn.dataset.listing, err.message);
-      }
-    });
-  });
+}
+
+function wireMyListingActions(container) {
+  wireSessionAction(container, '.comm-accept', (btn) => client.acceptSession(btn.dataset.session));
+  wireSessionAction(container, '.comm-decline', (btn) => client.declineSession(btn.dataset.session));
+  wireSessionAction(container, '.comm-complete', (btn) => client.completeSession(btn.dataset.session));
+  wireSessionAction(container, '.comm-close', (btn) => client.closeListing(btn.dataset.listing));
+
   container.querySelectorAll('.comm-feature').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const listingId = btn.dataset.listing;
@@ -357,7 +898,8 @@ function wireMyListingActions(container) {
       try {
         await client.featureListing(listingId, days);
         user = { ...user, tokenBalance: user.tokenBalance - days * 3 };
-        await renderDashboard();
+        renderAuthBar();
+        await renderMyListings();
       } catch (err) {
         btn.disabled = false;
         showListingError(container, listingId, err.message);
@@ -366,13 +908,38 @@ function wireMyListingActions(container) {
   });
 }
 
+/* ---------------------------- your sessions ---------------------------- */
+
+const STATUS_LABEL = {
+  requested: 'Waiting for review',
+  declined: 'Declined',
+  accepted: 'Accepted — go test it',
+  submitted: 'Feedback submitted',
+  completed: 'Completed',
+  abandoned: 'Abandoned',
+};
+
+const STATUS_TONE = {
+  requested: 'neutral',
+  declined: 'bad',
+  accepted: 'info',
+  submitted: 'neutral',
+  completed: 'ok',
+  abandoned: 'neutral',
+};
+
 async function renderMySessions() {
   const container = el('commMySessions');
+  if (!container) return;
   container.innerHTML = '<div class="status"><span class="spinner"></span> Loading</div>';
   try {
     const sessions = await client.mySessions();
     if (!sessions.length) {
-      container.innerHTML = empty('◍', "You haven't joined anything yet", 'Browse listings above.');
+      container.innerHTML = empty(
+        '◍',
+        "You haven't requested to test anything yet",
+        'Find something on the Find testers tab.',
+      );
       return;
     }
     container.innerHTML = sessions.map(mySessionCard).join('');
@@ -383,24 +950,44 @@ async function renderMySessions() {
 }
 
 function mySessionCard(s) {
+  const tone = STATUS_TONE[s.status] || 'neutral';
+  const label = STATUS_LABEL[s.status] || s.status;
+
+  let body = '';
+  if (s.status === 'requested') {
+    body = `<div class="muted" style="font-size:.82rem;margin-top:.3rem">"${escapeHtml(s.requestMessage)}"</div>`;
+  } else if (s.status === 'accepted') {
+    body = `
+      <div style="margin-top:.5rem">
+        <textarea class="comm-feedback-input" data-session="${s.id}" rows="2"
+          placeholder="What did you find? Bugs, confusing steps, first impressions..."
+          style="width:100%"></textarea>
+        <div class="eval-fields">
+          <label><input type="checkbox" class="comm-bug-found" data-session="${s.id}"> Found a blocking bug</label>
+          <label>Would use again:
+            <select class="comm-would-use-again" data-session="${s.id}" style="width:auto">
+              <option value="">—</option>
+              <option value="yes">Yes</option>
+              <option value="maybe">Maybe</option>
+              <option value="no">No</option>
+            </select>
+          </label>
+        </div>
+        <button class="primary comm-submit" data-session="${s.id}">Submit feedback</button>
+        <div class="comm-session-status status" data-session="${s.id}"></div>
+      </div>`;
+  } else if (s.status === 'submitted' || s.status === 'completed') {
+    body = `<div class="muted" style="font-size:.82rem;margin-top:.3rem">"${escapeHtml(s.feedback ?? '')}"</div>`;
+  }
+
   return `
     <div class="panel" style="padding:.9rem 1rem;margin-bottom:.6rem">
       <div style="display:flex;gap:.7rem;align-items:flex-start">
         ${appIcon(s.listing.artworkUrl, s.listing.appName)}
         <div style="flex:1;min-width:0">
           <strong>${escapeHtml(s.listing.appName)}</strong>
-          <span class="pill neutral" style="margin-left:.4rem">${s.status}</span>
-          ${
-            s.status === 'joined'
-              ? `<div style="margin-top:.5rem">
-                   <textarea class="comm-feedback-input" data-session="${s.id}" rows="2"
-                     placeholder="What did you find? Bugs, confusing steps, first impressions..."
-                     style="width:100%"></textarea>
-                   <button class="primary comm-submit" data-session="${s.id}">Submit feedback</button>
-                   <div class="comm-session-status status" data-session="${s.id}"></div>
-                 </div>`
-              : `<div class="muted" style="font-size:.82rem;margin-top:.3rem">"${escapeHtml(s.feedback ?? '')}"</div>`
-          }
+          <span class="pill ${tone}" style="margin-left:.4rem">${label}</span>
+          ${body}
           ${s.status === 'completed' ? '<div class="muted" style="font-size:.78rem">+1 token awarded</div>' : ''}
         </div>
       </div>
@@ -421,9 +1008,15 @@ function wireMySessionActions(container) {
         }
         return;
       }
+      const bugFoundEl = container.querySelector(`.comm-bug-found[data-session="${id}"]`);
+      const wouldUseAgainEl = container.querySelector(`.comm-would-use-again[data-session="${id}"]`);
       btn.disabled = true;
       try {
-        await client.submitSession(id, feedback);
+        await client.submitSession(id, {
+          feedback,
+          bugFound: bugFoundEl?.checked ?? false,
+          wouldUseAgain: wouldUseAgainEl?.value || undefined,
+        });
         await renderMySessions();
       } catch (err) {
         btn.disabled = false;

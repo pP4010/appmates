@@ -4,8 +4,28 @@
     {
       "name": "launchpilot-web",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8123", "--directory", "web"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8123",
+        "--directory",
+        "web"
+      ],
       "port": 8123
+    },
+    {
+      "name": "launchpilot-community-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "community",
+        "--",
+        "--port",
+        "8788"
+      ],
+      "port": 8788
     }
   ]
 }

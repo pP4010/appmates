@@ -278,7 +278,7 @@ h3 { font-size: .86rem; font-weight: 650; margin: 1.5rem 0 .55rem; color: var(--
 .field { display: flex; flex-direction: column; gap: .28rem; min-width: 0; }
 .field > label { color: var(--muted); font-size: .72rem; font-weight: 600; letter-spacing: .02em; }
 
-input[type=text], input[type=number], input[type=color], textarea, select {
+input[type=text], input[type=email], input[type=number], input[type=color], textarea, select {
   font: inherit;
   font-size: .87rem;
   padding: .45rem .65rem;
@@ -730,3 +730,199 @@ a.brand:hover { background: var(--surface-3); border-color: var(--border-strong)
 }
 .next-card strong { font-size: .87rem; }
 .next-card span { font-size: .79rem; line-height: 1.4; }
+
+/* ============================ community ============================ */
+
+/* The "request to test" dialog — a short pitch reviewed by the listing's
+   owner before a slot is theirs, the same shape as a marketplace's
+   contact-the-owner modal: name/email only when nobody's signed in yet,
+   one message field, one primary action. */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  background: rgb(10 10 16 / 55%);
+  padding: 1.2rem;
+  animation: fade .15s ease-out;
+}
+.modal {
+  width: 100%; max-width: 26rem;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+  padding: 1.3rem 1.4rem 1.5rem;
+}
+.modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.modal-head h3 { margin: 0; font-size: 1rem; color: var(--text); }
+.modal-close {
+  background: none; border: none; color: var(--muted);
+  font-size: 1.05rem; line-height: 1; padding: .25rem .4rem; cursor: pointer;
+  border-radius: var(--r-sm);
+}
+.modal-close:hover { color: var(--text); background: var(--surface-2); }
+.modal-sub { color: var(--muted); font-size: .82rem; margin: .3rem 0 1.1rem; }
+.modal-fields { display: flex; flex-direction: column; gap: .8rem; }
+.modal-fields textarea { min-height: 5.5rem; }
+.modal .status { margin: .7rem 0 0; }
+
+.rep-badge { font-family: inherit; }
+
+/* A request awaiting the owner's review — accept/decline sit where a
+   completed session's "mark complete" button used to, so the review step
+   reads as one more stage of the same list rather than a bolted-on extra. */
+.request-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: .7rem .8rem;
+  margin-bottom: .5rem;
+  background: var(--accent-soft);
+}
+.request-card .request-head { display: flex; justify-content: space-between; align-items: baseline; gap: .6rem; }
+.request-card .request-who { font-weight: 600; font-size: .87rem; }
+.request-card .request-message { font-size: .85rem; color: var(--text-2); margin: .35rem 0 .55rem; }
+.request-card .request-actions { display: flex; gap: .5rem; }
+
+.eval-fields { display: flex; gap: 1rem; flex-wrap: wrap; margin: .5rem 0; font-size: .83rem; }
+.eval-fields label { display: flex; align-items: center; gap: .35rem; color: var(--text-2); }
+.eval-summary { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .3rem; }
+
+.leaderboard-row {
+  display: grid; grid-template-columns: 2rem 1fr auto; gap: .6rem; align-items: center;
+  padding: .5rem .2rem; border-top: 1px solid var(--border);
+}
+.leaderboard-row:first-child { border-top: none; }
+.leaderboard-rank { font-family: var(--mono, ui-monospace); color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums; }
+.leaderboard-row:nth-child(1) .leaderboard-rank,
+.leaderboard-row:nth-child(2) .leaderboard-rank,
+.leaderboard-row:nth-child(3) .leaderboard-rank { color: var(--warn); font-weight: 700; }
+.leaderboard-name { font-weight: 550; font-size: .88rem; }
+.leaderboard-count { color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; }
+
+/* The community view is the one page here that holds three jobs at once —
+   a marketplace, a ranking and your own dashboard. Tabs keep each of them
+   a full page rather than a third of a scroll, without spending three
+   sidebar slots on a single feature. */
+.tabs {
+  display: flex; gap: .1rem; flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  margin: 0 0 1.25rem;
+}
+.tab {
+  font: inherit; font-size: .86rem; font-weight: 600;
+  padding: .5rem .8rem;
+  background: none;
+  border: none; border-bottom: 2px solid transparent;
+  border-radius: 0;
+  margin-bottom: -1px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color .12s, border-color .12s;
+}
+.tab:hover:not(:disabled) { background: none; color: var(--text); border-color: var(--border-strong); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab .tab-count {
+  display: inline-block; margin-left: .35rem;
+  font-size: .72rem; font-variant-numeric: tabular-nums;
+  color: var(--muted); font-weight: 600;
+}
+.tab.active .tab-count { color: var(--accent); }
+
+/* A listing card carries the same shape of headline metrics a marketplace
+   puts on a for-sale card — except every number here is recomputed from the
+   public catalogue when you look at it, never typed in by the person who
+   posted it. `pending` is the state before that recomputation lands. */
+.listing-card { padding: .95rem 1.05rem; margin-bottom: .6rem; }
+.listing-head { display: flex; gap: .7rem; align-items: flex-start; }
+.listing-title { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+.listing-title strong { font-size: .95rem; letter-spacing: -0.01em; }
+.listing-desc { color: var(--text-2); font-size: .85rem; margin-top: .35rem; max-width: 70ch; }
+
+.card-metrics {
+  display: flex; flex-wrap: wrap; gap: 1.5rem;
+  margin-top: .8rem; padding-top: .7rem;
+  border-top: 1px solid var(--border);
+}
+.card-metric { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.card-metric .metric-label {
+  font-size: .63rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em;
+  color: var(--muted);
+}
+.card-metric .metric-value {
+  font-size: .95rem; font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.card-metric .metric-value.pending { color: var(--muted); font-weight: 500; }
+.card-metric .metric-value.ok { color: var(--ok); }
+.card-metric .metric-value.warn { color: var(--warn); }
+.card-metric .metric-value.bad { color: var(--bad); }
+.card-metric .metric-sub { font-size: .72rem; color: var(--muted); }
+
+.verified-note {
+  display: flex; align-items: center; gap: .4rem;
+  font-size: .74rem; color: var(--muted);
+  margin: -.4rem 0 1rem;
+}
+
+/* Ranked board. Rank, who, a proportion bar against the leader, and the
+   headline number — the bar is what turns a list of numbers into a shape
+   you can read without comparing digits. */
+.board { padding: .35rem 1.05rem; }
+.board-row {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr) minmax(5rem, 9rem) auto;
+  gap: .75rem; align-items: center;
+  padding: .6rem 0;
+  border-top: 1px solid var(--border);
+}
+.board-row:first-child { border-top: none; }
+.board-rank {
+  font-size: .82rem; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  text-align: center;
+}
+.board-row.top-3 .board-rank { font-size: 1rem; }
+.board-who { min-width: 0; }
+.board-name {
+  font-weight: 600; font-size: .88rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.board-sub { color: var(--muted); font-size: .75rem; }
+.board-metric {
+  font-size: .88rem; font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: right; white-space: nowrap;
+}
+.board-metric .unit { color: var(--muted); font-weight: 500; font-size: .78rem; }
+
+/* A contributor and the apps they have open, nested under their standing —
+   the reward for giving back, made literal: contribute, and what you are
+   building is what gets seen. */
+.contributor-group { padding: 0; margin-bottom: .7rem; overflow: hidden; }
+.contributor-head {
+  display: flex; align-items: center; gap: .7rem;
+  padding: .8rem 1.05rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.contributor-head .board-rank { flex: 0 0 auto; }
+.contributor-listings { padding: .2rem 1.05rem .6rem; }
+.contributor-listing {
+  display: flex; align-items: center; gap: .65rem;
+  padding: .55rem 0;
+  border-top: 1px solid var(--border);
+}
+.contributor-listing:first-child { border-top: none; }
+.contributor-listing .app-icon { width: 30px; height: 30px; }
+.contributor-listing-body { flex: 1; min-width: 0; }
+.contributor-listing-name { font-weight: 550; font-size: .86rem; }
+
+@media (max-width: 700px) {
+  .board-row { grid-template-columns: 1.8rem minmax(0, 1fr) auto; }
+  .board-row .bar { display: none; }
+  .card-metrics { gap: 1.1rem; }
+}
