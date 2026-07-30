@@ -1,6 +1,6 @@
 """Access layer for the YAML spec catalogue.
 
-Every rule in LaunchPilot reads its numbers from here. The day these specs come
+Every rule in AppMates reads its numbers from here. The day these specs come
 from a database instead of a bundled YAML file, only this module changes.
 """
 

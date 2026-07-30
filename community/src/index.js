@@ -1,5 +1,5 @@
 /**
- * LaunchPilot Community: get real testers for closed betas, get real users
+ * AppMates Community: get real testers for closed betas, get real users
  * for a launch or update. See `README.md` for the design rationale — in
  * particular why this never touches App Store/Play reviews or ratings.
  */

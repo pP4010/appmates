@@ -52,18 +52,18 @@ export async function issueMagicLink(env, email) {
 export async function sendMagicLinkEmail(env, email, token, appOrigin) {
   const verifyUrl = new URL('/auth/verify', selfOrigin(env)).toString() + `?token=${token}`;
   const html = `
-    <p>Click to sign in to LaunchPilot Community:</p>
+    <p>Click to sign in to AppMates Community:</p>
     <p><a href="${verifyUrl}">${verifyUrl}</a></p>
     <p>This link expires in ${MAGIC_LINK_TTL_MINUTES} minutes and can only be used once.
     If you didn't request this, ignore this email.</p>`;
-  const text = `Sign in to LaunchPilot Community: ${verifyUrl}\n\n` +
+  const text = `Sign in to AppMates Community: ${verifyUrl}\n\n` +
     `This link expires in ${MAGIC_LINK_TTL_MINUTES} minutes and can only be used once. ` +
     "If you didn't request this, ignore this email.";
 
   await env.EMAIL.send({
     to: email,
     from: { email: env.EMAIL_FROM_ADDRESS, name: env.EMAIL_FROM_NAME },
-    subject: 'Sign in to LaunchPilot',
+    subject: 'Sign in to AppMates',
     html,
     text,
   });

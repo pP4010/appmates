@@ -1,6 +1,6 @@
-# LaunchPilot web app
+# AppMates web app
 
-Every LaunchPilot tool, running in the browser. Nothing is uploaded, there is no
+Every AppMates tool, running in the browser. Nothing is uploaded, there is no
 account, and no server of ours is involved at any point.
 
 | Tool | Needs the network? |

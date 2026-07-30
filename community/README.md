@@ -1,7 +1,7 @@
 # Community backend
 
 Get real closed testers before a launch, and real users for a launch or an
-update once one ships. This is the one part of LaunchPilot with an account —
+update once one ships. This is the one part of AppMates with an account —
 see `../web/views/community.js` and the callout in the Community view for why
 that's scoped to exactly this feature and nothing else.
 

@@ -1,4 +1,4 @@
-# LaunchPilot 🚀
+# AppMates 🚀
 
 [![CI](https://github.com/pP4010/launchpilot/actions/workflows/ci.yml/badge.svg)](https://github.com/pP4010/launchpilot/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/pP4010/launchpilot/branch/main/graph/badge.svg)](https://codecov.io/gh/pP4010/launchpilot)
@@ -12,7 +12,7 @@
 You upload ten screenshots, wait, and App Store Connect replies
 `IMAGE_TOOL_FAILURE` with no explanation. The actual cause is usually mundane —
 a stray alpha channel, a resolution that was valid in 2019, a screenshot two
-pixels too tall for Play's aspect ratio rule. LaunchPilot finds those in
+pixels too tall for Play's aspect ratio rule. AppMates finds those in
 milliseconds, tells you exactly which rule you broke, and can repair the files
 for you.
 
@@ -44,7 +44,7 @@ $ launchpilot validate-screenshots ./store/ios/en-US-fixed --strict
 
 Three things break releases, and all three are mechanically checkable:
 
-| Problem | What LaunchPilot does |
+| Problem | What AppMates does |
 |---|---|
 | **Screenshots that violate a store rule** | Validates format, alpha channel, colour space, exact resolution, aspect ratio, file weight — and repairs all of them |
 | **Listing text over a character limit** | Checks title/subtitle/description/keywords against both stores' limits, and warns *before* translation pushes you over |
@@ -87,7 +87,7 @@ launchpilot validate-screenshots ./screenshots --ignore APPLE_LEGACY_SIZE
 `--store` defaults to `auto`. App Store and Play screenshots are genuinely
 different assets — every current Apple iPhone size violates Play's "long side
 ≤ 2× short side" rule — so validating one directory against both always
-produces noise. LaunchPilot picks whichever store the files actually fit and
+produces noise. AppMates picks whichever store the files actually fit and
 tells you which it chose. Use `--store both` when you want the cross-check anyway.
 
 ### `fix-screenshots`
@@ -128,7 +128,7 @@ launchpilot check-testers -d 20 -t 12 --release-pending
 The requirement is 12 testers opted in **continuously** for 14 days. The word
 that costs people two weeks is *continuously*: if your count drops to 11 on day
 nine, Google restarts the clock. Pass a day-by-day timeline with `--from-file`
-and LaunchPilot detects the reset:
+and AppMates detects the reset:
 
 ```json
 [
@@ -169,7 +169,7 @@ per-keyword search counts. The Search Ads popularity index that other tools
 relabel as volume is a relative score with no published methodology, and in
 September 2025 the number of US keywords scoring above the floor
 [dropped 77% in four days](https://respectaso.com/blog/apple-search-ads-popularity-unreliable-aso-keyword-data/)
-when Apple changed something and told nobody. Every number LaunchPilot prints is
+when Apple changed something and told nobody. Every number AppMates prints is
 something it counted.
 
 Six signals, each shown with its raw observation so you can disagree with the

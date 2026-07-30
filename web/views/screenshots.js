@@ -213,7 +213,7 @@ async function runFix() {
     const [blob, filename] =
       items.length === 1
         ? [new Blob([items[0].data], { type: 'image/jpeg' }), items[0].name]
-        : [createZip(items), 'launchpilot-fixed.zip'];
+        : [createZip(items), 'appmates-fixed.zip'];
     download(blob, filename);
   } finally {
     button.disabled = false;

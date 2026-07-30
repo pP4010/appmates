@@ -23,7 +23,7 @@
     // see community/README.md. Magic links silently fail to send until this
     // is a real, onboarded address.
     "EMAIL_FROM_ADDRESS": "noreply@example.com",
-    "EMAIL_FROM_NAME": "LaunchPilot",
+    "EMAIL_FROM_NAME": "AppMates",
     // The web app's origin — CORS is locked to exactly this one origin
     // because, unlike the anonymous screenshot relay, these requests carry
     // an auth cookie.
