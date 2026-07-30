@@ -10,6 +10,7 @@ import * as apps from './routes/apps.js';
 import * as listings from './routes/listings.js';
 import * as testSessions from './routes/testSessions.js';
 import * as tokens from './routes/tokens.js';
+import * as leaderboard from './routes/leaderboard.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -47,13 +48,25 @@ export default {
       if ((m = path.match(/^\/listings\/([^/]+)\/feature$/)) && method === 'POST') {
         return await listings.feature(request, env, m[1]);
       }
-      if ((m = path.match(/^\/listings\/([^/]+)\/join$/)) && method === 'POST') {
-        return await listings.join(request, env, m[1]);
+      if ((m = path.match(/^\/listings\/([^/]+)\/request$/)) && method === 'POST') {
+        return await listings.request(request, env, m[1]);
       }
       if ((m = path.match(/^\/listings\/([^/]+)\/sessions$/)) && method === 'GET') {
         return await listings.sessionsFor(request, env, m[1]);
       }
+      // Must come after the exact-string and suffixed routes above, or it
+      // would swallow every `/listings/:id/...` request as a listing id.
+      if ((m = path.match(/^\/listings\/([^/]+)$/)) && method === 'GET') {
+        return await listings.detail(request, env, m[1]);
+      }
+
       if (path === '/test-sessions/mine' && method === 'GET') return await testSessions.mine(request, env);
+      if ((m = path.match(/^\/test-sessions\/([^/]+)\/accept$/)) && method === 'POST') {
+        return await testSessions.accept(request, env, m[1]);
+      }
+      if ((m = path.match(/^\/test-sessions\/([^/]+)\/decline$/)) && method === 'POST') {
+        return await testSessions.decline(request, env, m[1]);
+      }
       if ((m = path.match(/^\/test-sessions\/([^/]+)\/submit$/)) && method === 'POST') {
         return await testSessions.submit(request, env, m[1]);
       }
@@ -62,6 +75,7 @@ export default {
       }
 
       if (path === '/tokens/me' && method === 'GET') return await tokens.me(request, env);
+      if (path === '/leaderboard' && method === 'GET') return await leaderboard.top(request, env);
 
       return error(env, request, 404, 'not found');
     } catch (err) {

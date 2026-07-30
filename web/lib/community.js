@@ -94,13 +94,20 @@ export class CommunityClient {
     return this._request('/listings', { method: 'POST', body: listing }).then((d) => d.listing);
   }
 
-  browseListings(kind) {
-    const query = kind ? `?kind=${encodeURIComponent(kind)}` : '';
-    return this._request(`/listings${query}`).then((d) => d.listings);
+  browseListings(kind, sort) {
+    const params = new URLSearchParams();
+    if (kind) params.set('kind', kind);
+    if (sort) params.set('sort', sort);
+    const query = params.toString();
+    return this._request(`/listings${query ? `?${query}` : ''}`).then((d) => d.listings);
   }
 
   myListings() {
     return this._request('/listings/mine').then((d) => d.listings);
+  }
+
+  listingDetail(id) {
+    return this._request(`/listings/${id}`).then((d) => d.listing);
   }
 
   closeListing(id) {
@@ -111,20 +118,39 @@ export class CommunityClient {
     return this._request(`/listings/${id}/feature`, { method: 'POST', body: { days } });
   }
 
-  joinListing(id) {
-    return this._request(`/listings/${id}/join`, { method: 'POST' });
+  /** Asks to join a `testing` listing — a short pitch, not an instant join.
+   * `email`/`name` are only needed when nobody is signed in yet; the
+   * response says whether a sign-in link was sent so the caller can prompt
+   * "check your inbox" instead of assuming the request is already theirs
+   * to track. */
+  requestToJoin(id, { email, name, message } = {}) {
+    return this._request(`/listings/${id}/request`, {
+      method: 'POST',
+      body: { email, name, message },
+    });
   }
 
   listingSessions(id) {
     return this._request(`/listings/${id}/sessions`).then((d) => d.sessions);
   }
 
+  acceptSession(id) {
+    return this._request(`/test-sessions/${id}/accept`, { method: 'POST' });
+  }
+
+  declineSession(id) {
+    return this._request(`/test-sessions/${id}/decline`, { method: 'POST' });
+  }
+
   mySessions() {
     return this._request('/test-sessions/mine').then((d) => d.sessions);
   }
 
-  submitSession(id, feedback) {
-    return this._request(`/test-sessions/${id}/submit`, { method: 'POST', body: { feedback } });
+  submitSession(id, { feedback, bugFound, wouldUseAgain }) {
+    return this._request(`/test-sessions/${id}/submit`, {
+      method: 'POST',
+      body: { feedback, bugFound, wouldUseAgain },
+    });
   }
 
   completeSession(id) {
@@ -133,5 +159,13 @@ export class CommunityClient {
 
   tokens() {
     return this._request('/tokens/me');
+  }
+
+  /** Resolves to `{ windowDays, testers, contributors }` — two boards over
+   * the same trailing window, the second narrowed to contributors who also
+   * have something open for others to test. */
+  leaderboard(windowDays) {
+    const query = windowDays ? `?window=${encodeURIComponent(windowDays)}` : '';
+    return this._request(`/leaderboard${query}`);
   }
 }

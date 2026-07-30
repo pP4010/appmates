@@ -134,7 +134,10 @@ async function boot() {
     },
   });
 
-  initCommunity(new CommunityClient(), { getCurrentApp: selectedApp });
+  // The same throttled iTunes client every tool shares, so listing cards can
+  // re-derive an app's public catalogue facts rather than trusting numbers
+  // the person who posted the listing typed in.
+  initCommunity(new CommunityClient(), { getCurrentApp: selectedApp, itunes: client });
 
   const apple = specs.stores.apple;
   const google = specs.stores.google;
@@ -148,7 +151,8 @@ async function boot() {
 }
 
 boot().catch((err) => {
-  document.querySelector('main').innerHTML =
+  console.error(err);
+  document.querySelector('.main').innerHTML =
     `<div class="summary fail"><span class="verdict">Failed to start</span> ` +
     `<span class="muted">${err.message}</span></div>`;
 });

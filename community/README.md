@@ -84,6 +84,39 @@ before a domain is onboarded for Email Sending. This flag does not exist in
 `wrangler.jsonc`, so a real deploy can never accidentally leak a sign-in
 link this way.
 
+## Joining a test is a reviewed request, not an instant join
+
+Modeled on a marketplace's "contact the owner" flow: a tester asks with a
+short pitch (`message`, min 20 characters — device/OS, why they're a fit),
+and the listing's owner accepts or declines before it becomes an active
+test. No sign-in wall beforehand — `email`/`name` create or reuse an
+account and a magic link is sent so the tester can come back and track it,
+the same way a real sign-in does, just from a different entry point than
+the "Sign in" button. A session moves through
+`requested → accepted → submitted → completed`, or `requested → declined`.
+
+Three builder- and tester-facing signals are computed from this
+automatically on every read, never stored: a builder's **reliability**
+(completion rate and average response time across all their listings,
+hidden until they have `MIN_RESOLVED_FOR_RELIABILITY` resolved sessions),
+their **contribution** (tests they completed on *other* people's apps), and
+a rolling 30-day **leaderboard**. All three only ever count sessions a
+listing owner confirmed by hand — see `lib/reputation.js` and
+`routes/leaderboard.js`.
+
+`/leaderboard` returns two boards over the same window: `testers` (everyone
+who tested) and `contributors` (the same score narrowed to people who also
+have something open, with their listings nested). Contribution is what
+surfaces a listing in the showcase and in `?sort=contributors` — it is
+earned by testing and cannot be bought, which is the whole point. The main
+browse list still defaults to `newest` so a first listing from someone with
+no history is not buried under the regulars.
+
+Nothing about an app's *quality* is stored or scored here. The web client
+re-derives listing health, rating and last-shipped from the public
+catalogue as it renders each card (`web/views/community.js`), so those
+numbers can never be inflated by whoever posted the listing.
+
 ## API
 
 | Route | Method | Auth | Notes |
@@ -95,16 +128,22 @@ link this way.
 | `/apps` | POST | cookie | Upserts an app by `trackId`, keyed to the signed-in user. |
 | `/apps/mine` | GET | cookie | |
 | `/listings` | POST | cookie | `kind`: `testing` \| `launch`. |
-| `/listings` | GET | — | `?kind=`. Public — browsing needs no account. |
+| `/listings` | GET | — | `?kind=`, `?sort=newest\|contributors\|emptiest`. Public — browsing needs no account. |
 | `/listings/mine` | GET | cookie | |
+| `/listings/:id` | GET | — | Public detail page, includes the owner's reliability. |
 | `/listings/:id/close` | POST | cookie, owner | |
 | `/listings/:id/feature` | POST | cookie, owner | `{ days }`. Spends `3 × days` tokens. |
-| `/listings/:id/join` | POST | cookie | Can't join your own listing. |
-| `/listings/:id/sessions` | GET | cookie, owner | Testers who joined, for review. |
+| `/listings/:id/request` | POST | optional* | `{ email, name, message }`. Can't request your own listing. |
+| `/listings/:id/sessions` | GET | cookie, owner | Every request/session on this listing, for review. |
 | `/test-sessions/mine` | GET | cookie | |
-| `/test-sessions/:id/submit` | POST | cookie, tester | `{ feedback }`. |
+| `/test-sessions/:id/accept` | POST | cookie, owner | `requested → accepted`. Capped at `slots_wanted`. |
+| `/test-sessions/:id/decline` | POST | cookie, owner | `requested → declined`. |
+| `/test-sessions/:id/submit` | POST | cookie, tester | `{ feedback, bugFound?, wouldUseAgain? }`. |
 | `/test-sessions/:id/complete` | POST | cookie, owner | Mints 1 token for the tester. |
 | `/tokens/me` | GET | cookie | Balance and ledger history. |
+| `/leaderboard` | GET | — | `?window=` days, default 30. Returns `testers` and `contributors`. |
+
+\* If a session cookie is present it's used; otherwise `email`/`name` are required.
 
 ## Known limitation
 
