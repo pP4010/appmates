@@ -1,4 +1,4 @@
-"""LaunchPilot command-line entry point.
+"""AppMates command-line entry point.
 
 This module only wires commands together. Every command delegates immediately
 to a core service that returns Pydantic models, so the same logic backs the
@@ -69,7 +69,7 @@ def main(
         ),
     ] = False,
 ) -> None:
-    """LaunchPilot."""
+    """AppMates."""
 
 
 if __name__ == "__main__":  # pragma: no cover

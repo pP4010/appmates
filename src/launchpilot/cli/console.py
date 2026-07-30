@@ -26,7 +26,7 @@ err_console = Console(theme=THEME, stderr=True)
 
 
 class ExitCode(IntEnum):
-    """Exit codes, so LaunchPilot is usable as a CI gate.
+    """Exit codes, so AppMates is usable as a CI gate.
 
     Findings and usage errors are deliberately distinct: a broken path should
     not look like a failed validation.

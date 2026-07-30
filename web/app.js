@@ -57,7 +57,7 @@ function route() {
   const [title, sub] = VIEWS[active];
   document.getElementById('viewTitle').textContent = title;
   document.getElementById('viewSub').textContent = sub;
-  document.title = `LaunchPilot — ${title}`;
+  document.title = `AppMates — ${title}`;
   window.scrollTo({ top: 0 });
 }
 
@@ -96,10 +96,10 @@ async function boot() {
     const mark = document.getElementById('appMark');
     document.getElementById('appName').textContent = app?.name ?? 'Select your app';
     document.getElementById('appSeller').textContent =
-      app?.seller ?? 'LaunchPilot · pre-flight checks';
+      app?.seller ?? 'AppMates · pre-flight checks';
     mark.innerHTML = app?.artwork
       ? `<img src="${app.artwork}" alt="">`
-      : '◈';
+      : '<img src="./assets/icon.svg" alt="">';
     if (app) {
       const rankInput = document.getElementById('rankApp');
       if (!rankInput.value) rankInput.value = String(app.bundleId || app.trackId);

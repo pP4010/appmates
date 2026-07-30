@@ -1,5 +1,5 @@
 /**
- * Client for the LaunchPilot Community backend.
+ * Client for the AppMates Community backend.
  *
  * This is the one part of the app that needs an account: matching a real
  * developer with a real tester means knowing who's who, which the rest of

@@ -9,7 +9,7 @@ publish a changelog for, and degraded sharply in September 2025 — most keyword
 previously scoring 20-60 are now pinned at the floor. Tools that surface it as
 "search volume" are showing false precision.
 
-LaunchPilot therefore reports what can be counted from public listings and shows
+AppMates therefore reports what can be counted from public listings and shows
 its working. A :class:`Signal` carries the raw observation *and* the score it
 produced *and* the band it fell into, so a user can disagree with the weighting
 and still trust the underlying facts.

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 
 class LaunchPilotError(Exception):
-    """Base class for every error raised deliberately by LaunchPilot."""
+    """Base class for every error raised deliberately by AppMates."""
 
 
 class DirectoryNotFoundError(LaunchPilotError):
