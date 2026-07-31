@@ -1,0 +1,299 @@
+/* ==========================================================================
+   AppMates landing page
+
+   Loaded after styles.css, which it borrows every colour, radius and shadow
+   token from — so light and dark mode, the accent, and shared components
+   (.panel, .pill, .callout, .marketplace-card) all behave here exactly as
+   they do inside the app.
+
+   Two deliberate departures from the app's own look:
+
+   The app is dense on purpose — it answers questions by comparison, so rows
+   sit close enough to scan in one movement. A landing page is read once, in
+   order, so the vertical rhythm here is roughly double.
+
+   Headings are set in the monospace stack the app reserves for figures.
+   Marketplace software tends to use it for display type, and it does real
+   work: it reads as instrumentation rather than marketing, which is the
+   honest claim this product is making.
+   ========================================================================== */
+
+.landing-body { height: auto; }
+
+.landing,
+.landing-nav,
+.landing-footer {
+  --landing-max: 1080px;
+}
+
+/* ============================ nav ============================ */
+
+.landing-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  max-width: var(--landing-max);
+  margin: 0 auto;
+  padding: 1.1rem 1.5rem;
+}
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  font-weight: 700;
+  font-size: .98rem;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.landing-brand:hover { text-decoration: none; }
+.landing-brand img { border-radius: 7px; display: block; }
+
+.landing-nav-links {
+  display: flex;
+  gap: 1.3rem;
+  margin-left: auto;
+  font-size: .87rem;
+}
+.landing-nav-links a { color: var(--text-2); }
+.landing-nav-links a:hover { color: var(--text); text-decoration: none; }
+
+/* Anchor-styled buttons: the app's real <button> rules don't apply to <a>,
+   so the shared look is restated here rather than faked with a class that
+   only half-matches. */
+.landing-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .87rem;
+  font-weight: 650;
+  padding: .5rem .95rem;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: linear-gradient(140deg, var(--accent), var(--accent-strong));
+  color: var(--on-accent);
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+  transition: filter .12s, transform .06s;
+}
+.landing-cta:hover { text-decoration: none; filter: brightness(1.08); }
+.landing-cta:active { transform: translateY(1px); }
+.landing-cta.lg { font-size: .95rem; padding: .7rem 1.4rem; }
+.landing-cta.ghost {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border-strong);
+  box-shadow: none;
+}
+.landing-cta.ghost:hover { background: var(--surface-2); border-color: var(--muted); filter: none; }
+
+/* ============================ shell ============================ */
+
+.landing {
+  max-width: var(--landing-max);
+  margin: 0 auto;
+  padding: 0 1.5rem 4rem;
+}
+
+.landing-section { margin: 5rem 0; scroll-margin-top: 1.5rem; }
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: .5rem;
+}
+/* Beats the app's dense `h2 { font-size: .95rem }` without !important —
+   these two selectors are simply more specific. */
+.landing-section h2,
+.closing h2 {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 1.45rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  margin: 0;
+  text-wrap: balance;
+}
+.section-link { font-size: .87rem; font-weight: 600; white-space: nowrap; }
+.section-sub {
+  color: var(--text-2);
+  font-size: .92rem;
+  max-width: 68ch;
+  margin: 0 0 1.5rem;
+  line-height: 1.6;
+}
+
+/* ============================ hero ============================ */
+
+.hero { padding: 3.5rem 0 1rem; }
+.hero h1 {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: clamp(2rem, 5.5vw, 3.4rem);
+  line-height: 1.1;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  margin: 0 0 1.3rem;
+  text-wrap: balance;
+}
+.hero-sub {
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: var(--text-2);
+  max-width: 62ch;
+  margin: 0 0 2rem;
+}
+.hero-actions { display: flex; gap: .7rem; flex-wrap: wrap; margin-bottom: 2rem; }
+.hero-note {
+  font-size: .82rem;
+  color: var(--muted);
+  max-width: 60ch;
+  padding-left: .8rem;
+  border-left: 2px solid var(--border);
+  line-height: 1.6;
+}
+.hero-note strong { color: var(--text-2); font-weight: 650; }
+
+/* ============================ tools ============================ */
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: .7rem;
+}
+.tool-card {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  padding: 1rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: inherit;
+  transition: border-color .12s, transform .1s, box-shadow .12s;
+}
+.tool-card:hover {
+  text-decoration: none;
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.tool-icon { font-size: 1.1rem; color: var(--accent); line-height: 1; margin-bottom: .2rem; }
+.tool-card strong { font-size: .92rem; letter-spacing: -0.01em; }
+.tool-card span:last-child { font-size: .83rem; color: var(--text-2); line-height: 1.5; }
+
+.privacy-strip {
+  display: flex;
+  gap: .7rem;
+  align-items: flex-start;
+  margin-top: 1.2rem;
+  padding: .9rem 1.1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  font-size: .87rem;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+.privacy-strip strong { color: var(--text); }
+
+/* ============================ leaderboard table ============================ */
+
+.lb-table { padding: .3rem 1.1rem; }
+.lb-row {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) auto auto;
+  gap: 1rem;
+  align-items: center;
+  padding: .7rem 0;
+  border-top: 1px solid var(--border);
+}
+.lb-row:first-child { border-top: none; }
+.lb-row .lb-rank {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  text-align: center;
+}
+.lb-row.top .lb-rank { font-size: 1.05rem; }
+.lb-name { font-weight: 600; font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-tests { font-size: .82rem; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lb-tokens { font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lb-tokens .unit { color: var(--muted); font-weight: 500; font-size: .78rem; }
+
+/* ============================ steps ============================ */
+
+.steps {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: .7rem;
+  counter-reset: step;
+}
+.steps li {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  padding: 1.1rem 1.2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.step-n {
+  display: grid;
+  place-items: center;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: .82rem;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: .2rem;
+}
+.steps strong { font-size: .92rem; }
+.steps li > span:last-child { font-size: .85rem; color: var(--text-2); line-height: 1.55; }
+
+.callout.guardrail { max-width: none; font-size: .87rem; line-height: 1.65; }
+
+/* ============================ closing ============================ */
+
+.closing {
+  text-align: center;
+  padding: 4rem 1.5rem;
+  margin: 5rem 0 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+.closing p { color: var(--text-2); max-width: 46ch; margin: .8rem auto 1.8rem; line-height: 1.6; }
+
+/* ============================ footer ============================ */
+
+.landing-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  max-width: var(--landing-max);
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+  border-top: 1px solid var(--border);
+  font-size: .85rem;
+}
+.landing-footer > div:first-child { display: flex; flex-direction: column; gap: .2rem; }
+.landing-footer-links { display: flex; gap: 1.2rem; flex-wrap: wrap; }
+
+@media (max-width: 640px) {
+  .landing-nav { gap: .8rem; padding: .9rem 1.1rem; flex-wrap: wrap; }
+  .landing-nav-links { order: 3; width: 100%; margin-left: 0; justify-content: space-between; }
+  .landing { padding: 0 1.1rem 3rem; }
+  .landing-section { margin: 3.5rem 0; }
+  .hero { padding: 2rem 0 .5rem; }
+  .lb-row { grid-template-columns: 1.6rem minmax(0, 1fr) auto; }
+  .lb-row .lb-tests { display: none; }
+  .closing { padding: 2.5rem 1.2rem; }
+}

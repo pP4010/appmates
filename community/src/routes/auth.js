@@ -57,7 +57,12 @@ export async function verify(request, env) {
   const user = await getOrCreateUser(env, email);
   const session = await createSession(env, user.id);
 
-  const redirectTo = `${env.APP_ORIGIN}/#community`;
+  // The dashboard lives at `/app.html`; `/` is the public landing page. Kept
+  // as a var so a deployment that mounts the app elsewhere doesn't need a
+  // code change — a sign-in link that lands on the wrong page is a dead end
+  // for the one flow that has no second chance.
+  const appPath = env.APP_PATH || '/app.html';
+  const redirectTo = `${env.APP_ORIGIN}${appPath}#community`;
   return new Response(null, {
     status: 302,
     headers: {
