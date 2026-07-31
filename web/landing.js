@@ -330,7 +330,6 @@ async function fillAppFacts(testers) {
 function railCard(app) {
   return `
     <a class="rail-card" href="${escapeHtml(app.storeUrl)}" target="_blank" rel="noopener">
-      <span class="rail-tag">Promoted</span>
       ${app.artwork ? `<img class="rail-icon" src="${escapeHtml(app.artwork)}" alt="" loading="lazy">` : ''}
       <span class="rail-name">${escapeHtml(app.name)}</span>
       ${app.genre ? `<span class="rail-genre">${escapeHtml(app.genre)}</span>` : ''}
@@ -368,6 +367,22 @@ function emptySlot() {
 }
 
 /**
+ * Tags every `.rail-card` whose `.rail-name` actually wrapped to a second
+ * line with `name-wrap`, so the CSS above can pull the icon and genre in
+ * around it. Measured rather than guessed from string length: a name's
+ * wrap point depends on which characters it's made of and which font
+ * loaded, not on a character count this function would otherwise have to
+ * approximate.
+ */
+function markWrappedNames(rail) {
+  for (const name of rail.querySelectorAll('.rail-name')) {
+    const lineHeight = parseFloat(getComputedStyle(name).lineHeight);
+    const wrapped = name.scrollHeight > lineHeight * 1.5;
+    name.closest('.rail-card')?.classList.toggle('name-wrap', wrapped);
+  }
+}
+
+/**
  * Fills both rails. The promoted entries are resolved from the catalogue so
  * the name, icon and category track whatever is actually on the store — a
  * slot advertising a stale version of an app is worse than an empty one, so
@@ -382,6 +397,8 @@ async function renderRails() {
   right.innerHTML = RAIL_RIGHT.map(() => emptySlot()).join('');
   fillRailHeight(left);
   fillRailHeight(right);
+  markWrappedNames(left);
+  markWrappedNames(right);
 
   const itunes = new ITunesClient();
   const resolve = async (slots) => {
@@ -415,6 +432,8 @@ async function renderRails() {
   right.innerHTML = rightCards.join('');
   fillRailHeight(left);
   fillRailHeight(right);
+  markWrappedNames(left);
+  markWrappedNames(right);
 }
 
 /** A card at roughly this height reads as a real promoted slot rather than

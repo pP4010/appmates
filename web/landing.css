@@ -88,8 +88,37 @@
   box-shadow: var(--shadow-md);
 }
 .rail-icon { width: 42px; height: 42px; border-radius: 10px; display: block; object-fit: cover; }
-.rail-name { font-weight: 700; font-size: .9rem; letter-spacing: -0.01em; }
-.rail-genre { font-size: .68rem; color: var(--muted); }
+.rail-name {
+  font-weight: 700;
+  font-size: .82rem;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+/* Only once a name has actually wrapped (see `.name-wrap` below) does it
+   get a guaranteed two-line floor — reserving that unconditionally would
+   eat into the fixed-height card's budget for every one-line name too,
+   squeezing `.rail-genre` down toward nothing. `.rail-card` keeps its
+   fixed equal-share height (`flex: 1 1 0`) and must not grow just because
+   a name wraps, so this floor is what stops a tight share's shrink from
+   landing on the name and clipping its second line mid-glyph; the shrink
+   lands on the genre instead, which can't visibly "cut" a single line the
+   way an overflow-hidden 2-line box can. */
+.rail-card.name-wrap .rail-name {
+  flex-shrink: 0;
+  min-height: 2.05rem;
+}
+.rail-genre {
+  font-size: .68rem;
+  color: var(--muted);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .rail-desc { font-size: .74rem; color: var(--text-2); line-height: 1.4; }
 .rail-tag {
   font-size: .56rem;
@@ -98,6 +127,13 @@
   text-transform: uppercase;
   color: var(--muted);
 }
+
+/* `landing.js` adds this once it measures a card's name wrapping to a
+   second line — with the icon and genre centered around it via the card's
+   flex `gap`, a two-line name otherwise pushes both right up against the
+   card's top and bottom padding. Pulling the gap in only for that case
+   keeps the common one-line card at its normal, more open spacing. */
+.rail-card.name-wrap { gap: .25rem; }
 
 /* The offer, not a placeholder to be styled away later: a dashed slot reads
    as available, which is the whole point of showing it before it sells. */
