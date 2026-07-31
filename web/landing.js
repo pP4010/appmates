@@ -379,9 +379,7 @@ async function renderRails() {
   const right = document.getElementById('railRight');
   // Empty slots need no network, so they paint immediately.
   left.innerHTML = RAIL_LEFT.map(() => emptySlot()).join('');
-  right.innerHTML =
-    RAIL_RIGHT.map(() => emptySlot()).join('') +
-    `<span class="rail-foot">Want a slot? <a href="mailto:${CONTACT_EMAIL}">Ask here</a></span>`;
+  right.innerHTML = RAIL_RIGHT.map(() => emptySlot()).join('');
   fillRailHeight(left);
   fillRailHeight(right);
 
@@ -414,9 +412,7 @@ async function renderRails() {
 
   const [leftCards, rightCards] = [await resolve(RAIL_LEFT), await resolve(RAIL_RIGHT)];
   left.innerHTML = leftCards.join('');
-  right.innerHTML =
-    rightCards.join('') +
-    `<span class="rail-foot">Want a slot? <a href="mailto:${CONTACT_EMAIL}">Ask here</a></span>`;
+  right.innerHTML = rightCards.join('');
   fillRailHeight(left);
   fillRailHeight(right);
 }
@@ -449,12 +445,9 @@ function fillRailHeight(rail) {
 
   const available = rail.getBoundingClientRect().height;
   const gap = parseFloat(getComputedStyle(rail).rowGap) || 0;
-  const foot = rail.querySelector('.rail-foot');
-  const footSpace = foot ? foot.getBoundingClientRect().height + gap : 0;
 
-  const realCount = rail.children.length - (foot ? 1 : 0);
-  const usable = available - footSpace;
-  const targetCount = Math.max(realCount, Math.round((usable + gap) / (IDEAL_RAIL_CARD_HEIGHT + gap)));
+  const realCount = rail.children.length;
+  const targetCount = Math.max(realCount, Math.round((available + gap) / (IDEAL_RAIL_CARD_HEIGHT + gap)));
 
   for (let i = realCount; i < targetCount; i++) {
     const filler = document.createElement('a');
@@ -465,7 +458,7 @@ function fillRailHeight(rail) {
       <span class="rail-tag">Available</span>
       <span class="rail-name">Your app here</span>
       <span class="rail-desc">Get in touch to take this slot.</span>`;
-    rail.insertBefore(filler, foot);
+    rail.appendChild(filler);
   }
 }
 
