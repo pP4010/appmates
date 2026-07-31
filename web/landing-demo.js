@@ -14,6 +14,9 @@
  * a real app's logo here would imply a customer who doesn't exist.
  */
 
+/** `featured` mirrors what a real listing gets by spending tokens: a tinted
+ * card with a slow highlight sweep. Kept rare on purpose — the effect only
+ * means anything while most cards don't have it. */
 export const DEMO_TESTING = [
   {
     name: 'Habitloop',
@@ -22,6 +25,7 @@ export const DEMO_TESTING = [
     health: 91,
     daysLeft: 4,
     note: 'Streak logic and the widget refresh',
+    featured: true,
   },
   {
     name: 'Ferment',
@@ -54,6 +58,7 @@ export const DEMO_TESTING = [
     health: 88,
     daysLeft: 6,
     note: 'Sleep sounds, background audio',
+    featured: true,
   },
   {
     name: 'Snapcook',
@@ -73,6 +78,7 @@ export const DEMO_LAUNCHED = [
     rating: '4.7',
     ratings: '2,140',
     note: 'v2.0 — live pacing',
+    featured: true,
   },
   {
     name: 'Sunbeam',
@@ -108,12 +114,20 @@ export const DEMO_LAUNCHED = [
   },
 ];
 
+/** Every field here has a real counterpart the backend returns, so the live
+ * board renders the same columns rather than a thinner version of this one:
+ * `apps` ← apps_helped, `lastActive` ← last_active_at, and so on. */
 export const DEMO_LEADERBOARD = [
-  { rank: 1, name: 'Mara V.', tests: 23, tokens: 23, apps: 4 },
-  { rank: 2, name: 'devonp', tests: 19, tokens: 19, apps: 2 },
-  { rank: 3, name: 'Kit Sørensen', tests: 17, tokens: 17, apps: 3 },
-  { rank: 4, name: 'anna.builds', tests: 12, tokens: 12, apps: 1 },
-  { rank: 5, name: 'Tobi A.', tests: 11, tokens: 11, apps: 2 },
-  { rank: 6, name: 'nine_lives', tests: 9, tokens: 9, apps: 1 },
-  { rank: 7, name: 'Priya R.', tests: 8, tokens: 8, apps: 2 },
+  { rank: 1, name: 'Mara V.', tests: 23, tokens: 23, apps: 14, lastActive: '2h ago' },
+  { rank: 2, name: 'devonp', tests: 19, tokens: 19, apps: 11, lastActive: '5h ago' },
+  { rank: 3, name: 'Kit Sørensen', tests: 17, tokens: 17, apps: 12, lastActive: 'Yesterday' },
+  { rank: 4, name: 'anna.builds', tests: 15, tokens: 15, apps: 9, lastActive: 'Yesterday' },
+  { rank: 5, name: 'Tobi A.', tests: 13, tokens: 13, apps: 10, lastActive: '2d ago' },
+  { rank: 6, name: 'nine_lives', tests: 12, tokens: 12, apps: 6, lastActive: '3d ago' },
+  { rank: 7, name: 'Priya R.', tests: 11, tokens: 11, apps: 8, lastActive: '3d ago' },
+  { rank: 8, name: 'joon.dev', tests: 9, tokens: 9, apps: 7, lastActive: '4d ago' },
+  { rank: 9, name: 'Elif K.', tests: 8, tokens: 8, apps: 5, lastActive: '6d ago' },
+  { rank: 10, name: 'marcus_b', tests: 7, tokens: 7, apps: 6, lastActive: '8d ago' },
+  { rank: 11, name: 'Sofia L.', tests: 6, tokens: 6, apps: 4, lastActive: '9d ago' },
+  { rank: 12, name: 'pixelwright', tests: 5, tokens: 5, apps: 5, lastActive: '11d ago' },
 ];

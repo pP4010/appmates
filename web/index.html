@@ -91,18 +91,31 @@
       <h2>Top testers this month <span class="demo-tag" data-demo="leaderboard">sample</span></h2>
       <a class="row-link" href="./app.html#community">Full leaderboard →</a>
     </div>
+    <div class="lb-controls">
+      <div class="seg" role="group" aria-label="Rank by">
+        <button type="button" class="seg-btn active" data-sort="tokens">Tokens</button>
+        <button type="button" class="seg-btn" data-sort="tests">Tests</button>
+      </div>
+      <div class="seg" role="group" aria-label="Time range">
+        <button type="button" class="seg-btn active" data-window="30">30 days</button>
+        <button type="button" class="seg-btn" data-window="365">All time</button>
+      </div>
+    </div>
+
     <div class="panel lb-wrap">
       <table class="lb">
         <thead>
           <tr>
             <th class="c">#</th>
             <th>Tester</th>
-            <th class="n">Apps tested</th>
+            <th class="last-col">Last active</th>
+            <th class="n apps-col">Tests</th>
             <th class="n">Tokens</th>
           </tr>
         </thead>
         <tbody id="lbBody"></tbody>
       </table>
+      <button type="button" class="lb-more" id="lbMore">Show more</button>
     </div>
     <p class="row-note">
       A token exists only because a developer confirmed by hand that someone's testing

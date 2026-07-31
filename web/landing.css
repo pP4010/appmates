@@ -188,6 +188,7 @@
 .tile-flag {
   position: absolute;
   top: 0; right: 0;
+  z-index: 2;
   font-size: .58rem;
   font-weight: 800;
   letter-spacing: .05em;
@@ -197,9 +198,77 @@
 .tile-flag.testing { background: var(--warn-soft); color: var(--warn); }
 .tile-flag.launched { background: var(--ok-soft); color: var(--ok); }
 
+/* ---------------------------------------------------------------------
+   Featured listings
+
+   What a developer gets for spending tokens: a tinted card and a highlight
+   that crosses it now and then. `color-mix` against the surface keeps the
+   tint readable in both themes instead of hardcoding one dark wash.
+
+   The sweep pauses at each end rather than looping continuously — a
+   constant animation in a grid of cards reads as a loading state, while an
+   occasional glint reads as emphasis. That's what the long holds in the
+   keyframes below are for.
+   --------------------------------------------------------------------- */
+.listing-tile.featured {
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+}
+.listing-tile.featured.warm {
+  background: color-mix(in srgb, var(--warn) 10%, var(--surface));
+  border-color: color-mix(in srgb, var(--warn) 26%, var(--border));
+}
+
+.listing-tile.featured::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(
+    120deg,
+    transparent 0%, transparent 30%,
+    rgb(255 255 255 / 38%) 44%,
+    rgb(255 255 255 / 52%) 50%,
+    rgb(255 255 255 / 38%) 56%,
+    transparent 70%, transparent 100%
+  ) 0 0 / 200% 100% no-repeat;
+  animation: tile-streak 5s ease-in-out infinite;
+}
+
+@media (prefers-color-scheme: dark) {
+  .listing-tile.featured::after {
+    background-image: linear-gradient(
+      120deg,
+      transparent 0%, transparent 30%,
+      rgb(255 255 255 / 9%) 44%,
+      rgb(255 255 255 / 16%) 50%,
+      rgb(255 255 255 / 9%) 56%,
+      transparent 70%, transparent 100%
+    );
+  }
+}
+
+@keyframes tile-streak {
+  0%, 18%   { background-position: 200% 0; }
+  50%, 53%  { background-position: -100% 0; }
+  85%, 100% { background-position: 200% 0; }
+}
+
+/* A sweep that repeats forever is exactly the kind of motion that makes a
+   page unusable for some readers, and it carries no information. */
+@media (prefers-reduced-motion: reduce) {
+  .listing-tile.featured::after { animation: none; opacity: 0; }
+}
+
 .tile-head { display: flex; align-items: center; gap: .6rem; margin: .15rem 0 .7rem; padding-right: 4.2rem; }
-.tile-name { font-weight: 700; font-size: .87rem; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tile-genre { font-size: .68rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* `display:block` is load-bearing, not tidiness: `overflow`/`text-overflow`
+   are ignored on a non-replaced inline element, so without it these two
+   only stack (and only truncate) when the parent happens to be narrow
+   enough to force a wrap. */
+.tile-name { display: block; font-weight: 700; font-size: .87rem; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile-genre { display: block; font-size: .68rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* A generated letter tile rather than a logo: these listings are invented,
    and borrowing a real app's mark would imply a customer who isn't one. */
@@ -288,7 +357,37 @@
 
 /* ============================ leaderboard ============================ */
 
-.lb-wrap { padding: 0; overflow: hidden; }
+/* Segmented toggles: which number ranks the board, and over what window. */
+.lb-controls { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: .7rem; }
+.seg {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.seg-btn {
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 600;
+  padding: .3rem .7rem;
+  border: none;
+  border-radius: calc(var(--r-md) - 3px);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.seg-btn:hover:not(.active) { color: var(--text); background: var(--surface-3); }
+.seg-btn.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+
+/* `overflow-x: auto`, not `hidden`: the table is wider than the panel on a
+   phone, and hiding the overflow would clip the Tokens column off the right
+   edge with no way to reach it. Scrolling keeps every column readable, and
+   the rounded corners still clip because a non-visible overflow on one axis
+   forces the other to clip too. */
+.lb-wrap { padding: 0; overflow-x: auto; }
 table.lb { width: 100%; border-collapse: collapse; font-size: .86rem; }
 table.lb th {
   text-align: left;
@@ -301,16 +400,42 @@ table.lb th {
   border-bottom: 1px solid var(--border);
   background: var(--surface-2);
 }
-table.lb td { padding: .6rem .9rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
-table.lb tr:last-child td { border-bottom: none; }
+table.lb td { padding: .55rem .9rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+table.lb tbody tr:last-child td { border-bottom: none; }
+table.lb tbody tr { transition: background .12s; }
+table.lb tbody tr:hover { background: var(--surface-2); }
 table.lb .c { text-align: center; width: 3.2rem; }
 table.lb .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.lb .last-col { width: 8rem; color: var(--muted); font-weight: 500; white-space: nowrap; }
+table.lb td.last-col { font-size: .8rem; }
+
 .lb-medal { font-size: 1.05rem; line-height: 1; }
 .lb-rank { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
 .lb-who { display: flex; align-items: center; gap: .6rem; min-width: 0; }
-.lb-who .tile-icon { width: 26px; height: 26px; border-radius: 7px; font-size: .78rem; }
-.lb-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-who .tile-icon { width: 28px; height: 28px; border-radius: 8px; font-size: .8rem; }
+.lb-name { display: block; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The sub-line under a name, the way a marketplace board carries a one-line
+   description under each entry — `display:block` for the same reason as
+   `.tile-name` above. */
+.lb-sub { display: block; font-size: .72rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lb-tokens { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.lb-more {
+  width: 100%;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  padding: .65rem;
+  border: none;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface-2);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.lb-more:hover:not(:disabled) { background: var(--surface-3); color: var(--text); }
+.lb-more:disabled { opacity: .55; cursor: default; }
 
 /* ============================ steps ============================ */
 

@@ -20,6 +20,9 @@ export const MIN_RESOLVED_FOR_RELIABILITY = 3;
 export const LEADERBOARD_DEFAULT_WINDOW_DAYS = 30;
 export const LEADERBOARD_MAX_WINDOW_DAYS = 365;
 export const LEADERBOARD_LIMIT = 20;
+// The ceiling a "show more" can raise the board to. Capped so a crafted
+// `?limit=` can't turn a public endpoint into a full table scan.
+export const LEADERBOARD_MAX_LIMIT = 100;
 
 // How many top contributors get their own listings surfaced alongside the
 // board. Small on purpose: the point is a visible reward for giving back,

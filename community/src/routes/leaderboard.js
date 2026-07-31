@@ -4,6 +4,7 @@ import {
   LEADERBOARD_DEFAULT_WINDOW_DAYS,
   LEADERBOARD_MAX_WINDOW_DAYS,
   LEADERBOARD_LIMIT,
+  LEADERBOARD_MAX_LIMIT,
   CONTRIBUTOR_SHOWCASE_LIMIT,
 } from '../lib/config.js';
 
@@ -18,15 +19,34 @@ import {
  * showing up now instead of freezing whoever arrived first.
  */
 
+// `apps_helped` counts distinct listings rather than sessions: helping the
+// same app through three rounds is real work, but it is not the same reach
+// as helping three different developers ship, and the board says which.
 const EARNED_IN_WINDOW = `
   SELECT u.id, u.display_name,
          COUNT(DISTINCT ts.id) AS completed_count,
+         COUNT(DISTINCT ts.listing_id) AS apps_helped,
+         MAX(ts.completed_at) AS last_active_at,
          COALESCE(SUM(tl.delta), 0) AS tokens_earned
   FROM test_sessions ts
   JOIN users u ON u.id = ts.tester_user_id
   LEFT JOIN token_ledger tl ON tl.related_id = ts.id AND tl.reason = 'earned_test'
   WHERE ts.status = 'completed' AND ts.completed_at > datetime('now', ?)
 `;
+
+// Safelisted, so a sort name off the query string can never reach the SQL.
+// Same property the `resolveSort` in routes/listings.js relies on, and the
+// `typeof` guard is there for the same reason: a property key is coerced
+// with `toString()`, so an array would otherwise match what it stringifies to.
+const SORTS = {
+  tokens: 'tokens_earned DESC, completed_count DESC',
+  tests: 'completed_count DESC, tokens_earned DESC',
+};
+
+export function resolveSort(sort) {
+  if (typeof sort !== 'string') return SORTS.tokens;
+  return Object.hasOwn(SORTS, sort) ? SORTS[sort] : SORTS.tokens;
+}
 
 function resolveWindow(url) {
   const requested = Number(url.searchParams.get('window'));
@@ -35,16 +55,25 @@ function resolveWindow(url) {
     : LEADERBOARD_DEFAULT_WINDOW_DAYS;
 }
 
+function resolveLimit(url) {
+  const requested = Number(url.searchParams.get('limit'));
+  return Number.isFinite(requested) && requested > 0
+    ? Math.min(Math.trunc(requested), LEADERBOARD_MAX_LIMIT)
+    : LEADERBOARD_LIMIT;
+}
+
 export async function top(request, env) {
-  const windowDays = resolveWindow(new URL(request.url));
+  const url = new URL(request.url);
+  const windowDays = resolveWindow(url);
   const since = `-${windowDays} days`;
+  const orderBy = resolveSort(url.searchParams.get('sort'));
+  const limit = resolveLimit(url);
 
   // Board one: everyone who tested, whether or not they ship anything.
   const testers = await env.DB.prepare(
-    `${EARNED_IN_WINDOW} GROUP BY u.id
-     ORDER BY tokens_earned DESC, completed_count DESC LIMIT ?`,
+    `${EARNED_IN_WINDOW} GROUP BY u.id ORDER BY ${orderBy} LIMIT ?`,
   )
-    .bind(since, LEADERBOARD_LIMIT)
+    .bind(since, limit)
     .all();
 
   // Board two: the same score, narrowed to people who also have something
@@ -71,6 +100,8 @@ export async function top(request, env) {
       rank: i + 1,
       displayName: publicDisplayName({ displayName: r.display_name, id: r.id }),
       completedCount: r.completed_count,
+      appsHelped: r.apps_helped,
+      lastActiveAt: r.last_active_at,
       tokensEarned: r.tokens_earned,
     })),
     contributors: contributors.results.map((r, i) => ({

@@ -163,9 +163,14 @@ export class CommunityClient {
 
   /** Resolves to `{ windowDays, testers, contributors }` — two boards over
    * the same trailing window, the second narrowed to contributors who also
-   * have something open for others to test. */
-  leaderboard(windowDays) {
-    const query = windowDays ? `?window=${encodeURIComponent(windowDays)}` : '';
-    return this._request(`/leaderboard${query}`);
+   * have something open for others to test. `sort` is `tokens` (default) or
+   * `tests`; `limit` raises how many rows come back, capped server-side. */
+  leaderboard({ windowDays, sort, limit } = {}) {
+    const params = new URLSearchParams();
+    if (windowDays) params.set('window', windowDays);
+    if (sort) params.set('sort', sort);
+    if (limit) params.set('limit', limit);
+    const query = params.toString();
+    return this._request(`/leaderboard${query ? `?${query}` : ''}`);
   }
 }
