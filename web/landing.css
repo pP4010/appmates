@@ -21,14 +21,42 @@
 
 /* ============================ promoted rails ============================ */
 
-/* Two columns of promoted slots flanking the content, the way a marketplace
-   runs its own. Hidden by default; the three-column layout that reveals
-   them lives at the very end of this file, because it has to override
-   `.landing`'s max-width and at equal specificity that is settled by order. */
+/* Two columns of promoted slots flanking the content, genuinely fixed to
+   the viewport — not sticky. A sticky sidebar shorter than the page it
+   scrolls beside disengages once its own tail catches up with the row's
+   end, which reads as the cards suddenly lurching near the top or the
+   bottom of the page. Fixed positioning has no such edge case: the box
+   never moves regardless of scroll position, which is the actual property
+   being asked for. `landing.js` fills the remaining height with extra
+   empty slots at runtime, since how many fit depends on the real rendered
+   height of a card, not a number this file can know in advance. */
 .rail {
   display: none;
+  position: fixed;
+  top: 1.25rem;
+  height: calc(100vh - 2.5rem);
+  width: 190px;
+  overflow: hidden;
   flex-direction: column;
   gap: .6rem;
+  z-index: 5;
+}
+.rail-left { left: 1.25rem; }
+.rail-right { right: 1.25rem; }
+
+/* Content only makes room for the rails once there is width to spare.
+   `--landing-max` shrinks smoothly from the two fixed 190px columns (each
+   with its own padding and a breathing gap) up to the page's normal
+   1120px, so the rails start appearing well before the viewport is wide
+   enough to fit both at full content width. Lives here, not next to
+   `.landing`'s own rule, only because this is where the rail geometry it
+   depends on is defined. */
+@media (min-width: 1180px) {
+  .rail { display: flex; }
+  .landing,
+  .landing-footer {
+    --landing-max: min(1120px, calc(100vw - 470px));
+  }
 }
 
 .rail-card {
@@ -602,43 +630,3 @@ table.lb td.app-col { font-size: .82rem; }
   .closing { padding: 2.4rem 1.2rem; }
 }
 
-/* ============================ page layout ============================ */
-
-/* Last in the file on purpose. The rails only work if the content column
-   gives up width to make room for them, which means overriding `.landing`'s
-   own `max-width` — and at equal specificity that is settled by order, so
-   this block has to come after it. Sticky rather than fixed, so the rails
-   travel with the reader without creating a second scroll region. */
-@media (min-width: 1180px) {
-  .landing-body {
-    display: grid;
-    grid-template-columns: minmax(160px, 200px) minmax(0, 1fr) minmax(160px, 200px);
-    gap: 1.5rem;
-    max-width: 1560px;
-    margin: 0 auto;
-    padding: 0 1.25rem;
-    align-items: start;
-  }
-  .rail { display: flex; position: sticky; top: 1.25rem; grid-row: 1; }
-  .rail-left { grid-column: 1; }
-  .rail-right { grid-column: 3; }
-  .landing {
-    grid-column: 2;
-    grid-row: 1;
-    max-width: none;
-    padding-left: 0;
-    padding-right: 0;
-    /* Both of these are load-bearing, and neither is enough alone.
-       `min-width: 0` drops the grid item's automatic minimum size, and
-       `width: 100%` makes it resolve against its grid area instead of its
-       content — without the second, the horizontally scrolling card rows
-       size this item to the full width of every tile laid end to end
-       (~1650px), which pushes the whole page into a sideways scroll no
-       matter how narrow the track underneath it is. */
-    min-width: 0;
-    width: 100%;
-  }
-  /* Spans the full width underneath: a footer indented into the middle
-     column would read as belonging to the content rather than the page. */
-  .landing-footer { grid-column: 1 / -1; grid-row: 2; max-width: none; }
-}

@@ -342,12 +342,16 @@ function railCard(app) {
  *
  * The tempting fallback — render the empty "available" card — would invite
  * someone to ask for a slot that is already sold, so a slot that is taken
- * stays visibly taken. The store link is built from the id we already have,
- * which is enough to keep the card useful without any lookup at all.
+ * stays visibly taken. `slot.name`, when the config supplied one, beats the
+ * generic label for exactly this case — a lookup can fail for reasons that
+ * have nothing to do with the app (the catalogue rate-limits, a network
+ * hiccup), and there's no reason to show "Promoted app" when the real name
+ * was sitting right there in `landing-demo.js`. The store link is built
+ * from the id alone, so the card stays useful without any lookup at all.
  */
 function unresolvedSlot(slot) {
   return railCard({
-    name: 'Promoted app',
+    name: slot.name || 'Promoted app',
     genre: '',
     artwork: '',
     storeUrl: `https://apps.apple.com/app/id${encodeURIComponent(slot.trackId)}`,
@@ -356,7 +360,7 @@ function unresolvedSlot(slot) {
 
 function emptySlot() {
   return `
-    <a class="rail-card empty" href="mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Featuring my app on AppMates')}">
+    <a class="rail-card empty" data-filler href="mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Featuring my app on AppMates')}">
       <span class="rail-tag">Available</span>
       <span class="rail-name">Your app here</span>
       <span class="rail-desc">Get in touch to take this slot.</span>
@@ -378,6 +382,8 @@ async function renderRails() {
   right.innerHTML =
     RAIL_RIGHT.map(() => emptySlot()).join('') +
     `<span class="rail-foot">Want a slot? <a href="mailto:${CONTACT_EMAIL}">Ask here</a></span>`;
+  fillRailHeight(left);
+  fillRailHeight(right);
 
   const itunes = new ITunesClient();
   const resolve = async (slots) => {
@@ -411,6 +417,56 @@ async function renderRails() {
   right.innerHTML =
     rightCards.join('') +
     `<span class="rail-foot">Want a slot? <a href="mailto:${CONTACT_EMAIL}">Ask here</a></span>`;
+  fillRailHeight(left);
+  fillRailHeight(right);
+}
+
+/**
+ * Appends "Available" cards to a rail until it is as full as the viewport
+ * allows, measuring real rendered heights rather than guessing a pixel
+ * value — the number that fits depends on the theme's line-height and
+ * whichever font actually loaded, neither of which this function should
+ * need to know in advance.
+ *
+ * Idempotent: existing `[data-filler]` cards are cleared first, so calling
+ * this again after a resize (or after the real promoted card replaces the
+ * placeholder it started as) recomputes cleanly instead of accumulating.
+ */
+function fillRailHeight(rail) {
+  rail.querySelectorAll('[data-filler]').forEach((node) => node.remove());
+  if (getComputedStyle(rail).display === 'none') return;
+
+  const available = rail.getBoundingClientRect().height;
+  const gap = parseFloat(getComputedStyle(rail).rowGap) || 0;
+  const foot = rail.querySelector('.rail-foot');
+
+  let used = [...rail.children].reduce((sum, node) => sum + node.getBoundingClientRect().height, 0);
+  used += Math.max(0, rail.children.length - 1) * gap;
+
+  // Bounded well past anything a real viewport would need, so a measurement
+  // that never converges (a card reporting 0 height, say) can't hang the tab.
+  for (let i = 0; i < 20; i++) {
+    const probe = document.createElement('a');
+    probe.className = 'rail-card empty';
+    probe.dataset.filler = '';
+    probe.style.visibility = 'hidden';
+    probe.innerHTML = `
+      <span class="rail-tag">Available</span>
+      <span class="rail-name">Your app here</span>
+      <span class="rail-desc">Get in touch to take this slot.</span>`;
+    rail.insertBefore(probe, foot);
+
+    const height = probe.getBoundingClientRect().height;
+    const nextUsed = used + (rail.children.length > 1 ? gap : 0) + height;
+    if (nextUsed > available) {
+      probe.remove();
+      break;
+    }
+
+    probe.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Featuring my app on AppMates')}`;
+    probe.style.visibility = '';
+    used = nextUsed;
+  }
 }
 
 /* ============================ boot ============================ */
@@ -491,10 +547,27 @@ function wireBoardControls() {
   });
 }
 
+/** Re-measures both rails after the viewport settles, so height added by a
+ * window resize (or the sidebar crossing the 1180px breakpoint) is filled
+ * — and height removed doesn't leave the last few filler cards clipped by
+ * `overflow: hidden`. Debounced: a drag-resize fires this dozens of times a
+ * second, and only the last one, after the user stops, needs to run. */
+function wireRailResize() {
+  let timer;
+  window.addEventListener('resize', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      fillRailHeight(document.getElementById('railLeft'));
+      fillRailHeight(document.getElementById('railRight'));
+    }, 150);
+  });
+}
+
 async function boot() {
   renderDemo();
   wireHeroSearch();
   wireBoardControls();
+  wireRailResize();
   // Not awaited: the rails are decoration, and a slow catalogue lookup for
   // them must not hold up the live community data below.
   renderRails();
