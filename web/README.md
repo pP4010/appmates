@@ -119,8 +119,11 @@ a smaller sample is visible rather than mistaken for a thinner market.
 
 ```
 web/
-├── index.html          # shell and views
-├── styles.css
+├── index.html          # public landing page
+├── landing.css
+├── landing.js          # live community data, degrades to nothing
+├── app.html            # the app itself: shell and views
+├── styles.css          # design tokens + app, also used by the landing
 ├── app.js              # routing and boot only
 ├── lib/                # engines, each mirroring a Python service
 │   ├── image-facts.js  # PNG/JPEG headers      ← read_facts
