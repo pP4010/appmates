@@ -1,167 +1,328 @@
 /* ==========================================================================
    AppMates landing page
 
-   Loaded after styles.css, which it borrows every colour, radius and shadow
-   token from — so light and dark mode, the accent, and shared components
-   (.panel, .pill, .callout, .marketplace-card) all behave here exactly as
-   they do inside the app.
+   Loaded after styles.css and borrows every token from it, so light/dark,
+   the accent and shared components behave here exactly as in the app.
 
-   Two deliberate departures from the app's own look:
+   The shape is a marketplace front page, and the rule that shape follows is
+   that the cards are the content. Section headings are therefore small and
+   muted — a big display heading above a row of listings competes with the
+   listings, which are the thing worth looking at. The only large type on
+   the page is the hero, which has nothing to compete with.
 
-   The app is dense on purpose — it answers questions by comparison, so rows
-   sit close enough to scan in one movement. A landing page is read once, in
-   order, so the vertical rhythm here is roughly double.
-
-   Headings are set in the monospace stack the app reserves for figures.
-   Marketplace software tends to use it for display type, and it does real
-   work: it reads as instrumentation rather than marketing, which is the
-   honest claim this product is making.
+   Rows scroll horizontally with snap points rather than wrapping into a
+   grid: a row that runs off the edge reads as a catalogue that continues,
+   where a tidy grid of six reads as everything there is.
    ========================================================================== */
 
 .landing-body { height: auto; }
-
 .landing,
-.landing-nav,
-.landing-footer {
-  --landing-max: 1080px;
-}
+.landing-footer { --landing-max: 1120px; }
 
-/* ============================ nav ============================ */
+/* ============================ hero ============================ */
 
-.landing-nav {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  max-width: var(--landing-max);
+.hero {
+  text-align: center;
+  max-width: 46rem;
   margin: 0 auto;
-  padding: 1.1rem 1.5rem;
+  padding: 3.5rem 1.5rem 3rem;
 }
-.landing-brand {
-  display: flex;
+.hero-brand {
+  display: inline-flex;
   align-items: center;
-  gap: .55rem;
+  gap: .45rem;
   font-weight: 700;
-  font-size: .98rem;
-  letter-spacing: -0.02em;
-  color: var(--text);
+  font-size: .9rem;
+  letter-spacing: -0.01em;
+  color: var(--text-2);
+  margin-bottom: 2rem;
 }
-.landing-brand:hover { text-decoration: none; }
-.landing-brand img { border-radius: 7px; display: block; }
+.hero-brand:hover { text-decoration: none; color: var(--text); }
+.hero-brand img { border-radius: 6px; display: block; }
 
-.landing-nav-links {
+.hero h1 {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: clamp(1.9rem, 5vw, 3.1rem);
+  line-height: 1.12;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  margin: 0 0 1.2rem;
+  text-wrap: balance;
+}
+.hero-sub {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-2);
+  max-width: 40rem;
+  margin: 0 auto 1.8rem;
+}
+
+.hero-search {
   display: flex;
-  gap: 1.3rem;
-  margin-left: auto;
-  font-size: .87rem;
+  gap: .5rem;
+  max-width: 30rem;
+  margin: 0 auto 1.2rem;
 }
-.landing-nav-links a { color: var(--text-2); }
-.landing-nav-links a:hover { color: var(--text); text-decoration: none; }
+.hero-search input {
+  flex: 1;
+  min-width: 0;
+  font-size: .9rem;
+  padding: .6rem .85rem;
+  border-radius: var(--r-md);
+}
+.hero-nav {
+  display: flex;
+  gap: .6rem;
+  justify-content: center;
+  align-items: center;
+  font-size: .85rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.hero-nav a { color: var(--text-2); }
+.hero-nav a:hover { color: var(--text); text-decoration: none; }
 
-/* Anchor-styled buttons: the app's real <button> rules don't apply to <a>,
-   so the shared look is restated here rather than faked with a class that
-   only half-matches. */
+/* Anchors can't inherit the app's <button> rules, so the shared look is
+   restated rather than approximated. */
 .landing-cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: .87rem;
+  font-size: .88rem;
   font-weight: 650;
-  padding: .5rem .95rem;
-  border-radius: var(--r-sm);
+  padding: .6rem 1.1rem;
   border: 1px solid transparent;
+  border-radius: var(--r-md);
   background: linear-gradient(140deg, var(--accent), var(--accent-strong));
   color: var(--on-accent);
   box-shadow: var(--shadow-sm);
   white-space: nowrap;
+  cursor: pointer;
   transition: filter .12s, transform .06s;
 }
 .landing-cta:hover { text-decoration: none; filter: brightness(1.08); }
 .landing-cta:active { transform: translateY(1px); }
-.landing-cta.lg { font-size: .95rem; padding: .7rem 1.4rem; }
-.landing-cta.ghost {
-  background: var(--surface);
-  color: var(--text);
-  border-color: var(--border-strong);
-  box-shadow: none;
-}
-.landing-cta.ghost:hover { background: var(--surface-2); border-color: var(--muted); filter: none; }
+.landing-cta.lg { font-size: .95rem; padding: .72rem 1.5rem; }
 
-/* ============================ shell ============================ */
+/* ============================ sections ============================ */
 
 .landing {
   max-width: var(--landing-max);
   margin: 0 auto;
-  padding: 0 1.5rem 4rem;
+  padding: 0 1.5rem 3rem;
 }
+.row-section { margin-bottom: 3rem; scroll-margin-top: 1.5rem; }
 
-.landing-section { margin: 5rem 0; scroll-margin-top: 1.5rem; }
-
-.section-head {
+.row-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  flex-wrap: wrap;
-  margin-bottom: .5rem;
+  margin-bottom: .7rem;
+  padding: 0 .15rem;
 }
-/* Beats the app's dense `h2 { font-size: .95rem }` without !important —
-   these two selectors are simply more specific. */
-.landing-section h2,
-.closing h2 {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
-  font-size: 1.45rem;
+/* Small and muted on purpose — see the note at the top of this file. Two
+   selectors deep so it beats the app's own `h2` without !important. */
+.row-section h2 {
+  font-size: .88rem;
   font-weight: 650;
-  letter-spacing: -0.02em;
+  color: var(--text-2);
   margin: 0;
-  text-wrap: balance;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
 }
-.section-link { font-size: .87rem; font-weight: 600; white-space: nowrap; }
-.section-sub {
-  color: var(--text-2);
-  font-size: .92rem;
-  max-width: 68ch;
-  margin: 0 0 1.5rem;
-  line-height: 1.6;
-}
+.row-link { font-size: .8rem; font-weight: 550; color: var(--muted); white-space: nowrap; }
+.row-link:hover { color: var(--text); text-decoration: none; }
+.row-sub { font-size: .85rem; color: var(--muted); margin: 0 0 1rem; max-width: 62ch; line-height: 1.55; }
+.row-note { font-size: .8rem; color: var(--muted); margin: .7rem .15rem 0; max-width: 62ch; }
 
-/* ============================ hero ============================ */
-
-.hero { padding: 3.5rem 0 1rem; }
-.hero h1 {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
-  font-size: clamp(2rem, 5.5vw, 3.4rem);
-  line-height: 1.1;
-  font-weight: 650;
-  letter-spacing: -0.035em;
-  margin: 0 0 1.3rem;
-  text-wrap: balance;
-}
-.hero-sub {
-  font-size: 1.02rem;
-  line-height: 1.65;
-  color: var(--text-2);
-  max-width: 62ch;
-  margin: 0 0 2rem;
-}
-.hero-actions { display: flex; gap: .7rem; flex-wrap: wrap; margin-bottom: 2rem; }
-.hero-note {
-  font-size: .82rem;
+/* Placeholder content is labelled where it is shown, not only in a comment
+   in the source — see landing-demo.js. */
+.demo-tag {
+  font-size: .62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  padding: .12rem .4rem;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
   color: var(--muted);
-  max-width: 60ch;
-  padding-left: .8rem;
-  border-left: 2px solid var(--border);
-  line-height: 1.6;
 }
-.hero-note strong { color: var(--text-2); font-weight: 650; }
+
+/* ============================ card rows ============================ */
+
+.card-row {
+  display: flex;
+  gap: .65rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+  padding: .2rem .15rem 1rem;
+  scrollbar-width: none;
+}
+.card-row::-webkit-scrollbar { display: none; }
+
+.listing-tile {
+  position: relative;
+  flex: 0 0 auto;
+  width: 226px;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  padding: .8rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: inherit;
+  overflow: hidden;
+  transition: border-color .12s, transform .1s, box-shadow .12s;
+}
+.listing-tile:hover {
+  text-decoration: none;
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.tile-flag {
+  position: absolute;
+  top: 0; right: 0;
+  font-size: .58rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+  padding: .18rem .45rem;
+  border-bottom-left-radius: var(--r-md);
+}
+.tile-flag.testing { background: var(--warn-soft); color: var(--warn); }
+.tile-flag.launched { background: var(--ok-soft); color: var(--ok); }
+
+.tile-head { display: flex; align-items: center; gap: .6rem; margin: .15rem 0 .7rem; padding-right: 4.2rem; }
+.tile-name { font-weight: 700; font-size: .87rem; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile-genre { font-size: .68rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* A generated letter tile rather than a logo: these listings are invented,
+   and borrowing a real app's mark would imply a customer who isn't one. */
+.tile-icon {
+  flex: 0 0 auto;
+  width: 32px; height: 32px;
+  border-radius: 9px;
+  display: grid; place-items: center;
+  font-weight: 700; font-size: .95rem;
+  color: #fff;
+  border: 1px solid rgb(255 255 255 / 14%);
+}
+
+.tile-note {
+  font-size: .74rem;
+  color: var(--muted);
+  line-height: 1.4;
+  margin-bottom: .7rem;
+  min-height: 2.05em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tile-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; margin-top: auto; }
+.tile-metrics .k {
+  display: block;
+  font-size: .56rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--muted);
+  margin-bottom: .1rem;
+}
+.tile-metrics .v {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: .78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.tile-metrics .v.ok { color: var(--ok); }
+.tile-metrics .v.warn { color: var(--warn); }
+.tile-metrics .v.bad { color: var(--bad); }
+
+.row-more {
+  flex: 0 0 auto;
+  width: 226px;
+  scroll-snap-align: start;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  text-align: center;
+  font-size: .84rem;
+  font-weight: 550;
+  color: var(--muted);
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--r-md);
+  transition: border-color .12s, color .12s, background .12s;
+}
+.row-more:hover { text-decoration: none; border-color: var(--accent); color: var(--text); background: var(--surface-2); }
 
 /* ============================ tools ============================ */
 
 .tools-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: .7rem;
+  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+  gap: .55rem;
 }
 .tool-card {
+  display: flex;
+  flex-direction: column;
+  gap: .22rem;
+  padding: .85rem .95rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: inherit;
+  transition: border-color .12s, transform .1s, box-shadow .12s;
+}
+.tool-card:hover { text-decoration: none; border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.tool-icon { font-size: 1rem; color: var(--accent); line-height: 1; margin-bottom: .15rem; }
+.tool-card strong { font-size: .87rem; }
+.tool-card span:last-child { font-size: .78rem; color: var(--text-2); line-height: 1.45; }
+
+/* ============================ leaderboard ============================ */
+
+.lb-wrap { padding: 0; overflow: hidden; }
+table.lb { width: 100%; border-collapse: collapse; font-size: .86rem; }
+table.lb th {
+  text-align: left;
+  font-size: .66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+  padding: .6rem .9rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+table.lb td { padding: .6rem .9rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+table.lb tr:last-child td { border-bottom: none; }
+table.lb .c { text-align: center; width: 3.2rem; }
+table.lb .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lb-medal { font-size: 1.05rem; line-height: 1; }
+.lb-rank { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lb-who { display: flex; align-items: center; gap: .6rem; min-width: 0; }
+.lb-who .tile-icon { width: 26px; height: 26px; border-radius: 7px; font-size: .78rem; }
+.lb-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-tokens { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ============================ steps ============================ */
+
+.steps {
+  list-style: none;
+  margin: 0 0 1.2rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: .6rem;
+}
+.steps li {
   display: flex;
   flex-direction: column;
   gap: .3rem;
@@ -169,108 +330,37 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  color: inherit;
-  transition: border-color .12s, transform .1s, box-shadow .12s;
-}
-.tool-card:hover {
-  text-decoration: none;
-  border-color: var(--accent);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-.tool-icon { font-size: 1.1rem; color: var(--accent); line-height: 1; margin-bottom: .2rem; }
-.tool-card strong { font-size: .92rem; letter-spacing: -0.01em; }
-.tool-card span:last-child { font-size: .83rem; color: var(--text-2); line-height: 1.5; }
-
-.privacy-strip {
-  display: flex;
-  gap: .7rem;
-  align-items: flex-start;
-  margin-top: 1.2rem;
-  padding: .9rem 1.1rem;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  font-size: .87rem;
-  color: var(--text-2);
-  line-height: 1.6;
-}
-.privacy-strip strong { color: var(--text); }
-
-/* ============================ leaderboard table ============================ */
-
-.lb-table { padding: .3rem 1.1rem; }
-.lb-row {
-  display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr) auto auto;
-  gap: 1rem;
-  align-items: center;
-  padding: .7rem 0;
-  border-top: 1px solid var(--border);
-}
-.lb-row:first-child { border-top: none; }
-.lb-row .lb-rank {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--muted);
-  text-align: center;
-}
-.lb-row.top .lb-rank { font-size: 1.05rem; }
-.lb-name { font-weight: 600; font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lb-tests { font-size: .82rem; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.lb-tokens { font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.lb-tokens .unit { color: var(--muted); font-weight: 500; font-size: .78rem; }
-
-/* ============================ steps ============================ */
-
-.steps {
-  list-style: none;
-  margin: 0 0 1.5rem;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: .7rem;
-  counter-reset: step;
-}
-.steps li {
-  display: flex;
-  flex-direction: column;
-  gap: .35rem;
-  padding: 1.1rem 1.2rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
 }
 .step-n {
-  display: grid;
-  place-items: center;
-  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  width: 24px; height: 24px;
   border-radius: 50%;
   background: var(--accent-soft);
   color: var(--accent);
-  font-weight: 700;
-  font-size: .82rem;
-  font-variant-numeric: tabular-nums;
-  margin-bottom: .2rem;
+  font-weight: 700; font-size: .78rem;
+  margin-bottom: .15rem;
 }
-.steps strong { font-size: .92rem; }
-.steps li > span:last-child { font-size: .85rem; color: var(--text-2); line-height: 1.55; }
+.steps strong { font-size: .88rem; }
+.steps li > span:last-child { font-size: .82rem; color: var(--text-2); line-height: 1.5; }
+.callout.guardrail { max-width: none; font-size: .84rem; line-height: 1.6; }
 
-.callout.guardrail { max-width: none; font-size: .87rem; line-height: 1.65; }
-
-/* ============================ closing ============================ */
+/* ============================ closing + footer ============================ */
 
 .closing {
   text-align: center;
-  padding: 4rem 1.5rem;
-  margin: 5rem 0 0;
+  padding: 3.2rem 1.5rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
 }
-.closing p { color: var(--text-2); max-width: 46ch; margin: .8rem auto 1.8rem; line-height: 1.6; }
-
-/* ============================ footer ============================ */
+.closing h2 {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 1.3rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.closing p { color: var(--text-2); max-width: 44ch; margin: .7rem auto 1.5rem; font-size: .9rem; line-height: 1.55; }
 
 .landing-footer {
   display: flex;
@@ -282,18 +372,16 @@
   margin: 0 auto;
   padding: 2rem 1.5rem 3rem;
   border-top: 1px solid var(--border);
-  font-size: .85rem;
+  font-size: .84rem;
 }
-.landing-footer > div:first-child { display: flex; flex-direction: column; gap: .2rem; }
+.landing-footer > div:first-child { display: flex; flex-direction: column; gap: .15rem; }
 .landing-footer-links { display: flex; gap: 1.2rem; flex-wrap: wrap; }
 
 @media (max-width: 640px) {
-  .landing-nav { gap: .8rem; padding: .9rem 1.1rem; flex-wrap: wrap; }
-  .landing-nav-links { order: 3; width: 100%; margin-left: 0; justify-content: space-between; }
-  .landing { padding: 0 1.1rem 3rem; }
-  .landing-section { margin: 3.5rem 0; }
-  .hero { padding: 2rem 0 .5rem; }
-  .lb-row { grid-template-columns: 1.6rem minmax(0, 1fr) auto; }
-  .lb-row .lb-tests { display: none; }
-  .closing { padding: 2.5rem 1.2rem; }
+  .hero { padding: 2.2rem 1.1rem 2rem; }
+  .hero-search { flex-direction: column; }
+  .landing { padding: 0 1.1rem 2.5rem; }
+  .row-section { margin-bottom: 2.4rem; }
+  table.lb .apps-col { display: none; }
+  .closing { padding: 2.4rem 1.2rem; }
 }

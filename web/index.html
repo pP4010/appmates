@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AppMates — Get the listing right, then get real testers</title>
-<meta name="description" content="Nine pre-flight checks for your App Store and Play listing, running entirely in your browser. Then a community of developers who test each other's builds for real.">
+<title>AppMates — Real testers for your app, and a listing that holds up</title>
+<meta name="description" content="Find the 12 closed testers Google Play makes you find, get real users at launch, and check every listing rule before you ship — all in one place.">
 <link rel="icon" type="image/svg+xml" href="./assets/icon.svg">
 <link rel="apple-touch-icon" href="./assets/icon.svg">
 <link rel="stylesheet" href="./styles.css">
@@ -12,179 +12,141 @@
 </head>
 <body class="landing-body">
 
-<header class="landing-nav">
-  <a class="landing-brand" href="./">
-    <img src="./assets/icon.svg" alt="" width="26" height="26">
-    <span>AppMates</span>
-  </a>
-  <nav class="landing-nav-links">
-    <a href="#tools">Tools</a>
-    <a href="#testers">Testers</a>
-    <a href="#leaderboard">Leaderboard</a>
-  </nav>
-  <a class="landing-cta" href="./app.html#overview">Open the app</a>
-</header>
-
 <main class="landing">
 
   <!-- ============================ hero ============================ -->
   <section class="hero">
-    <h1>Get the listing right.<br>Then get real testers.</h1>
+    <a class="hero-brand" href="./">
+      <img src="./assets/icon.svg" alt="" width="22" height="22">
+      <span>AppMates</span>
+    </a>
+
+    <h1>Real testers for your app.<br>A listing that holds up.</h1>
+
     <p class="hero-sub">
-      Nine pre-flight checks for your App Store and Google Play listing — screenshots,
-      keyword field, character limits, rank, market difficulty — all running in your
-      browser. Nothing uploaded, no account. Then a community where developers actually
-      test each other's builds.
+      Google Play wants 12 testers for 14 unbroken days before you can publish.
+      Find them here by testing someone else's build — then check every store rule
+      before you ship. <a href="./app.html#community">Browse open listings</a>
     </p>
-    <div class="hero-actions">
-      <a class="landing-cta lg" href="./app.html#overview">Check your listing</a>
-      <a class="landing-cta ghost lg" href="./app.html#community">Browse open listings</a>
-    </div>
-    <p class="hero-note">
-      Store rules verified <strong>26 July 2026</strong> against Apple's and Google's own
-      documentation. Every number this app prints traces back to that catalogue.
-    </p>
+
+    <form class="hero-search" id="heroSearch" action="./app.html" method="get">
+      <input type="text" id="heroInput" placeholder="1438388363 or com.example.app"
+        aria-label="App Store id or bundle id" autocomplete="off">
+      <button type="submit" class="landing-cta">Check my listing</button>
+    </form>
+
+    <nav class="hero-nav">
+      <a href="./app.html#community">Get testers</a>
+      <span aria-hidden="true">·</span>
+      <a href="#leaderboard">Leaderboard</a>
+      <span aria-hidden="true">·</span>
+      <a href="./app.html#overview">Open the app</a>
+    </nav>
   </section>
 
-  <!-- ==================== tools: finalize the launch ==================== -->
-  <section class="landing-section" id="tools">
-    <div class="section-head">
-      <h2>Everything you check before you ship</h2>
-      <a class="section-link" href="./app.html#overview">Open the app →</a>
+  <!-- ==================== needs testers ==================== -->
+  <section class="row-section">
+    <div class="row-head">
+      <h2>Needs testers now <span class="demo-tag" data-demo="testing">sample</span></h2>
+      <a class="row-link" href="./app.html#community">View all →</a>
     </div>
-    <p class="section-sub">
-      The half of AppMates that never needs an account. Point it at your app once and every
-      tool below reads from the same public catalogue data — the same engines the command-line
-      version runs, tested against each other on every commit.
-    </p>
+    <div class="card-row" id="rowTesting"></div>
+  </section>
 
+  <!-- ==================== just launched ==================== -->
+  <section class="row-section">
+    <div class="row-head">
+      <h2>Just launched <span class="demo-tag" data-demo="launched">sample</span></h2>
+      <a class="row-link" href="./app.html#community">View all →</a>
+    </div>
+    <div class="card-row" id="rowLaunched"></div>
+  </section>
+
+  <!-- ==================== what the tools do ==================== -->
+  <section class="row-section" id="tools">
+    <div class="row-head">
+      <h2>Checked before you ship</h2>
+      <a class="row-link" href="./app.html#overview">Open the app →</a>
+    </div>
+    <p class="row-sub">
+      Nine checks that run in your browser against the public store catalogue. No upload,
+      no account — the same engines the command-line version runs.
+    </p>
     <div class="tools-grid">
-      <a class="tool-card" href="./app.html#overview">
-        <span class="tool-icon">◈</span>
-        <strong>Overview</strong>
-        <span>One health score for your listing, and the list of what is still failing.</span>
-      </a>
-      <a class="tool-card" href="./app.html#screenshots">
-        <span class="tool-icon">▢</span>
-        <strong>Screenshots</strong>
-        <span>Catch the sizes a store rejects — and repair them, without leaving the page.</span>
-      </a>
-      <a class="tool-card" href="./app.html#keywords">
-        <span class="tool-icon">⌗</span>
-        <strong>Keyword field</strong>
-        <span>Audit the 100 characters nobody sees but everybody is ranked on.</span>
-      </a>
-      <a class="tool-card" href="./app.html#metadata">
-        <span class="tool-icon">¶</span>
-        <strong>Listing text</strong>
-        <span>Title, subtitle and description against each store's real character limits.</span>
-      </a>
-      <a class="tool-card" href="./app.html#niche">
-        <span class="tool-icon">◎</span>
-        <strong>Niche</strong>
-        <span>How hard a keyword actually is, with the raw counts behind every score.</span>
-      </a>
-      <a class="tool-card" href="./app.html#markets">
-        <span class="tool-icon">⊕</span>
-        <strong>Markets</strong>
-        <span>Scan storefronts to see where a term is contested and where it is open.</span>
-      </a>
-      <a class="tool-card" href="./app.html#competitors">
-        <span class="tool-icon">⧉</span>
-        <strong>Competitors</strong>
-        <span>Put your listing next to theirs and see which fields they actually use.</span>
-      </a>
-      <a class="tool-card" href="./app.html#rank">
-        <span class="tool-icon">↗</span>
-        <strong>Rank</strong>
-        <span>Track your position per keyword over time, stored on your own machine.</span>
-      </a>
-      <a class="tool-card" href="./app.html#testers">
-        <span class="tool-icon">◷</span>
-        <strong>Play testers</strong>
-        <span>The 12-testers-for-14-days gate, and exactly when a reset would cost you.</span>
-      </a>
-    </div>
-
-    <div class="privacy-strip">
-      <span aria-hidden="true">🔒</span>
-      <span>
-        <strong>Nothing is uploaded.</strong> Every tool above runs in your browser and talks
-        to the public store catalogue directly. There is no server holding your assets, and no
-        account to create.
-      </span>
+      <a class="tool-card" href="./app.html#overview"><span class="tool-icon">◈</span><strong>Overview</strong><span>One health score, and what is still failing.</span></a>
+      <a class="tool-card" href="./app.html#screenshots"><span class="tool-icon">▢</span><strong>Screenshots</strong><span>Catch the sizes a store rejects — and repair them.</span></a>
+      <a class="tool-card" href="./app.html#keywords"><span class="tool-icon">⌗</span><strong>Keyword field</strong><span>Audit the 100 characters you are ranked on.</span></a>
+      <a class="tool-card" href="./app.html#metadata"><span class="tool-icon">¶</span><strong>Listing text</strong><span>Title, subtitle, description against real limits.</span></a>
+      <a class="tool-card" href="./app.html#niche"><span class="tool-icon">◎</span><strong>Niche</strong><span>How contested a keyword actually is.</span></a>
+      <a class="tool-card" href="./app.html#markets"><span class="tool-icon">⊕</span><strong>Markets</strong><span>Which storefronts are open, which are crowded.</span></a>
+      <a class="tool-card" href="./app.html#competitors"><span class="tool-icon">⧉</span><strong>Competitors</strong><span>Your listing next to theirs, field by field.</span></a>
+      <a class="tool-card" href="./app.html#rank"><span class="tool-icon">↗</span><strong>Rank</strong><span>Position per keyword, stored on your machine.</span></a>
+      <a class="tool-card" href="./app.html#testers"><span class="tool-icon">◷</span><strong>Play testers</strong><span>The 12-for-14-days gate, and what resets it.</span></a>
     </div>
   </section>
 
-  <!-- ==================== live: open listings ==================== -->
-  <section class="landing-section hidden" id="testers">
-    <div class="section-head">
-      <h2>Looking for testers right now</h2>
-      <a class="section-link" href="./app.html#community">See all listings →</a>
+  <!-- ==================== leaderboard ==================== -->
+  <section class="row-section" id="leaderboard">
+    <div class="row-head">
+      <h2>Top testers this month <span class="demo-tag" data-demo="leaderboard">sample</span></h2>
+      <a class="row-link" href="./app.html#community">Full leaderboard →</a>
     </div>
-    <p class="section-sub">
-      Every headline number below is recomputed from the public catalogue as this page loads —
-      never typed in by the developer who posted the listing.
-    </p>
-    <div class="marketplace-grid" id="landingListings"></div>
-  </section>
-
-  <!-- ==================== live: leaderboard ==================== -->
-  <section class="landing-section hidden" id="leaderboard">
-    <div class="section-head">
-      <h2>Top testers</h2>
-      <a class="section-link" href="./app.html#community">Full leaderboard →</a>
+    <div class="panel lb-wrap">
+      <table class="lb">
+        <thead>
+          <tr>
+            <th class="c">#</th>
+            <th>Tester</th>
+            <th class="n">Apps tested</th>
+            <th class="n">Tokens</th>
+          </tr>
+        </thead>
+        <tbody id="lbBody"></tbody>
+      </table>
     </div>
-    <p class="section-sub">
-      Ranked by tokens earned over the last 30 days. A token exists only because a developer
-      confirmed by hand that someone's testing actually helped.
+    <p class="row-note">
+      A token exists only because a developer confirmed by hand that someone's testing
+      helped. It cannot be bought.
     </p>
-    <div class="panel lb-table" id="landingLeaderboard"></div>
   </section>
 
   <!-- ==================== how it works ==================== -->
-  <section class="landing-section" id="how">
-    <div class="section-head">
-      <h2>How a tester gets earned</h2>
-    </div>
-
+  <section class="row-section">
+    <div class="row-head"><h2>How it works</h2></div>
     <ol class="steps">
       <li>
         <span class="step-n">1</span>
-        <strong>You test someone else's build</strong>
-        <span>Ask for a slot with a short pitch. The developer reviews it and accepts or declines —
-        closed testing is invitation-only on both stores anyway.</span>
+        <strong>Test someone else's build</strong>
+        <span>Ask for a slot with a short pitch. The developer accepts or declines — closed
+        testing is invitation-only on both stores anyway.</span>
       </li>
       <li>
         <span class="step-n">2</span>
-        <strong>They confirm you actually helped</strong>
-        <span>You send private feedback. Only the listing's owner can mark it complete, and only
-        that mints a token. Nobody can credit themselves.</span>
+        <strong>They confirm it helped</strong>
+        <span>You send private feedback. Only the listing's owner can mark it complete, and
+        only that mints a token. Nobody credits themselves.</span>
       </li>
       <li>
         <span class="step-n">3</span>
-        <strong>You spend it on your own listing</strong>
-        <span>Tokens buy visibility for your app — the same kind of placement a launch directory
+        <strong>Spend it on your own app</strong>
+        <span>Tokens buy visibility for your listing — the placement a launch directory
         sells, except this one is earned.</span>
       </li>
     </ol>
-
     <div class="callout guardrail">
-      <strong>What this isn't.</strong> Nobody here trades App Store or Play reviews, and nothing
-      on this site ever asks a tester to leave one. Both stores ban incentivised reviews outright,
-      and a developer account is not worth risking over a placement. Testers give you private
-      feedback on a closed build; whether anyone reviews your app is entirely between them and the
-      store. Tokens cannot be bought — not at any price, not ever.
+      <strong>What this isn't.</strong> Nobody here trades App Store or Play reviews, and
+      nothing on this site ever asks a tester to leave one. Both stores ban incentivised
+      reviews outright, and a developer account is not worth risking over a placement.
+      Testers give you private feedback on a build; whether anyone reviews your app is
+      between them and the store.
     </div>
   </section>
 
   <!-- ==================== closing ==================== -->
   <section class="closing">
     <h2>Start with the listing you already have</h2>
-    <p>
-      Paste an App Store id or bundle id and see what a reviewer — and a tester — would find.
-    </p>
-    <a class="landing-cta lg" href="./app.html#overview">Check your listing</a>
+    <p>Paste an App Store id or bundle id and see what a reviewer — and a tester — would find.</p>
+    <a class="landing-cta lg" href="./app.html#overview">Check my listing</a>
   </section>
 
 </main>
