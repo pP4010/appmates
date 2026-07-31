@@ -146,14 +146,15 @@ export const DEMO_LEADERBOARD = [
  * icon pasted into source goes stale the moment the listing changes. The
  * empty ones are the offer: a slot someone can ask for, priced later.
  */
-export const RAIL_LEFT = [
-  { trackId: '6768688178', country: 'us' },
-  { empty: true },
-  { empty: true },
-];
+/**
+ * `name` is only a fallback label. The card normally shows whatever the
+ * catalogue returns — that is what keeps it current — but a lookup can
+ * fail, and a promoted slot reading "Promoted app" instead of the app's
+ * actual name is a worse outcome than a slightly stale one.
+ *
+ * The empty slots below each list are not fixed: `landing.js` generates as
+ * many as the viewport has room for, so the column is full at any height.
+ */
+export const RAIL_LEFT = [{ trackId: '6768688178', country: 'us', name: 'Kaizen' }];
 
-export const RAIL_RIGHT = [
-  { trackId: '6782585843', country: 'us' },
-  { empty: true },
-  { empty: true },
-];
+export const RAIL_RIGHT = [{ trackId: '6782585843', country: 'us', name: 'Rebuild' }];
