@@ -134,6 +134,17 @@ async function boot() {
     },
   });
 
+  // An id typed into the landing page's search box, handed over as `?app=`.
+  // Consumed once and stripped from the URL so a reload — or a link someone
+  // copied out of the address bar — doesn't silently re-run the lookup and
+  // override whatever app they picked since.
+  const handoff = new URLSearchParams(location.search).get('app');
+  if (handoff) {
+    history.replaceState(null, '', location.pathname + location.hash);
+    location.hash = '#overview';
+    loadApp(handoff);
+  }
+
   // The same throttled iTunes client every tool shares, so listing cards can
   // re-derive an app's public catalogue facts rather than trusting numbers
   // the person who posted the listing typed in.

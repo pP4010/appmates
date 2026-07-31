@@ -1,168 +1,217 @@
 /**
- * Landing page: the public front door, at `/`. The app itself is `app.html`.
+ * Landing page at `/`. The app itself is `app.html`.
  *
- * Everything here degrades to nothing. The two community sections start
- * hidden in the markup and are only revealed once real data arrives, so a
- * deployment with no community backend configured — or one whose backend is
- * down — shows a landing page about the tools rather than a row of empty
- * shelves. That is also why this module never throws into the page: a
- * marketing page that renders an error is worse than one that renders less.
+ * Renders sample rows immediately so the page explains the product on a
+ * deployment with no community backend — the state every fresh clone starts
+ * in — then replaces them wholesale if `COMMUNITY_API_URL` is set. Sample
+ * rows keep a visible "sample" tag; real ones drop it, so the page never
+ * passes placeholder numbers off as traction.
  *
- * The listing cards recompute their headline numbers from the public store
- * catalogue as they render, exactly as they do inside the app. That is the
- * product's actual claim, so the landing page should not be the one place it
- * is faked with a hardcoded figure.
+ * Nothing here can throw into the page. A landing page that renders an
+ * error is worse than one that renders the static half and stops.
  */
 
 import { escapeHtml } from './views/shared.js';
 import { CommunityClient } from './lib/community.js';
-import { ITunesClient } from './lib/itunes.js';
-import { loadAppHealthSpec, checkAppHealth, profileFromEntry } from './lib/app-profile.js';
+import { DEMO_TESTING, DEMO_LAUNCHED, DEMO_LEADERBOARD } from './landing-demo.js';
 
-/** A landing page shows a taste, not a directory — and each card costs one
- * throttled catalogue lookup, so this is also what keeps the page from
- * spending twenty seconds filling in numbers nobody scrolled to. */
-const SHOWCASE_LIMIT = 3;
-const LEADERBOARD_LIMIT = 5;
-
+const ROW_LIMIT = 6;
 const MEDALS = ['🥇', '🥈', '🥉'];
 
-function reveal(id) {
-  document.getElementById(id)?.classList.remove('hidden');
+/* ============================ shared bits ============================ */
+
+/** A stable colour per name, so the same app keeps the same tile across
+ * reloads without storing anything. */
+function letterTile(name, className = 'tile-icon') {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) % 360;
+  const letter = (name.trim()[0] || '?').toUpperCase();
+  return `<span class="${className}" aria-hidden="true"
+    style="background:linear-gradient(140deg,hsl(${hash} 62% 52%),hsl(${(hash + 38) % 360} 62% 42%))"
+    >${escapeHtml(letter)}</span>`;
 }
 
-/* ============================ listings ============================ */
+function healthTone(score) {
+  return score >= 80 ? 'ok' : score >= 50 ? 'warn' : 'bad';
+}
 
-function card(listing) {
-  const kindLabel = listing.kind === 'testing' ? 'Looking for testers' : 'Launch / update';
-  const slots = `${listing.slotsFilled}/${listing.slotsWanted || '∞'}`;
+function metric(label, value, tone = '') {
+  return `<div><span class="k">${escapeHtml(label)}</span><span class="v ${tone}">${escapeHtml(String(value))}</span></div>`;
+}
 
+function tile({ flag, flagClass, name, genre, note, metrics }) {
   return `
-    <div class="panel marketplace-card">
-      <div class="marketplace-card-head">
-        ${
-          listing.app.artworkUrl
-            ? `<img class="app-icon" src="${escapeHtml(listing.app.artworkUrl)}" alt="" loading="lazy">`
-            : '<span class="app-icon"></span>'
-        }
-        <div style="min-width:0;flex:1">
-          <strong class="marketplace-card-name">${escapeHtml(listing.app.name)}</strong>
-          <div class="marketplace-card-badges">
-            <span class="pill ${listing.kind === 'testing' ? 'info' : 'ok'}">${kindLabel}</span>
-          </div>
-        </div>
-      </div>
-      <div class="marketplace-card-metrics">
-        <div class="mini-metric">
-          <span class="metric-label">Health</span>
-          <span class="metric-value pending" data-health="${listing.id}">…</span>
-        </div>
-        <div class="mini-metric">
-          <span class="metric-label">Rating</span>
-          <span class="metric-value pending" data-rating="${listing.id}">…</span>
-        </div>
-        <div class="mini-metric">
-          <span class="metric-label">Testers</span>
-          <span class="metric-value">${slots}</span>
-        </div>
-      </div>
-      <a class="landing-cta ghost" href="./app.html#community">Request to test</a>
-    </div>`;
+    <a class="listing-tile" href="./app.html#community">
+      <span class="tile-flag ${flagClass}">${escapeHtml(flag)}</span>
+      <span class="tile-head">
+        ${letterTile(name)}
+        <span style="min-width:0">
+          <span class="tile-name">${escapeHtml(name)}</span>
+          <span class="tile-genre">${escapeHtml(genre)}</span>
+        </span>
+      </span>
+      <span class="tile-note">${escapeHtml(note)}</span>
+      <span class="tile-metrics">${metrics}</span>
+    </a>`;
 }
 
-function setCell(attr, id, text, tone = '') {
-  const node = document.querySelector(`[data-${attr}="${id}"]`);
-  if (node) {
-    node.className = `metric-value ${tone}`;
-    node.textContent = text;
+function moreTile(label) {
+  return `<a class="row-more" href="./app.html#community">${escapeHtml(label)}</a>`;
+}
+
+/* ============================ demo rendering ============================ */
+
+function renderDemo() {
+  document.getElementById('rowTesting').innerHTML =
+    DEMO_TESTING.map((a) =>
+      tile({
+        flag: 'NEEDS TESTERS',
+        flagClass: 'testing',
+        name: a.name,
+        genre: a.genre,
+        note: a.note,
+        metrics: [
+          metric('Testers', a.testers),
+          metric('Health', a.health, healthTone(a.health)),
+          metric('Days left', a.daysLeft),
+        ].join(''),
+      }),
+    ).join('') + moreTile('Browse every listing looking for testers');
+
+  document.getElementById('rowLaunched').innerHTML =
+    DEMO_LAUNCHED.map((a) =>
+      tile({
+        flag: 'JUST LAUNCHED',
+        flagClass: 'launched',
+        name: a.name,
+        genre: a.genre,
+        note: a.note,
+        metrics: [
+          metric('Health', a.health, healthTone(a.health)),
+          metric('Rating', `${a.rating}★`),
+          metric('Ratings', a.ratings),
+        ].join(''),
+      }),
+    ).join('') + moreTile('See every launch and update');
+
+  document.getElementById('lbBody').innerHTML = DEMO_LEADERBOARD.map(
+    (e) => `
+      <tr>
+        <td class="c">${e.rank <= 3 ? `<span class="lb-medal">${MEDALS[e.rank - 1]}</span>` : `<span class="lb-rank">${e.rank}</span>`}</td>
+        <td><span class="lb-who">${letterTile(e.name)}<span class="lb-name">${escapeHtml(e.name)}</span></span></td>
+        <td class="n apps-col">${e.tests}</td>
+        <td class="n"><span class="lb-tokens">${e.tokens}</span></td>
+      </tr>`,
+  ).join('');
+}
+
+/* ============================ live rendering ============================ */
+
+/** Per section, never wholesale: a live listings row does not make the
+ * leaderboard beside it real, and dropping its tag too would relabel sample
+ * numbers as traction. */
+function clearDemoTag(section) {
+  document.querySelector(`[data-demo="${section}"]`)?.remove();
+}
+
+function renderLiveListings(listings) {
+  const testing = listings.filter((l) => l.kind === 'testing').slice(0, ROW_LIMIT);
+  const launched = listings.filter((l) => l.kind === 'launch').slice(0, ROW_LIMIT);
+
+  if (testing.length) {
+    document.getElementById('rowTesting').innerHTML =
+      testing
+        .map((l) =>
+          tile({
+            flag: 'NEEDS TESTERS',
+            flagClass: 'testing',
+            name: l.app.name,
+            genre: l.platform === 'android' ? 'Google Play' : l.platform === 'ios' ? 'App Store' : 'iOS + Android',
+            note: l.description || 'Open for closed testers.',
+            metrics: [
+              metric('Testers', `${l.slotsFilled}/${l.slotsWanted || '∞'}`),
+              metric('Given back', l.ownerContribution ?? 0),
+              metric('Slots', Math.max(0, (l.slotsWanted || 0) - l.slotsFilled) || '—'),
+            ].join(''),
+          }),
+        )
+        .join('') + moreTile('Browse every listing looking for testers');
+    clearDemoTag('testing');
+  }
+
+  if (launched.length) {
+    document.getElementById('rowLaunched').innerHTML =
+      launched
+        .map((l) =>
+          tile({
+            flag: 'JUST LAUNCHED',
+            flagClass: 'launched',
+            name: l.app.name,
+            genre: l.platform === 'android' ? 'Google Play' : l.platform === 'ios' ? 'App Store' : 'iOS + Android',
+            note: l.description || 'Shipped and open to new users.',
+            metrics: [
+              metric('Given back', l.ownerContribution ?? 0),
+              metric('Reach', l.slotsFilled || '—'),
+              metric('Status', 'Live'),
+            ].join(''),
+          }),
+        )
+        .join('') + moreTile('See every launch and update');
+    clearDemoTag('launched');
   }
 }
 
-/** Sequential on purpose: `ITunesClient` throttles anyway, so firing these in
- * parallel would only queue them behind each other. Each card fails on its
- * own — one app the catalogue won't answer for shows a dash, not a broken
- * row of cards. */
-async function enrich(listings, itunes) {
-  for (const listing of listings) {
-    if (!listing.app?.trackId) continue;
-    try {
-      const entry = await itunes.lookup(String(listing.app.trackId), {
-        country: listing.app.country || 'us',
-      });
-      if (!entry) throw new Error('not in catalogue');
-
-      const report = checkAppHealth(profileFromEntry(entry));
-      const score = Math.round(report.score);
-      setCell('health', listing.id, `${score}/100`, score >= 80 ? 'ok' : score >= 50 ? 'warn' : 'bad');
-      setCell(
-        'rating',
-        listing.id,
-        report.profile.rating ? `${report.profile.rating.toFixed(1)}★` : 'No ratings',
-      );
-    } catch {
-      setCell('health', listing.id, '—');
-      setCell('rating', listing.id, '—');
-    }
-  }
-}
-
-/* ============================ leaderboard ============================ */
-
-function leaderboardRows(entries) {
-  return entries
+function renderLiveLeaderboard(testers) {
+  if (!testers.length) return;
+  document.getElementById('lbBody').innerHTML = testers
+    .slice(0, 7)
     .map(
       (e) => `
-      <div class="lb-row ${e.rank <= 3 ? 'top' : ''}">
-        <span class="lb-rank">${e.rank <= 3 ? MEDALS[e.rank - 1] : e.rank}</span>
-        <span class="lb-name">${escapeHtml(e.displayName)}</span>
-        <span class="lb-tests">${e.completedCount} test${e.completedCount === 1 ? '' : 's'}</span>
-        <span class="lb-tokens">${e.tokensEarned} <span class="unit">tokens</span></span>
-      </div>`,
+      <tr>
+        <td class="c">${e.rank <= 3 ? `<span class="lb-medal">${MEDALS[e.rank - 1]}</span>` : `<span class="lb-rank">${e.rank}</span>`}</td>
+        <td><span class="lb-who">${letterTile(e.displayName)}<span class="lb-name">${escapeHtml(e.displayName)}</span></span></td>
+        <td class="n apps-col">${e.completedCount}</td>
+        <td class="n"><span class="lb-tokens">${e.tokensEarned}</span></td>
+      </tr>`,
     )
     .join('');
+  clearDemoTag('leaderboard');
 }
 
 /* ============================ boot ============================ */
 
+function wireHeroSearch() {
+  const form = document.getElementById('heroSearch');
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const value = document.getElementById('heroInput').value.trim();
+    // Handed over as `?app=`, which app.js reads once on boot — the hash is
+    // already the router's, so an id cannot ride along in it. An empty box
+    // still opens Overview rather than doing nothing.
+    location.href = value
+      ? `./app.html?app=${encodeURIComponent(value)}#overview`
+      : './app.html#overview';
+  });
+}
+
 async function boot() {
+  renderDemo();
+  wireHeroSearch();
+
   const client = new CommunityClient();
   if (!client.configured) return;
 
-  // Listings and the board are independent: one failing should not cost the
-  // page the other, so they settle separately rather than through a single
-  // Promise.all that any one rejection would take down.
-  const [listingsResult, boardResult] = await Promise.allSettled([
-    client.browseListings('testing', 'newest'),
+  // Independent on purpose: a leaderboard outage should not also cost the
+  // page its listings, so each half settles on its own.
+  const [listings, board] = await Promise.allSettled([
+    client.browseListings(undefined, 'newest'),
     client.leaderboard(),
   ]);
 
-  if (boardResult.status === 'fulfilled' && boardResult.value.testers.length) {
-    document.getElementById('landingLeaderboard').innerHTML = leaderboardRows(
-      boardResult.value.testers.slice(0, LEADERBOARD_LIMIT),
-    );
-    reveal('leaderboard');
-  }
-
-  if (listingsResult.status === 'fulfilled' && listingsResult.value.length) {
-    const listings = listingsResult.value.slice(0, SHOWCASE_LIMIT);
-    document.getElementById('landingListings').innerHTML = listings.map(card).join('');
-    reveal('testers');
-
-    // Only needed for the health score, and only once there is a card to put
-    // it on — a visitor who never sees a listing never pays for this fetch.
-    try {
-      const specs = await (await fetch('./lib/specs.json')).json();
-      loadAppHealthSpec(specs);
-      await enrich(listings, new ITunesClient());
-    } catch {
-      for (const listing of listings) {
-        setCell('health', listing.id, '—');
-        setCell('rating', listing.id, '—');
-      }
-    }
-  }
+  if (listings.status === 'fulfilled') renderLiveListings(listings.value);
+  if (board.status === 'fulfilled') renderLiveLeaderboard(board.value.testers);
 }
 
 boot().catch(() => {
-  /* The tools half of this page is static markup and still stands. */
+  /* The static half of the page still stands. */
 });
