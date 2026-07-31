@@ -205,20 +205,17 @@ export class ITunesClient {
   /**
    * Fetch one app by numeric App Store id or by bundle id.
    *
-   * `country` is deliberately omitted for numeric ids. Apple's lookup endpoint
-   * returns no CORS headers at all when `id` and `country` are combined —
-   * `?id=X` answers with `access-control-allow-origin: *`, `?id=X&country=us`
-   * answers with nothing — so the browser blocks the response and the request
-   * fails with an opaque "Failed to fetch".
-   *
-   * Dropping it costs nothing: a track id already identifies one app across
-   * every storefront. The parameter only varies pricing fields this tool does
-   * not read.
+   * `country` is always sent now. Apple's lookup endpoint currently answers
+   * `?id=X` alone with no CORS headers at all — the browser blocks the
+   * response and the request fails with an opaque "Failed to fetch" — while
+   * `?id=X&country=us` answers with `access-control-allow-origin: *`. That is
+   * the reverse of what this endpoint used to do, so dropping the parameter
+   * for numeric ids (as this client once did) now breaks every lookup by id.
    */
   async lookup(appId, { country = 'us' } = {}) {
     const isNumericId = /^\d+$/.test(appId);
     const params = isNumericId
-      ? { id: appId }
+      ? { id: appId, country: country.toLowerCase() }
       : { bundleId: appId, country: country.toLowerCase() };
 
     const payload = await this.get(LOOKUP_URL, params, { subject: appId });
