@@ -39,6 +39,12 @@
   overflow: hidden;
   flex-direction: column;
   gap: .6rem;
+  /* The top card's hover lift (`translateY(-2px)` plus a shadow that blurs
+     upward past the element) needs room above it, or `overflow: hidden`
+     clips the card's own top edge mid-hover. Padding-bottom would just
+     shrink the last card for no reason — hovering never pushes a card
+     down into the rail's bottom edge. */
+  padding-top: 1rem;
   z-index: 5;
 }
 .rail-left { left: 1.25rem; }
@@ -103,7 +109,6 @@
 }
 .rail-card.empty:hover { border-color: var(--accent); background: var(--surface-2); }
 .rail-card.empty .rail-name { color: var(--text-2); font-weight: 650; }
-.rail-foot { text-align: center; font-size: .72rem; color: var(--muted); padding-top: .1rem; }
 
 /* ============================ hero ============================ */
 
