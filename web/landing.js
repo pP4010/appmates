@@ -13,11 +13,22 @@
 
 import { escapeHtml } from './views/shared.js';
 import { CommunityClient } from './lib/community.js';
-import { DEMO_TESTING, DEMO_LAUNCHED, DEMO_LEADERBOARD } from './landing-demo.js';
+import { ITunesClient } from './lib/itunes.js';
+import {
+  DEMO_TESTING,
+  DEMO_LAUNCHED,
+  DEMO_LEADERBOARD,
+  RAIL_LEFT,
+  RAIL_RIGHT,
+} from './landing-demo.js';
 
 const ROW_LIMIT = 6;
 /** Rows the board starts at, and how many each "Show more" adds. */
 const BOARD_PAGE = 7;
+/** Catalogue lookups are throttled, so a fully expanded board would spend a
+ * long time filling in rows nobody scrolled to. */
+const RATINGS_LOOKUP_LIMIT = 10;
+const CONTACT_EMAIL = 'kaizenapp.contact@gmail.com';
 const MEDALS = ['🥇', '🥈', '🥉'];
 
 /* ============================ shared bits ============================ */
@@ -121,26 +132,36 @@ function demoToRow(e) {
     rank: e.rank,
     name: e.name,
     sub: `Helped ${e.apps} app${e.apps === 1 ? '' : 's'} ship`,
-    lastActive: e.lastActive,
+    appName: e.ownApp,
+    appDesc: e.ownAppDesc,
     tests: e.tests,
-    tokens: e.tokens,
+    ratings: e.ratings,
   };
 }
 
-/** SQLite hands back `YYYY-MM-DD HH:MM:SS` in UTC with no zone marker, which
- * `Date` would read as local time — an hours-wide error on a column whose
- * whole job is "how recently". The `T`/`Z` are added back before parsing. */
-function relativeTime(timestamp) {
-  if (!timestamp) return '—';
-  const then = new Date(`${String(timestamp).replace(' ', 'T')}Z`);
-  if (Number.isNaN(then.getTime())) return '—';
+/** An em dash, not a blank or a zero: plenty of the best testers here have
+ * not shipped anything yet, and an empty cell would read as missing data
+ * rather than as a real answer. */
+const NONE = '—';
 
-  const hours = Math.floor((Date.now() - then.getTime()) / 3_600_000);
-  if (hours < 1) return 'Just now';
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return 'Yesterday';
-  return `${days}d ago`;
+/**
+ * Icon, name, one line of context — the same shape a marketplace board uses
+ * for the entity each row is about.
+ *
+ * The icon starts as a generated letter tile even for live rows: the real
+ * artwork arrives a throttled lookup later, and swapping a placeholder for
+ * it is far less jarring than a row that reflows when an image pops in.
+ */
+function appCell(r) {
+  const key = r.ratingsKey ? ` data-app="${escapeHtml(r.ratingsKey)}"` : '';
+  return `
+    <span class="lb-app-cell"${key}>
+      ${letterTile(r.appName, 'lb-app-icon')}
+      <span style="min-width:0">
+        <span class="lb-app">${escapeHtml(r.appName)}</span>
+        <span class="lb-app-desc">${escapeHtml(r.appDesc ?? '')}</span>
+      </span>
+    </span>`;
 }
 
 function renderBoard(rows) {
@@ -158,9 +179,15 @@ function renderBoard(rows) {
             </span>
           </span>
         </td>
-        <td class="last-col">${escapeHtml(r.lastActive)}</td>
+        <td class="app-col">${r.appName ? appCell(r) : `<span class="lb-none">${NONE}</span>`}</td>
         <td class="n apps-col">${r.tests}</td>
-        <td class="n"><span class="lb-tokens">${r.tokens}</span></td>
+        <td class="n">${
+          r.appName
+            ? `<span class="lb-ratings"${r.ratingsKey ? ` data-ratings="${escapeHtml(r.ratingsKey)}"` : ''}>${
+                r.ratings ?? '…'
+              }</span>`
+            : `<span class="lb-none">${NONE}</span>`
+        }</td>
       </tr>`,
     )
     .join('');
@@ -239,12 +266,151 @@ function renderLiveLeaderboard(testers) {
       rank: e.rank,
       name: e.displayName,
       sub: `Helped ${e.appsHelped ?? 0} app${e.appsHelped === 1 ? '' : 's'} ship`,
-      lastActive: relativeTime(e.lastActiveAt),
+      appName: e.ownApp?.name ?? null,
+      // Both left blank for `fillAppFacts`: the rating count and the
+      // category are live properties of the listing, so storing either
+      // would only mean showing a stale number with a straight face.
+      appDesc: null,
+      ratings: null,
+      ratingsKey: e.ownApp?.trackId ?? null,
       tests: e.completedCount,
-      tokens: e.tokensEarned,
     })),
   );
   clearDemoTag('leaderboard');
+  fillAppFacts(testers);
+}
+
+/** Reads each listed app's icon, category and rating count straight from
+ * the public catalogue, one throttled lookup at a time. Per-row failures
+ * leave the letter tile and a dash rather than a spinner that never
+ * resolves. */
+async function fillAppFacts(testers) {
+  const withApps = testers.filter((e) => e.ownApp?.trackId).slice(0, RATINGS_LOOKUP_LIMIT);
+  if (!withApps.length) return;
+
+  const itunes = new ITunesClient();
+  for (const tester of withApps) {
+    const key = CSS.escape(String(tester.ownApp.trackId));
+    let ratings = NONE;
+    let entry = null;
+    try {
+      entry = await itunes.lookup(String(tester.ownApp.trackId), {
+        country: tester.ownApp.country || 'us',
+      });
+      const count = Number(entry?.userRatingCount ?? 0);
+      ratings = count > 0 ? count.toLocaleString('en-US') : 'No ratings';
+    } catch {
+      /* leaves the letter tile and the dash */
+    }
+
+    document.querySelectorAll(`[data-ratings="${key}"]`).forEach((node) => {
+      node.textContent = ratings;
+    });
+
+    if (!entry) continue;
+    document.querySelectorAll(`[data-app="${key}"]`).forEach((cell) => {
+      const artwork = entry.artworkUrl100 ?? entry.artworkUrl512;
+      const tile = cell.querySelector('.lb-app-icon');
+      if (artwork && tile) {
+        const img = document.createElement('img');
+        img.className = 'lb-app-icon';
+        img.src = artwork;
+        img.alt = '';
+        img.loading = 'lazy';
+        tile.replaceWith(img);
+      }
+      const desc = cell.querySelector('.lb-app-desc');
+      if (desc) desc.textContent = entry.primaryGenreName ?? '';
+    });
+  }
+}
+
+/* ============================ promoted rails ============================ */
+
+function railCard(app) {
+  return `
+    <a class="rail-card" href="${escapeHtml(app.storeUrl)}" target="_blank" rel="noopener">
+      <span class="rail-tag">Promoted</span>
+      ${app.artwork ? `<img class="rail-icon" src="${escapeHtml(app.artwork)}" alt="" loading="lazy">` : ''}
+      <span class="rail-name">${escapeHtml(app.name)}</span>
+      ${app.genre ? `<span class="rail-genre">${escapeHtml(app.genre)}</span>` : ''}
+    </a>`;
+}
+
+/**
+ * A taken slot whose catalogue lookup failed.
+ *
+ * The tempting fallback — render the empty "available" card — would invite
+ * someone to ask for a slot that is already sold, so a slot that is taken
+ * stays visibly taken. The store link is built from the id we already have,
+ * which is enough to keep the card useful without any lookup at all.
+ */
+function unresolvedSlot(slot) {
+  return railCard({
+    name: 'Promoted app',
+    genre: '',
+    artwork: '',
+    storeUrl: `https://apps.apple.com/app/id${encodeURIComponent(slot.trackId)}`,
+  });
+}
+
+function emptySlot() {
+  return `
+    <a class="rail-card empty" href="mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Featuring my app on AppMates')}">
+      <span class="rail-tag">Available</span>
+      <span class="rail-name">Your app here</span>
+      <span class="rail-desc">Get in touch to take this slot.</span>
+    </a>`;
+}
+
+/**
+ * Fills both rails. The promoted entries are resolved from the catalogue so
+ * the name, icon and category track whatever is actually on the store — a
+ * slot advertising a stale version of an app is worse than an empty one, so
+ * a lookup that fails falls back to an available slot rather than to a
+ * half-rendered card.
+ */
+async function renderRails() {
+  const left = document.getElementById('railLeft');
+  const right = document.getElementById('railRight');
+  // Empty slots need no network, so they paint immediately.
+  left.innerHTML = RAIL_LEFT.map(() => emptySlot()).join('');
+  right.innerHTML =
+    RAIL_RIGHT.map(() => emptySlot()).join('') +
+    `<span class="rail-foot">Want a slot? <a href="mailto:${CONTACT_EMAIL}">Ask here</a></span>`;
+
+  const itunes = new ITunesClient();
+  const resolve = async (slots) => {
+    const out = [];
+    for (const slot of slots) {
+      if (slot.empty || !slot.trackId) {
+        out.push(emptySlot());
+        continue;
+      }
+      try {
+        const entry = await itunes.lookup(slot.trackId, { country: slot.country || 'us' });
+        out.push(
+          entry
+            ? railCard({
+                name: entry.trackName,
+                genre: entry.primaryGenreName ?? '',
+                artwork: entry.artworkUrl100 ?? entry.artworkUrl512 ?? '',
+                storeUrl: entry.trackViewUrl ?? '',
+              })
+            : unresolvedSlot(slot),
+        );
+      } catch {
+        out.push(unresolvedSlot(slot));
+      }
+    }
+    return out;
+  };
+
+  const [leftCards, rightCards] = [await resolve(RAIL_LEFT), await resolve(RAIL_RIGHT)];
+  left.innerHTML = leftCards.join('');
+  right.innerHTML =
+    rightCards.join('') +
+    `<span class="rail-foot">Want a slot? <a href="mailto:${CONTACT_EMAIL}">Ask here</a></span>`;
 }
 
 /* ============================ boot ============================ */
@@ -266,12 +432,13 @@ function wireHeroSearch() {
 /** Board state, and the one place that decides whether a redraw comes from
  * the sample rows or the backend — so the toggles behave the same either
  * way instead of going dead on a deployment with no community backend. */
-const board = { sort: 'tokens', windowDays: 30, limit: BOARD_PAGE, client: null };
+const board = { sort: 'tests', windowDays: 30, limit: BOARD_PAGE, client: null };
 
 function sortedDemo() {
-  const key = board.sort === 'tests' ? 'tests' : 'tokens';
+  const key = board.sort === 'apps' ? 'apps' : 'tests';
+  const tieBreak = key === 'apps' ? 'tests' : 'apps';
   return [...DEMO_LEADERBOARD]
-    .sort((a, b) => b[key] - a[key] || b.tokens - a.tokens)
+    .sort((a, b) => b[key] - a[key] || b[tieBreak] - a[tieBreak])
     .slice(0, board.limit)
     .map((e, i) => demoToRow({ ...e, rank: i + 1 }));
 }
@@ -328,6 +495,9 @@ async function boot() {
   renderDemo();
   wireHeroSearch();
   wireBoardControls();
+  // Not awaited: the rails are decoration, and a slow catalogue lookup for
+  // them must not hold up the live community data below.
+  renderRails();
 
   const client = new CommunityClient();
   if (!client.configured) {

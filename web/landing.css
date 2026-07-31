@@ -19,6 +19,63 @@
 .landing,
 .landing-footer { --landing-max: 1120px; }
 
+/* ============================ promoted rails ============================ */
+
+/* Two columns of promoted slots flanking the content, the way a marketplace
+   runs its own. Hidden by default; the three-column layout that reveals
+   them lives at the very end of this file, because it has to override
+   `.landing`'s max-width and at equal specificity that is settled by order. */
+.rail {
+  display: none;
+  flex-direction: column;
+  gap: .6rem;
+}
+
+.rail-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: .4rem;
+  padding: .9rem .8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: inherit;
+  transition: border-color .12s, transform .1s, box-shadow .12s;
+}
+.rail-card:hover {
+  text-decoration: none;
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.rail-icon { width: 34px; height: 34px; border-radius: 9px; display: block; object-fit: cover; }
+.rail-name { font-weight: 700; font-size: .84rem; letter-spacing: -0.01em; }
+.rail-genre { font-size: .68rem; color: var(--muted); }
+.rail-desc { font-size: .74rem; color: var(--text-2); line-height: 1.4; }
+.rail-tag {
+  font-size: .56rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* The offer, not a placeholder to be styled away later: a dashed slot reads
+   as available, which is the whole point of showing it before it sells. */
+.rail-card.empty {
+  border-style: dashed;
+  border-color: var(--border-strong);
+  background: none;
+  min-height: 116px;
+  justify-content: center;
+  gap: .3rem;
+}
+.rail-card.empty:hover { border-color: var(--accent); background: var(--surface-2); }
+.rail-card.empty .rail-name { color: var(--text-2); font-weight: 650; }
+.rail-foot { text-align: center; font-size: .72rem; color: var(--muted); padding-top: .1rem; }
+
 /* ============================ hero ============================ */
 
 .hero {
@@ -406,8 +463,36 @@ table.lb tbody tr { transition: background .12s; }
 table.lb tbody tr:hover { background: var(--surface-2); }
 table.lb .c { text-align: center; width: 3.2rem; }
 table.lb .n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-table.lb .last-col { width: 8rem; color: var(--muted); font-weight: 500; white-space: nowrap; }
-table.lb td.last-col { font-size: .8rem; }
+table.lb .app-col { width: 15rem; }
+table.lb td.app-col { font-size: .82rem; }
+.lb-app-cell { display: flex; align-items: center; gap: .55rem; min-width: 0; }
+/* Sized to match `.lb-who`'s tester avatar so the two entity columns sit on
+   one another's baseline instead of stepping. */
+.lb-app-icon {
+  flex: 0 0 auto;
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: grid; place-items: center;
+  object-fit: cover;
+  font-weight: 700; font-size: .8rem;
+  color: #fff;
+  border: 1px solid rgb(255 255 255 / 14%);
+}
+.lb-app {
+  display: block;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.lb-app-desc {
+  display: block;
+  font-size: .72rem;
+  color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* The dash is an answer, not missing data, so it reads as deliberate rather
+   than as a cell that failed to load. */
+.lb-none { color: var(--muted); }
 
 .lb-medal { font-size: 1.05rem; line-height: 1; }
 .lb-rank { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -418,7 +503,7 @@ table.lb td.last-col { font-size: .8rem; }
    description under each entry — `display:block` for the same reason as
    `.tile-name` above. */
 .lb-sub { display: block; font-size: .72rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lb-tokens { font-weight: 700; font-variant-numeric: tabular-nums; }
+.lb-ratings { font-weight: 700; font-variant-numeric: tabular-nums; }
 
 .lb-more {
   width: 100%;
@@ -507,6 +592,53 @@ table.lb td.last-col { font-size: .8rem; }
   .hero-search { flex-direction: column; }
   .landing { padding: 0 1.1rem 2.5rem; }
   .row-section { margin-bottom: 2.4rem; }
-  table.lb .apps-col { display: none; }
+  /* Keeps rank, who, and the number they are actually ranked by. The app
+     and its store ratings are context, and context is what a phone drops
+     first — hiding "Tests" instead would leave a board with no visible
+     basis for its own order. */
+  table.lb .app-col,
+  table.lb th:last-child,
+  table.lb td:last-child { display: none; }
   .closing { padding: 2.4rem 1.2rem; }
+}
+
+/* ============================ page layout ============================ */
+
+/* Last in the file on purpose. The rails only work if the content column
+   gives up width to make room for them, which means overriding `.landing`'s
+   own `max-width` — and at equal specificity that is settled by order, so
+   this block has to come after it. Sticky rather than fixed, so the rails
+   travel with the reader without creating a second scroll region. */
+@media (min-width: 1180px) {
+  .landing-body {
+    display: grid;
+    grid-template-columns: minmax(160px, 200px) minmax(0, 1fr) minmax(160px, 200px);
+    gap: 1.5rem;
+    max-width: 1560px;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+    align-items: start;
+  }
+  .rail { display: flex; position: sticky; top: 1.25rem; grid-row: 1; }
+  .rail-left { grid-column: 1; }
+  .rail-right { grid-column: 3; }
+  .landing {
+    grid-column: 2;
+    grid-row: 1;
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+    /* Both of these are load-bearing, and neither is enough alone.
+       `min-width: 0` drops the grid item's automatic minimum size, and
+       `width: 100%` makes it resolve against its grid area instead of its
+       content — without the second, the horizontally scrolling card rows
+       size this item to the full width of every tile laid end to end
+       (~1650px), which pushes the whole page into a sideways scroll no
+       matter how narrow the track underneath it is. */
+    min-width: 0;
+    width: 100%;
+  }
+  /* Spans the full width underneath: a footer indented into the middle
+     column would read as belonging to the content rather than the page. */
+  .landing-footer { grid-column: 1 / -1; grid-row: 2; max-width: none; }
 }
