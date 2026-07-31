@@ -116,18 +116,44 @@ export const DEMO_LAUNCHED = [
 
 /** Every field here has a real counterpart the backend returns, so the live
  * board renders the same columns rather than a thinner version of this one:
- * `apps` ← apps_helped, `lastActive` ← last_active_at, and so on. */
+ * `apps` ← apps_helped, `ownApp` ← the tester's connected app, and so on.
+ *
+ * `ownApp: null` is deliberately common. Plenty of good testers have not
+ * shipped anything yet, and a board that implied otherwise would misread
+ * who this community is for — so the column shows a dash, not a blank.
+ * `ratings` stands in for what the live board re-reads from the public
+ * catalogue; it is a property of the app, never a score earned here. */
 export const DEMO_LEADERBOARD = [
-  { rank: 1, name: 'Mara V.', tests: 23, tokens: 23, apps: 14, lastActive: '2h ago' },
-  { rank: 2, name: 'devonp', tests: 19, tokens: 19, apps: 11, lastActive: '5h ago' },
-  { rank: 3, name: 'Kit Sørensen', tests: 17, tokens: 17, apps: 12, lastActive: 'Yesterday' },
-  { rank: 4, name: 'anna.builds', tests: 15, tokens: 15, apps: 9, lastActive: 'Yesterday' },
-  { rank: 5, name: 'Tobi A.', tests: 13, tokens: 13, apps: 10, lastActive: '2d ago' },
-  { rank: 6, name: 'nine_lives', tests: 12, tokens: 12, apps: 6, lastActive: '3d ago' },
-  { rank: 7, name: 'Priya R.', tests: 11, tokens: 11, apps: 8, lastActive: '3d ago' },
-  { rank: 8, name: 'joon.dev', tests: 9, tokens: 9, apps: 7, lastActive: '4d ago' },
-  { rank: 9, name: 'Elif K.', tests: 8, tokens: 8, apps: 5, lastActive: '6d ago' },
-  { rank: 10, name: 'marcus_b', tests: 7, tokens: 7, apps: 6, lastActive: '8d ago' },
-  { rank: 11, name: 'Sofia L.', tests: 6, tokens: 6, apps: 4, lastActive: '9d ago' },
-  { rank: 12, name: 'pixelwright', tests: 5, tokens: 5, apps: 5, lastActive: '11d ago' },
+  { rank: 1, name: 'Mara V.', tests: 23, apps: 14, ownApp: 'Habitloop', ownAppDesc: 'Productivity · Habit streaks', ratings: '1,204' },
+  { rank: 2, name: 'devonp', tests: 19, apps: 11, ownApp: null, ownAppDesc: null, ratings: null },
+  { rank: 3, name: 'Kit Sørensen', tests: 17, apps: 12, ownApp: 'Ferment', ownAppDesc: 'Food & Drink · Sourdough timers', ratings: '318' },
+  { rank: 4, name: 'anna.builds', tests: 15, apps: 9, ownApp: 'Inkwell', ownAppDesc: 'Productivity · Markdown notes', ratings: '96' },
+  { rank: 5, name: 'Tobi A.', tests: 13, apps: 10, ownApp: null, ownAppDesc: null, ratings: null },
+  { rank: 6, name: 'nine_lives', tests: 12, apps: 6, ownApp: 'Cadence', ownAppDesc: 'Music · Metronome & setlists', ratings: '1,309' },
+  { rank: 7, name: 'Priya R.', tests: 11, apps: 8, ownApp: 'Quietly', ownAppDesc: 'Health & Fitness · Sleep sounds', ratings: '47' },
+  { rank: 8, name: 'joon.dev', tests: 9, apps: 7, ownApp: null, ownAppDesc: null, ratings: null },
+  { rank: 9, name: 'Elif K.', tests: 8, apps: 5, ownApp: 'Fernweh', ownAppDesc: 'Travel · Offline city maps', ratings: '624' },
+  { rank: 10, name: 'marcus_b', tests: 7, apps: 6, ownApp: 'Trailmix', ownAppDesc: 'Health & Fitness · Trail routes', ratings: '12' },
+  { rank: 11, name: 'Sofia L.', tests: 6, apps: 4, ownApp: null, ownAppDesc: null, ratings: null },
+  { rank: 12, name: 'pixelwright', tests: 5, apps: 5, ownApp: 'Bulletpoint', ownAppDesc: 'Productivity · Outliner', ratings: '431' },
+];
+
+/**
+ * The promoted slots down either side of the page.
+ *
+ * The two real entries are the site owner's own apps, filled in from the
+ * public catalogue at render time rather than hardcoded here — a name or an
+ * icon pasted into source goes stale the moment the listing changes. The
+ * empty ones are the offer: a slot someone can ask for, priced later.
+ */
+export const RAIL_LEFT = [
+  { trackId: '6768688178', country: 'us' },
+  { empty: true },
+  { empty: true },
+];
+
+export const RAIL_RIGHT = [
+  { trackId: '6782585843', country: 'us' },
+  { empty: true },
+  { empty: true },
 ];

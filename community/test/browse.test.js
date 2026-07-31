@@ -42,12 +42,15 @@ test('a non-string sort is never trusted', () => {
 test('the leaderboard sort safelist holds the same line', () => {
   // Same property, separate table: a second endpoint splicing a sort
   // fragment into SQL needs its own guard, not the listings one's reputation.
-  assert.notEqual(resolveBoardSort('tests'), resolveBoardSort('tokens'));
+  assert.notEqual(resolveBoardSort('tests'), resolveBoardSort('apps'));
   assert.match(resolveBoardSort('tests'), /completed_count DESC/);
-  assert.match(resolveBoardSort('tokens'), /tokens_earned DESC/);
+  assert.match(resolveBoardSort('apps'), /apps_helped DESC/);
+  // Tokens are one-per-completed-test, so ranking by them would just be a
+  // third spelling of `tests` — it must not be a sort the API accepts.
+  assert.equal(resolveBoardSort('tokens'), resolveBoardSort('tests'));
 
   for (const attempt of [
-    'tokens_earned DESC; DROP TABLE users--',
+    'completed_count DESC; DROP TABLE users--',
     '1=1',
     '',
     'TOKENS',
@@ -58,6 +61,6 @@ test('the leaderboard sort safelist holds the same line', () => {
     42,
     ['tests'],
   ]) {
-    assert.equal(resolveBoardSort(attempt), resolveBoardSort('tokens'), `leaked for: ${attempt}`);
+    assert.equal(resolveBoardSort(attempt), resolveBoardSort('tests'), `leaked for: ${attempt}`);
   }
 });

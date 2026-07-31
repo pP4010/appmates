@@ -22,12 +22,23 @@ import {
 // `apps_helped` counts distinct listings rather than sessions: helping the
 // same app through three rounds is real work, but it is not the same reach
 // as helping three different developers ship, and the board says which.
+// The tester's own app, if they have connected one — the board shows what
+// each person is building next to what they gave, and a dash when they are
+// here purely to test. Only `track_id` and enough to label it: the rating
+// count beside it is re-read from the public catalogue by the client, never
+// stored here, so nothing in this database tracks a store rating.
 const EARNED_IN_WINDOW = `
   SELECT u.id, u.display_name,
          COUNT(DISTINCT ts.id) AS completed_count,
          COUNT(DISTINCT ts.listing_id) AS apps_helped,
          MAX(ts.completed_at) AS last_active_at,
-         COALESCE(SUM(tl.delta), 0) AS tokens_earned
+         COALESCE(SUM(tl.delta), 0) AS tokens_earned,
+         (SELECT a.name FROM apps a
+            WHERE a.owner_user_id = u.id ORDER BY a.created_at DESC LIMIT 1) AS own_app_name,
+         (SELECT a.track_id FROM apps a
+            WHERE a.owner_user_id = u.id ORDER BY a.created_at DESC LIMIT 1) AS own_app_track_id,
+         (SELECT a.country FROM apps a
+            WHERE a.owner_user_id = u.id ORDER BY a.created_at DESC LIMIT 1) AS own_app_country
   FROM test_sessions ts
   JOIN users u ON u.id = ts.tester_user_id
   LEFT JOIN token_ledger tl ON tl.related_id = ts.id AND tl.reason = 'earned_test'
@@ -38,14 +49,17 @@ const EARNED_IN_WINDOW = `
 // Same property the `resolveSort` in routes/listings.js relies on, and the
 // `typeof` guard is there for the same reason: a property key is coerced
 // with `toString()`, so an array would otherwise match what it stringifies to.
+// Two genuinely different questions: how many sessions someone completed,
+// and how many separate developers they helped. Ranking by tokens would be
+// a third name for the first — one completed test mints exactly one token.
 const SORTS = {
-  tokens: 'tokens_earned DESC, completed_count DESC',
-  tests: 'completed_count DESC, tokens_earned DESC',
+  tests: 'completed_count DESC, apps_helped DESC',
+  apps: 'apps_helped DESC, completed_count DESC',
 };
 
 export function resolveSort(sort) {
-  if (typeof sort !== 'string') return SORTS.tokens;
-  return Object.hasOwn(SORTS, sort) ? SORTS[sort] : SORTS.tokens;
+  if (typeof sort !== 'string') return SORTS.tests;
+  return Object.hasOwn(SORTS, sort) ? SORTS[sort] : SORTS.tests;
 }
 
 function resolveWindow(url) {
@@ -103,6 +117,9 @@ export async function top(request, env) {
       appsHelped: r.apps_helped,
       lastActiveAt: r.last_active_at,
       tokensEarned: r.tokens_earned,
+      ownApp: r.own_app_track_id
+        ? { name: r.own_app_name, trackId: r.own_app_track_id, country: r.own_app_country }
+        : null,
     })),
     contributors: contributors.results.map((r, i) => ({
       rank: i + 1,

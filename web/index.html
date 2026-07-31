@@ -12,6 +12,12 @@
 </head>
 <body class="landing-body">
 
+<!-- Promoted slots. Decoration for the page's argument, so they sit outside
+     <main> and are hidden from assistive tech's reading order the same way
+     they're hidden below 1400px — they carry nothing the page needs. -->
+<aside class="rail rail-left" id="railLeft" aria-hidden="true"></aside>
+<aside class="rail rail-right" id="railRight" aria-hidden="true"></aside>
+
 <main class="landing">
 
   <!-- ============================ hero ============================ -->
@@ -93,8 +99,8 @@
     </div>
     <div class="lb-controls">
       <div class="seg" role="group" aria-label="Rank by">
-        <button type="button" class="seg-btn active" data-sort="tokens">Tokens</button>
-        <button type="button" class="seg-btn" data-sort="tests">Tests</button>
+        <button type="button" class="seg-btn active" data-sort="tests">Tests</button>
+        <button type="button" class="seg-btn" data-sort="apps">Apps helped</button>
       </div>
       <div class="seg" role="group" aria-label="Time range">
         <button type="button" class="seg-btn active" data-window="30">30 days</button>
@@ -108,9 +114,9 @@
           <tr>
             <th class="c">#</th>
             <th>Tester</th>
-            <th class="last-col">Last active</th>
+            <th class="app-col">Their app</th>
             <th class="n apps-col">Tests</th>
-            <th class="n">Tokens</th>
+            <th class="n">Store ratings</th>
           </tr>
         </thead>
         <tbody id="lbBody"></tbody>
@@ -118,8 +124,10 @@
       <button type="button" class="lb-more" id="lbMore">Show more</button>
     </div>
     <p class="row-note">
-      A token exists only because a developer confirmed by hand that someone's testing
-      helped. It cannot be bought.
+      Ranked by tests completed — each one confirmed by hand by the developer it helped,
+      which is the only way a test counts here. Store ratings are a public fact about
+      whatever that person shipped, read from the store as this page loads; nothing here
+      rewards or asks for a review.
     </p>
   </section>
 
