@@ -421,12 +421,23 @@ async function renderRails() {
   fillRailHeight(right);
 }
 
+/** A card at roughly this height reads as a real promoted slot rather than
+ * a sliver or a poster — the target `fillRailHeight` sizes the column
+ * toward, not a hard minimum (that lives in the `.rail-card` CSS). */
+const IDEAL_RAIL_CARD_HEIGHT = 148;
+
 /**
- * Appends "Available" cards to a rail until it is as full as the viewport
- * allows, measuring real rendered heights rather than guessing a pixel
- * value — the number that fits depends on the theme's line-height and
- * whichever font actually loaded, neither of which this function should
- * need to know in advance.
+ * Tops up a rail with "Available" cards so the column always divides evenly
+ * across its full height, with every card — the real one included —
+ * stretching to fill its share (`.rail-card` is `flex: 1 1 0`). That mirrors
+ * how a marketplace like trustmrr.com fills its promoted rails: a handful of
+ * evenly sized tiles reaching edge to edge, not one small card sitting above
+ * a column of leftover space.
+ *
+ * The target count comes from how many `IDEAL_RAIL_CARD_HEIGHT` cards would
+ * fit, not from measuring rendered heights — with `flex: 1 1 0` a card's
+ * rendered height depends on how many siblings it has, so probing one in
+ * isolation can't tell you how many belong in the column.
  *
  * Idempotent: existing `[data-filler]` cards are cleared first, so calling
  * this again after a resize (or after the real promoted card replaces the
@@ -439,33 +450,22 @@ function fillRailHeight(rail) {
   const available = rail.getBoundingClientRect().height;
   const gap = parseFloat(getComputedStyle(rail).rowGap) || 0;
   const foot = rail.querySelector('.rail-foot');
+  const footSpace = foot ? foot.getBoundingClientRect().height + gap : 0;
 
-  let used = [...rail.children].reduce((sum, node) => sum + node.getBoundingClientRect().height, 0);
-  used += Math.max(0, rail.children.length - 1) * gap;
+  const realCount = rail.children.length - (foot ? 1 : 0);
+  const usable = available - footSpace;
+  const targetCount = Math.max(realCount, Math.round((usable + gap) / (IDEAL_RAIL_CARD_HEIGHT + gap)));
 
-  // Bounded well past anything a real viewport would need, so a measurement
-  // that never converges (a card reporting 0 height, say) can't hang the tab.
-  for (let i = 0; i < 20; i++) {
-    const probe = document.createElement('a');
-    probe.className = 'rail-card empty';
-    probe.dataset.filler = '';
-    probe.style.visibility = 'hidden';
-    probe.innerHTML = `
+  for (let i = realCount; i < targetCount; i++) {
+    const filler = document.createElement('a');
+    filler.className = 'rail-card empty';
+    filler.dataset.filler = '';
+    filler.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Featuring my app on AppMates')}`;
+    filler.innerHTML = `
       <span class="rail-tag">Available</span>
       <span class="rail-name">Your app here</span>
       <span class="rail-desc">Get in touch to take this slot.</span>`;
-    rail.insertBefore(probe, foot);
-
-    const height = probe.getBoundingClientRect().height;
-    const nextUsed = used + (rail.children.length > 1 ? gap : 0) + height;
-    if (nextUsed > available) {
-      probe.remove();
-      break;
-    }
-
-    probe.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Featuring my app on AppMates')}`;
-    probe.style.visibility = '';
-    used = nextUsed;
+    rail.insertBefore(filler, foot);
   }
 }
 
