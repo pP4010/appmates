@@ -225,9 +225,25 @@
   box-shadow: var(--shadow-sm);
   white-space: nowrap;
   cursor: pointer;
-  transition: filter .12s, transform .06s;
+  /* Matches `button.primary` in styles.css: a gradient can't cross-fade into
+     the flat hover colour below, so `background` is left out of the
+     transition — easing that swap is what causes the flicker, dropping it
+     makes the swap instant instead of attempted-and-broken. */
+  transition: border-color .12s, transform .06s;
 }
-.landing-cta:hover { text-decoration: none; filter: brightness(1.08); }
+/* The hero search's CTA is a real `<button>` (needed for form submit), so
+   it also matches styles.css's generic `button:hover:not(:disabled)` —
+   which, thanks to the extra element selector, outranks a plain
+   `.landing-cta:hover` on specificity and wins regardless of stylesheet
+   order, repainting it grey instead of the accent colour below. Repeating
+   the selector as `button.landing-cta:hover` matches that specificity so
+   this rule's later position in the cascade decides it instead. */
+.landing-cta:hover,
+button.landing-cta:hover {
+  text-decoration: none;
+  background: var(--accent);
+  border-color: transparent;
+}
 .landing-cta:active { transform: translateY(1px); }
 .landing-cta.lg { font-size: .95rem; padding: .72rem 1.5rem; }
 
