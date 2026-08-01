@@ -341,8 +341,9 @@ async function fillAppFacts(apps) {
 /* ============================ promoted rails ============================ */
 
 function railCard(app) {
+  const colorClass = app.color ? ` rail-card--${escapeHtml(app.color)}` : '';
   return `
-    <a class="rail-card" href="${escapeHtml(app.storeUrl)}" target="_blank" rel="noopener">
+    <a class="rail-card${colorClass}" href="${escapeHtml(app.storeUrl)}" target="_blank" rel="noopener">
       ${app.artwork ? `<img class="rail-icon" src="${escapeHtml(app.artwork)}" alt="" loading="lazy">` : ''}
       <span class="rail-name">${escapeHtml(app.name)}</span>
       ${app.genre ? `<span class="rail-genre">${escapeHtml(app.genre)}</span>` : ''}
@@ -367,6 +368,7 @@ function unresolvedSlot(slot) {
     genre: '',
     artwork: '',
     storeUrl: `https://apps.apple.com/app/id${encodeURIComponent(slot.trackId)}`,
+    color: slot.color,
   });
 }
 
@@ -430,6 +432,7 @@ async function renderRails() {
                 genre: entry.primaryGenreName ?? '',
                 artwork: entry.artworkUrl100 ?? entry.artworkUrl512 ?? '',
                 storeUrl: entry.trackViewUrl ?? '',
+                color: slot.color,
               })
             : unresolvedSlot(slot),
         );
@@ -492,6 +495,138 @@ function fillRailHeight(rail) {
       <span class="rail-desc">Get in touch to take this slot.</span>`;
     rail.appendChild(filler);
   }
+}
+
+/* ============================ promo dialog ============================ */
+
+/** The palette an open slot can be requested in. Kept in sync by hand with
+ * the `.rail-card--*` rules in `landing.css` — six is few enough that a
+ * shared lookup table would cost more to read than it saves. */
+const RAIL_COLORS = [
+  { id: 'blue', label: 'Blue', hex: '#3b82f6' },
+  { id: 'green', label: 'Green', hex: '#22c55e' },
+  { id: 'violet', label: 'Violet', hex: '#a855f7' },
+  { id: 'orange', label: 'Orange', hex: '#f97316' },
+  { id: 'pink', label: 'Pink', hex: '#ec4899' },
+  { id: 'teal', label: 'Teal', hex: '#14b8a6' },
+];
+
+function promoMailto(color) {
+  const subject = 'Featuring my app on AppMates';
+  const body = `Preferred card colour: ${color}\n\nApp name:\nApp Store / Play Store link:\n`;
+  return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+function onPromoKeydown(e) {
+  if (e.key === 'Escape') closePromoDialog();
+}
+
+function closePromoDialog() {
+  document.getElementById('promoModal')?.remove();
+  document.removeEventListener('keydown', onPromoKeydown);
+}
+
+/**
+ * The info a visitor needs before asking for an open slot — reuses the
+ * app's own `.modal-overlay`/`.modal` look (see `views/community.js` for
+ * the same pattern with the "request to test" dialog) rather than a
+ * landing-page-only component, so the two feel like the same product.
+ *
+ * Pricing is a promise, not a form: nothing here submits anywhere, since
+ * there is no backend yet to receive it. "Request this slot" is a `mailto`
+ * link seeded with the colour just picked, the same handoff every other
+ * "Ask here" on this page already uses — reviewed and priced by a person,
+ * not auto-charged, which is the point the pricing note itself makes.
+ */
+function openPromoDialog() {
+  let selected = RAIL_COLORS[0].id;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'promoModal';
+  overlay.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="promoTitle">
+      <div class="modal-head">
+        <div>
+          <h3 id="promoTitle">Feature your app here</h3>
+          <p class="modal-sub">A promoted slot in the sidebar, linked straight to your store listing.</p>
+        </div>
+        <button class="modal-close" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="promo-price">
+        <span class="promo-price-old">$20/mo</span>
+        <span class="promo-price-new">Free</span>
+      </div>
+      <p class="modal-sub">
+        Free while AppMates is growing. As traffic and demand pick up, pricing may
+        change — at most once a month, never mid-cycle — but you'll always hear about
+        it first by email. Nothing is ever charged without your confirmation.
+      </p>
+
+      <div class="field">
+        <label id="promoColorLabel">Pick a colour for your card</label>
+        <div class="promo-swatches" role="radiogroup" aria-labelledby="promoColorLabel">
+          ${RAIL_COLORS.map(
+            (c, i) => `
+            <button type="button" class="promo-swatch${i === 0 ? ' selected' : ''}"
+              data-color="${c.id}" style="--swatch:${c.hex}"
+              role="radio" aria-checked="${i === 0}" aria-label="${escapeHtml(c.label)}"></button>`,
+          ).join('')}
+        </div>
+      </div>
+
+      <div class="field">
+        <label id="promoPreviewLabel">Preview</label>
+        <div class="promo-preview-wrap" aria-labelledby="promoPreviewLabel">
+          <div class="rail-card rail-card--${selected}" id="promoPreviewCard">
+            <span class="promo-preview-icon" aria-hidden="true">📱</span>
+            <span class="rail-name">Your app</span>
+            <span class="rail-genre">Category</span>
+          </div>
+        </div>
+      </div>
+
+      <a id="promoRequestBtn" class="landing-cta" style="width:100%;margin-top:.9rem;text-align:center"
+        href="${promoMailto(selected)}">Request this slot</a>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const preview = overlay.querySelector('#promoPreviewCard');
+  const request = overlay.querySelector('#promoRequestBtn');
+
+  overlay.querySelectorAll('.promo-swatch').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      overlay.querySelectorAll('.promo-swatch').forEach((b) => {
+        b.classList.remove('selected');
+        b.setAttribute('aria-checked', 'false');
+      });
+      btn.classList.add('selected');
+      btn.setAttribute('aria-checked', 'true');
+      selected = btn.dataset.color;
+      preview.className = `rail-card rail-card--${selected}`;
+      request.href = promoMailto(selected);
+    });
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closePromoDialog();
+  });
+  overlay.querySelector('.modal-close').addEventListener('click', closePromoDialog);
+  request.addEventListener('click', closePromoDialog);
+  document.addEventListener('keydown', onPromoKeydown);
+}
+
+/** Delegated rather than bound per-card: filler cards are (re)created by
+ * `fillRailHeight` on every resize, and a listener attached to elements
+ * that get thrown away and rebuilt would silently stop firing. */
+function wirePromoDialog() {
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.rail-card.empty');
+    if (!card) return;
+    e.preventDefault();
+    openPromoDialog();
+  });
 }
 
 /* ============================ boot ============================ */
@@ -601,6 +736,7 @@ async function boot() {
   wireHeroSearch();
   wireBoardControls();
   wireRailResize();
+  wirePromoDialog();
   // Not awaited: the rails are decoration, and a slow catalogue lookup for
   // them must not hold up the live community data below.
   renderRails();

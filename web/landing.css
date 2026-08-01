@@ -146,6 +146,51 @@
 .rail-card.empty:hover { border-color: var(--accent); background: var(--surface-2); }
 .rail-card.empty .rail-name { color: var(--text-2); font-weight: 650; }
 
+/* A promoted card's colour, picked at request time (see the "Feature your
+   app here" dialog below) — a tint mixed into the existing surface/border
+   tokens rather than a flat hue, so it reads correctly in both themes and
+   never fights the card's own text colours. Kept in sync by hand with
+   `RAIL_COLORS` in `landing.js`. */
+.rail-card--blue   { background: color-mix(in srgb, #3b82f6 20%, var(--surface)); border-color: color-mix(in srgb, #3b82f6 45%, var(--border)); }
+.rail-card--green  { background: color-mix(in srgb, #22c55e 20%, var(--surface)); border-color: color-mix(in srgb, #22c55e 45%, var(--border)); }
+.rail-card--violet { background: color-mix(in srgb, #a855f7 20%, var(--surface)); border-color: color-mix(in srgb, #a855f7 45%, var(--border)); }
+.rail-card--orange { background: color-mix(in srgb, #f97316 20%, var(--surface)); border-color: color-mix(in srgb, #f97316 45%, var(--border)); }
+.rail-card--pink   { background: color-mix(in srgb, #ec4899 20%, var(--surface)); border-color: color-mix(in srgb, #ec4899 45%, var(--border)); }
+.rail-card--teal   { background: color-mix(in srgb, #14b8a6 20%, var(--surface)); border-color: color-mix(in srgb, #14b8a6 45%, var(--border)); }
+
+/* ============================ promo dialog ============================ */
+
+/* Reuses the app's own `.modal-overlay`/`.modal`/`.field` (see styles.css)
+   for everything generic; only the parts unique to this dialog — price,
+   colour swatches, live preview — get their own rules here. */
+.promo-price { display: flex; align-items: baseline; gap: .6rem; margin: 1rem 0 .2rem; }
+.promo-price-old { font-size: 1.05rem; color: var(--muted); text-decoration: line-through; }
+.promo-price-new { font-size: 1.5rem; font-weight: 700; color: var(--ok); }
+
+.promo-swatches { display: flex; gap: .55rem; margin-top: .2rem; }
+.promo-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--swatch);
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--border);
+  padding: 0;
+  cursor: pointer;
+  transition: transform .1s, box-shadow .12s;
+}
+.promo-swatch:hover { transform: scale(1.1); }
+.promo-swatch.selected { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--swatch); }
+
+.promo-preview-wrap { display: flex; }
+.promo-preview-wrap .rail-card {
+  width: 190px;
+  flex: none;
+  cursor: default;
+}
+.promo-preview-wrap .rail-card:hover { transform: none; box-shadow: none; }
+.promo-preview-icon { font-size: 1.6rem; line-height: 1; }
+
 /* ============================ hero ============================ */
 
 .hero {
@@ -639,6 +684,40 @@ table.lb td.app-col { font-size: .82rem; }
 .steps strong { font-size: .88rem; }
 .steps li > span:last-child { font-size: .82rem; color: var(--text-2); line-height: 1.5; }
 .callout.guardrail { max-width: none; font-size: .84rem; line-height: 1.6; }
+
+/* ============================ faq ============================ */
+
+/* `<details>/<summary>` rather than a JS accordion: the questions people
+   actually search for should work even if the script never loads. */
+.faq-list { max-width: 42rem; display: flex; flex-direction: column; gap: .6rem; }
+.faq-item {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: 0 1rem;
+}
+.faq-item summary {
+  cursor: pointer;
+  padding: .9rem 0;
+  font-weight: 650;
+  font-size: .92rem;
+  color: var(--text);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after {
+  content: '+';
+  font-size: 1.2rem;
+  color: var(--muted);
+  flex-shrink: 0;
+  transition: transform .15s;
+}
+.faq-item[open] summary::after { transform: rotate(45deg); }
+.faq-item p { margin: 0 0 1rem; font-size: .86rem; color: var(--text-2); line-height: 1.6; }
 
 /* ============================ closing + footer ============================ */
 
