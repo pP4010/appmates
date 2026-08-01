@@ -126,16 +126,24 @@ function renderDemo() {
 /* ============================ leaderboard ============================ */
 
 /** One row shape for both the sample board and the live one, so switching
- * between them can't quietly drop a column. */
+ * between them can't quietly drop a column.
+ *
+ * `ownApp` is a plain string for the fictional sample rows, but a `{ name,
+ * trackId, country }` object for the two real ones — see `DEMO_LEADERBOARD`.
+ * Only the latter gets a `ratingsKey`, which is what tells `renderBoard`
+ * to render the `data-app`/`data-ratings` hooks `fillAppFacts` patches once
+ * the catalogue lookup for that row resolves. */
 function demoToRow(e) {
+  const linked = e.ownApp && typeof e.ownApp === 'object';
   return {
     rank: e.rank,
     name: e.name,
     sub: `Helped ${e.apps} app${e.apps === 1 ? '' : 's'} ship`,
-    appName: e.ownApp,
+    appName: linked ? e.ownApp.name : e.ownApp,
     appDesc: e.ownAppDesc,
     tests: e.tests,
     ratings: e.ratings,
+    ratingsKey: linked ? e.ownApp.trackId : null,
   };
 }
 
@@ -277,26 +285,29 @@ function renderLiveLeaderboard(testers) {
     })),
   );
   clearDemoTag('leaderboard');
-  fillAppFacts(testers);
+  fillAppFacts(testers.map((e) => e.ownApp).filter(Boolean));
 }
 
-/** Reads each listed app's icon, category and rating count straight from
- * the public catalogue, one throttled lookup at a time. Per-row failures
- * leave the letter tile and a dash rather than a spinner that never
- * resolves. */
-async function fillAppFacts(testers) {
-  const withApps = testers.filter((e) => e.ownApp?.trackId).slice(0, RATINGS_LOOKUP_LIMIT);
+/**
+ * Reads each listed app's icon, real title, category and rating count
+ * straight from the public catalogue, one throttled lookup at a time, and
+ * patches the row(s) already on the board for that `trackId` — live testers
+ * and the two self-promoted `DEMO_LEADERBOARD` rows alike, since both went
+ * through `demoToRow`/`renderBoard` and carry the same `data-app`/
+ * `data-ratings` hooks. Per-row failures leave the letter tile, the label
+ * this file was given, and a dash — never a spinner that never resolves.
+ */
+async function fillAppFacts(apps) {
+  const withApps = apps.filter((a) => a.trackId).slice(0, RATINGS_LOOKUP_LIMIT);
   if (!withApps.length) return;
 
   const itunes = new ITunesClient();
-  for (const tester of withApps) {
-    const key = CSS.escape(String(tester.ownApp.trackId));
+  for (const app of withApps) {
+    const key = CSS.escape(String(app.trackId));
     let ratings = NONE;
     let entry = null;
     try {
-      entry = await itunes.lookup(String(tester.ownApp.trackId), {
-        country: tester.ownApp.country || 'us',
-      });
+      entry = await itunes.lookup(String(app.trackId), { country: app.country || 'us' });
       const count = Number(entry?.userRatingCount ?? 0);
       ratings = count > 0 ? count.toLocaleString('en-US') : 'No ratings';
     } catch {
@@ -319,6 +330,8 @@ async function fillAppFacts(testers) {
         img.loading = 'lazy';
         tile.replaceWith(img);
       }
+      const name = cell.querySelector('.lb-app');
+      if (name && entry.trackName) name.textContent = entry.trackName;
       const desc = cell.querySelector('.lb-app-desc');
       if (desc) desc.textContent = entry.primaryGenreName ?? '';
     });
@@ -511,6 +524,13 @@ function sortedDemo() {
     .map((e, i) => demoToRow({ ...e, rank: i + 1 }));
 }
 
+/** The `DEMO_LEADERBOARD` rows that carry a real catalogue id — the site
+ * owner's own apps — computed once since the source data never changes at
+ * runtime. `ITunesClient` caches per session, so calling `fillAppFacts`
+ * with this on every sort/window toggle re-hits the cache rather than the
+ * network after the first resolve. */
+const DEMO_LINKED_APPS = DEMO_LEADERBOARD.map((e) => e.ownApp).filter((a) => a && typeof a === 'object');
+
 async function refreshBoard() {
   const more = document.getElementById('lbMore');
 
@@ -518,6 +538,7 @@ async function refreshBoard() {
     // The sample board has a fixed number of rows; once they are all shown
     // there is nothing further to reveal.
     renderBoard(sortedDemo());
+    fillAppFacts(DEMO_LINKED_APPS);
     more.disabled = board.limit >= DEMO_LEADERBOARD.length;
     more.textContent = more.disabled ? 'That’s everyone' : 'Show more';
     return;
