@@ -162,9 +162,14 @@ export const DEMO_LEADERBOARD = [
  * fail, and a promoted slot reading "Promoted app" instead of the app's
  * actual name is a worse outcome than a slightly stale one.
  *
+ * `color` picks one of `RAIL_COLORS` in `landing.js` — the same palette a
+ * visitor requesting an open slot chooses from — and survives a failed
+ * lookup (`unresolvedSlot` carries it through too), since a slot's colour
+ * was chosen at purchase time, not read from the catalogue.
+ *
  * The empty slots below each list are not fixed: `landing.js` generates as
  * many as the viewport has room for, so the column is full at any height.
  */
-export const RAIL_LEFT = [{ trackId: '6768688178', country: 'us', name: 'Kaizen' }];
+export const RAIL_LEFT = [{ trackId: '6768688178', country: 'us', name: 'Kaizen', color: 'blue' }];
 
-export const RAIL_RIGHT = [{ trackId: '6782585843', country: 'us', name: 'Rebuild' }];
+export const RAIL_RIGHT = [{ trackId: '6782585843', country: 'us', name: 'Rebuild', color: 'green' }];
