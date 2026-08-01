@@ -499,21 +499,24 @@ function fillRailHeight(rail) {
 
 /* ============================ promo dialog ============================ */
 
-/** The palette an open slot can be requested in. Kept in sync by hand with
- * the `.rail-card--*` rules in `landing.css` — six is few enough that a
- * shared lookup table would cost more to read than it saves. */
+/** The palette an open slot can be requested in — muted, deep tones rather
+ * than a bright candy palette, closer to what a marketplace like
+ * trustmrr.com uses for its sponsor cards. Kept in sync by hand with the
+ * `.rail-card--*` rules in `landing.css` — six is few enough that a shared
+ * lookup table would cost more to read than it saves. */
 const RAIL_COLORS = [
-  { id: 'blue', label: 'Blue', hex: '#3b82f6' },
-  { id: 'green', label: 'Green', hex: '#22c55e' },
-  { id: 'violet', label: 'Violet', hex: '#a855f7' },
-  { id: 'orange', label: 'Orange', hex: '#f97316' },
-  { id: 'pink', label: 'Pink', hex: '#ec4899' },
-  { id: 'teal', label: 'Teal', hex: '#14b8a6' },
+  { id: 'blue', label: 'Blue', hex: '#2f5fa8' },
+  { id: 'green', label: 'Green', hex: '#1f7a4d' },
+  { id: 'violet', label: 'Violet', hex: '#6d3aa8' },
+  { id: 'orange', label: 'Orange', hex: '#b5502a' },
+  { id: 'pink', label: 'Pink', hex: '#8a2f4a' },
+  { id: 'teal', label: 'Teal', hex: '#2c6470' },
 ];
 
-function promoMailto(color) {
+function promoMailto(color, appQuery) {
   const subject = 'Featuring my app on AppMates';
-  const body = `Preferred card colour: ${color}\n\nApp name:\nApp Store / Play Store link:\n`;
+  const body =
+    `App Store id / bundle id: ${appQuery || '(not provided yet)'}\n` + `Preferred card colour: ${color}\n`;
   return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
@@ -526,15 +529,40 @@ function closePromoDialog() {
   document.removeEventListener('keydown', onPromoKeydown);
 }
 
+/** Swaps the preview card's icon between the placeholder emoji and a real
+ * `<img>` — the same span-to-img swap `fillAppFacts` does for a resolved
+ * leaderboard row, just local to this one card instead of every row on a
+ * page sharing a `data-app` key. */
+function setPromoPreviewIcon(preview, artworkUrl) {
+  const existing = preview.querySelector('.promo-preview-icon, .rail-icon');
+  const node = artworkUrl ? document.createElement('img') : document.createElement('span');
+  if (artworkUrl) {
+    node.className = 'rail-icon';
+    node.src = artworkUrl;
+    node.alt = '';
+  } else {
+    node.className = 'promo-preview-icon';
+    node.setAttribute('aria-hidden', 'true');
+    node.textContent = '📱';
+  }
+  existing.replaceWith(node);
+}
+
 /**
  * The info a visitor needs before asking for an open slot — reuses the
- * app's own `.modal-overlay`/`.modal` look (see `views/community.js` for
- * the same pattern with the "request to test" dialog) rather than a
+ * app's own `.modal-overlay`/`.modal`/`.field` look (see `views/community.js`
+ * for the same pattern with the "request to test" dialog) rather than a
  * landing-page-only component, so the two feel like the same product.
+ *
+ * The preview sits first, before either control that shapes it, so it
+ * reads as "here's your card" rather than a form with a diagram bolted on
+ * the side. Typing an id resolves the real icon/name/category the same way
+ * the rails themselves do; picking a colour never touches that lookup, so
+ * the two controls can be used in either order or not at all.
  *
  * Pricing is a promise, not a form: nothing here submits anywhere, since
  * there is no backend yet to receive it. "Request this slot" is a `mailto`
- * link seeded with the colour just picked, the same handoff every other
+ * link seeded with whatever's been filled in, the same handoff every other
  * "Ask here" on this page already uses — reviewed and priced by a person,
  * not auto-charged, which is the point the pricing note itself makes.
  */
@@ -554,18 +582,22 @@ function openPromoDialog() {
         <button class="modal-close" type="button" aria-label="Close">✕</button>
       </div>
 
-      <div class="promo-price">
-        <span class="promo-price-old">$20/mo</span>
-        <span class="promo-price-new">Free</span>
+      <div class="promo-preview-wrap">
+        <div class="rail-card rail-card--${selected}" id="promoPreviewCard" aria-label="Card preview">
+          <span class="promo-preview-icon" aria-hidden="true">📱</span>
+          <span class="rail-name">Your app</span>
+          <span class="rail-genre">Category</span>
+        </div>
       </div>
-      <p class="modal-sub">
-        Free while AppMates is growing. As traffic and demand pick up, pricing may
-        change — at most once a month, never mid-cycle — but you'll always hear about
-        it first by email. Nothing is ever charged without your confirmation.
-      </p>
 
       <div class="field">
-        <label id="promoColorLabel">Pick a colour for your card</label>
+        <label for="promoAppInput">Your app</label>
+        <input id="promoAppInput" type="text" placeholder="1438388363 or com.example.app" autocomplete="off">
+        <span class="promo-app-status" id="promoAppStatus"></span>
+      </div>
+
+      <div class="field">
+        <label id="promoColorLabel">Card colour</label>
         <div class="promo-swatches" role="radiogroup" aria-labelledby="promoColorLabel">
           ${RAIL_COLORS.map(
             (c, i) => `
@@ -576,24 +608,26 @@ function openPromoDialog() {
         </div>
       </div>
 
-      <div class="field">
-        <label id="promoPreviewLabel">Preview</label>
-        <div class="promo-preview-wrap" aria-labelledby="promoPreviewLabel">
-          <div class="rail-card rail-card--${selected}" id="promoPreviewCard">
-            <span class="promo-preview-icon" aria-hidden="true">📱</span>
-            <span class="rail-name">Your app</span>
-            <span class="rail-genre">Category</span>
-          </div>
-        </div>
+      <div class="promo-price">
+        <span class="promo-price-old">$20/mo</span>
+        <span class="promo-price-new">Free</span>
       </div>
+      <p class="modal-sub">
+        Free while AppMates is growing. As traffic and demand pick up, pricing may
+        change — at most once a month, never mid-cycle — but you'll always hear about
+        it first by email. Nothing is ever charged without your confirmation.
+      </p>
 
-      <a id="promoRequestBtn" class="landing-cta" style="width:100%;margin-top:.9rem;text-align:center"
-        href="${promoMailto(selected)}">Request this slot</a>
+      <a id="promoRequestBtn" class="landing-cta" style="width:100%;margin-top:.4rem;text-align:center"
+        href="${promoMailto(selected, '')}">Request this slot</a>
     </div>`;
   document.body.appendChild(overlay);
 
   const preview = overlay.querySelector('#promoPreviewCard');
   const request = overlay.querySelector('#promoRequestBtn');
+  const appInput = overlay.querySelector('#promoAppInput');
+  const appStatus = overlay.querySelector('#promoAppStatus');
+  let appQuery = '';
 
   overlay.querySelectorAll('.promo-swatch').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -605,8 +639,43 @@ function openPromoDialog() {
       btn.setAttribute('aria-checked', 'true');
       selected = btn.dataset.color;
       preview.className = `rail-card rail-card--${selected}`;
-      request.href = promoMailto(selected);
+      request.href = promoMailto(selected, appQuery);
     });
+  });
+
+  const itunes = new ITunesClient();
+  let lookupTimer;
+  appInput.addEventListener('input', () => {
+    clearTimeout(lookupTimer);
+    appQuery = appInput.value.trim();
+    request.href = promoMailto(selected, appQuery);
+
+    if (!appQuery) {
+      appStatus.textContent = '';
+      preview.querySelector('.rail-name').textContent = 'Your app';
+      preview.querySelector('.rail-genre').textContent = 'Category';
+      setPromoPreviewIcon(preview, '');
+      return;
+    }
+
+    appStatus.textContent = 'Looking up…';
+    lookupTimer = setTimeout(async () => {
+      let entry = null;
+      try {
+        entry = await itunes.lookup(appQuery, { country: 'us' });
+      } catch {
+        appStatus.textContent = "Couldn't reach the App Store catalogue — try again in a moment.";
+        return;
+      }
+      if (!entry) {
+        appStatus.textContent = "Couldn't find that app — check the id.";
+        return;
+      }
+      appStatus.textContent = `Found: ${entry.trackName}`;
+      preview.querySelector('.rail-name').textContent = entry.trackName;
+      preview.querySelector('.rail-genre').textContent = entry.primaryGenreName ?? '';
+      setPromoPreviewIcon(preview, entry.artworkUrl100 ?? entry.artworkUrl512 ?? '');
+    }, 500);
   });
 
   overlay.addEventListener('click', (e) => {
