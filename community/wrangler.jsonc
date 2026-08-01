@@ -24,7 +24,7 @@
     // The web app's origin — CORS is locked to exactly this one origin
     // because, unlike the anonymous screenshot relay, these requests carry
     // an auth cookie.
-    "APP_ORIGIN": "http://localhost:8123",
+    "APP_ORIGIN": "https://appmates.heykaizen.app",
     // Where the dashboard is served from, relative to APP_ORIGIN — `/` is
     // the public landing page. A verified sign-in link redirects here.
     "APP_PATH": "/app.html",

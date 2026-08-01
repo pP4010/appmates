@@ -13,6 +13,7 @@ import * as tokens from './routes/tokens.js';
 import * as leaderboard from './routes/leaderboard.js';
 import * as promo from './routes/promo.js';
 import * as messages from './routes/messages.js';
+import * as itunes from './routes/itunes.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -91,6 +92,9 @@ export default {
         return await promo.adminReview(request, env, m[1], m[2]);
       }
       if (path === '/promo/featured' && method === 'GET') return await promo.featured(request, env);
+
+      if (path === '/itunes/lookup' && method === 'GET') return await itunes.lookup(request, env);
+      if (path === '/itunes/search' && method === 'GET') return await itunes.search(request, env);
 
       return error(env, request, 404, 'not found');
     } catch (err) {
