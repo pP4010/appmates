@@ -11,6 +11,8 @@ import * as listings from './routes/listings.js';
 import * as testSessions from './routes/testSessions.js';
 import * as tokens from './routes/tokens.js';
 import * as leaderboard from './routes/leaderboard.js';
+import * as promo from './routes/promo.js';
+import * as messages from './routes/messages.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -73,9 +75,22 @@ export default {
       if ((m = path.match(/^\/test-sessions\/([^/]+)\/complete$/)) && method === 'POST') {
         return await testSessions.complete(request, env, m[1]);
       }
+      if ((m = path.match(/^\/test-sessions\/([^/]+)\/messages$/)) && method === 'GET') {
+        return await messages.list(request, env, m[1]);
+      }
+      if ((m = path.match(/^\/test-sessions\/([^/]+)\/messages$/)) && method === 'POST') {
+        return await messages.send(request, env, m[1]);
+      }
 
       if (path === '/tokens/me' && method === 'GET') return await tokens.me(request, env);
       if (path === '/leaderboard' && method === 'GET') return await leaderboard.top(request, env);
+
+      if (path === '/promo/requests' && method === 'POST') return await promo.create(request, env);
+      if (path === '/promo/requests' && method === 'GET') return await promo.adminList(request, env);
+      if ((m = path.match(/^\/promo\/requests\/([^/]+)\/(approve|reject)$/)) && method === 'POST') {
+        return await promo.adminReview(request, env, m[1], m[2]);
+      }
+      if (path === '/promo/featured' && method === 'GET') return await promo.featured(request, env);
 
       return error(env, request, 404, 'not found');
     } catch (err) {

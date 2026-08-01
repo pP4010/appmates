@@ -34,7 +34,7 @@ export async function requestLink(request, env) {
   // Local-dev-only escape hatch: `.dev.vars` sets this, production config
   // never does, so a real deploy can never leak a sign-in link in the API
   // response or skip actually emailing it. Lets the flow be tested end to
-  // end before a domain is onboarded for Email Sending.
+  // end before a sending domain is verified with Resend.
   if (devMode && token) {
     return json(env, request, { ok: true, devToken: token });
   }

@@ -50,16 +50,23 @@ nothing here is ever called.
 
 ### Email — the one step you can't skip
 
-Magic links are sent via Cloudflare Email Service, which requires a domain
-you control to be onboarded first:
+Magic links are sent via [Resend](https://resend.com)'s HTTP API, not
+Cloudflare's own Email Sending — that product requires a paid plan.
+Resend's free tier (3,000 emails/month, no card required) is plenty for
+this:
 
-```bash
-npx wrangler email sending enable yourdomain.com
-```
+1. Sign up at resend.com and add/verify a sending domain (or subdomain —
+   `appmates.yourdomain.com` works fine) — Resend gives you the DNS
+   records to add, same as any transactional email provider.
+2. Create an API key, then set it as a secret (never a plain var):
+   ```bash
+   npx wrangler secret put RESEND_API_KEY
+   ```
+3. Set `EMAIL_FROM_ADDRESS` in `wrangler.jsonc` to an address on that
+   verified domain (e.g. `noreply@appmates.yourdomain.com`).
 
-Then set `EMAIL_FROM_ADDRESS` in `wrangler.jsonc` to an address on that
-domain (e.g. `noreply@yourdomain.com`). Until this is done, sign-in requests
-fail with a clean 500 — the Worker never silently pretends an email was sent.
+Until both are done, sign-in requests fail with a clean error — the Worker
+never silently pretends an email was sent.
 
 ### CORS and cookies
 
@@ -80,7 +87,7 @@ npx wrangler d1 migrations apply launchpilot-community --local
 Add `DEV_EXPOSE_LINKS=true` to a local `.dev.vars` file (never committed) to
 have `/auth/request-link` return the magic-link token directly in its JSON
 response instead of emailing it — lets you test the whole sign-in flow
-before a domain is onboarded for Email Sending. This flag does not exist in
+before a sending domain is verified with Resend. This flag does not exist in
 `wrangler.jsonc`, so a real deploy can never accidentally leak a sign-in
 link this way.
 

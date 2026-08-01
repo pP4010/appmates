@@ -1087,18 +1087,21 @@ function sessionRow(s) {
     evalBadges.push(`<span class="pill neutral">Would use again: ${escapeHtml(s.wouldUseAgain)}</span>`);
   }
   return `
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.4rem 0;border-top:1px solid var(--border)">
-      <div style="min-width:0">
-        <span class="mono" style="font-size:.8rem">${escapeHtml(s.testerDisplayName || s.testerEmail)}</span>
-        <span class="pill neutral" style="margin-left:.4rem">${s.status}</span>
-        ${evalBadges.length ? `<div class="eval-summary">${evalBadges.join('')}</div>` : ''}
-        ${s.feedback ? `<div class="muted" style="font-size:.82rem;margin-top:.2rem">"${escapeHtml(s.feedback)}"</div>` : ''}
+    <div style="padding:.4rem 0;border-top:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem">
+        <div style="min-width:0">
+          <span class="mono" style="font-size:.8rem">${escapeHtml(s.testerDisplayName || s.testerEmail)}</span>
+          <span class="pill neutral" style="margin-left:.4rem">${s.status}</span>
+          ${evalBadges.length ? `<div class="eval-summary">${evalBadges.join('')}</div>` : ''}
+          ${s.feedback ? `<div class="muted" style="font-size:.82rem;margin-top:.2rem">"${escapeHtml(s.feedback)}"</div>` : ''}
+        </div>
+        ${
+          s.status === 'submitted'
+            ? `<button class="comm-complete" data-session="${s.id}">Mark complete</button>`
+            : ''
+        }
       </div>
-      ${
-        s.status === 'submitted'
-          ? `<button class="comm-complete" data-session="${s.id}">Mark complete</button>`
-          : ''
-      }
+      ${MESSAGEABLE_STATUSES.has(s.status) ? messageThreadHtml(s.id) : ''}
     </div>`;
 }
 
@@ -1149,6 +1152,7 @@ function wireMyListingActions(container) {
   wireSessionAction(container, '.comm-decline', (btn) => client.declineSession(btn.dataset.session));
   wireSessionAction(container, '.comm-complete', (btn) => client.completeSession(btn.dataset.session));
   wireSessionAction(container, '.comm-close', (btn) => client.closeListing(btn.dataset.listing));
+  wireMessageThreads(container);
 
   container.querySelectorAll('.comm-feature').forEach((btn) => {
     btn.addEventListener('click', async () => {
@@ -1192,6 +1196,100 @@ const STATUS_TONE = {
   completed: 'ok',
   abandoned: 'neutral',
 };
+
+/* ---------------------------- message threads ---------------------------- */
+
+// Only once a request has been accepted is there anything to coordinate —
+// a device the tester doesn't have, a build that needs a fresh TestFlight
+// invite. Before that the pitch (`requestMessage`) already says everything
+// there is to say, and after `declined`/`abandoned` there is nothing left
+// to arrange, so neither status gets a thread.
+const MESSAGEABLE_STATUSES = new Set(['accepted', 'submitted', 'completed']);
+
+function messageThreadHtml(sessionId) {
+  return `
+    <div style="margin-top:.4rem">
+      <button class="ghost comm-thread-toggle" data-session="${sessionId}" type="button">Messages</button>
+      <div class="comm-thread" data-session="${sessionId}" hidden></div>
+    </div>`;
+}
+
+/** Delegates once per container rather than once per toggle button, so a
+ * card list that re-renders (a new session appearing, one changing status)
+ * never needs its listeners rewired by hand. */
+function wireMessageThreads(container) {
+  container.addEventListener('click', (e) => {
+    const btn = e.target.closest('.comm-thread-toggle');
+    if (btn && container.contains(btn)) toggleThread(btn);
+  });
+}
+
+async function toggleThread(btn) {
+  const id = btn.dataset.session;
+  const thread = document.querySelector(`.comm-thread[data-session="${id}"]`);
+  if (!thread) return;
+  const opening = thread.hidden;
+  thread.hidden = !opening;
+  if (opening && !thread.dataset.loaded) {
+    thread.dataset.loaded = '1';
+    await loadThread(id, thread);
+  }
+}
+
+async function loadThread(id, thread) {
+  thread.innerHTML = '<div class="status"><span class="spinner"></span> Loading</div>';
+  try {
+    renderThread(id, thread, await client.sessionMessages(id));
+  } catch (err) {
+    thread.innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderThread(id, thread, messages) {
+  const list = messages.length
+    ? messages
+        .map(
+          (m) => `
+        <div class="thread-message${m.senderUserId === user?.id ? ' mine' : ''}">
+          <div class="muted" style="font-size:.72rem">${escapeHtml(new Date(m.createdAt).toLocaleString())}</div>
+          <div>${escapeHtml(m.body)}</div>
+        </div>`,
+        )
+        .join('')
+    : '<p class="muted" style="font-size:.8rem">No messages yet.</p>';
+
+  thread.innerHTML = `
+    <div class="thread-list">${list}</div>
+    <div style="display:flex;gap:.4rem;margin-top:.5rem">
+      <input type="text" class="comm-thread-input" placeholder="Write a message…" style="flex:1">
+      <button class="comm-thread-send">Send</button>
+    </div>
+    <div class="comm-thread-status status"></div>`;
+
+  const input = thread.querySelector('.comm-thread-input');
+  const sendBtn = thread.querySelector('.comm-thread-send');
+  const statusEl = thread.querySelector('.comm-thread-status');
+
+  const sendMessage = async () => {
+    const body = input.value.trim();
+    if (!body) return;
+    sendBtn.disabled = true;
+    statusEl.textContent = '';
+    try {
+      await client.sendSessionMessage(id, body);
+      input.value = '';
+      renderThread(id, thread, await client.sessionMessages(id));
+    } catch (err) {
+      statusEl.className = 'status error';
+      statusEl.textContent = err.message;
+      sendBtn.disabled = false;
+    }
+  };
+  sendBtn.addEventListener('click', sendMessage);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') sendMessage();
+  });
+}
 
 async function renderMySessions() {
   const container = el('commMySessions');
@@ -1254,12 +1352,14 @@ function mySessionCard(s) {
           <span class="pill ${tone}" style="margin-left:.4rem">${label}</span>
           ${body}
           ${s.status === 'completed' ? '<div class="muted" style="font-size:.78rem">+1 token awarded</div>' : ''}
+          ${MESSAGEABLE_STATUSES.has(s.status) ? messageThreadHtml(s.id) : ''}
         </div>
       </div>
     </div>`;
 }
 
 function wireMySessionActions(container) {
+  wireMessageThreads(container);
   container.querySelectorAll('.comm-submit').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const id = btn.dataset.session;

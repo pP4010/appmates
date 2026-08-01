@@ -49,7 +49,15 @@ export async function issueMagicLink(env, email) {
   return token;
 }
 
-export async function sendMagicLinkEmail(env, email, token, appOrigin) {
+/**
+ * Sent via Resend's HTTP API rather than the Workers `send_email` binding —
+ * that binding only reaches Cloudflare's "Email Sending" product, which is
+ * paid-tier only. Resend's free tier (3,000/mo, no card required) covers
+ * this comfortably, and a plain `fetch` needs no SDK and no Cloudflare
+ * binding at all, so there's nothing here to swap back if that ever
+ * changes other than this one function.
+ */
+export async function sendMagicLinkEmail(env, email, token) {
   const verifyUrl = new URL('/auth/verify', selfOrigin(env)).toString() + `?token=${token}`;
   const html = `
     <p>Click to sign in to AppMates Community:</p>
@@ -60,15 +68,27 @@ export async function sendMagicLinkEmail(env, email, token, appOrigin) {
     `This link expires in ${MAGIC_LINK_TTL_MINUTES} minutes and can only be used once. ` +
     "If you didn't request this, ignore this email.";
 
-  await env.EMAIL.send({
-    to: email,
-    from: { email: env.EMAIL_FROM_ADDRESS, name: env.EMAIL_FROM_NAME },
-    subject: 'Sign in to AppMates',
-    html,
-    text,
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${env.RESEND_API_KEY}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: `${env.EMAIL_FROM_NAME} <${env.EMAIL_FROM_ADDRESS}>`,
+      to: email,
+      subject: 'Sign in to AppMates',
+      html,
+      text,
+    }),
   });
 
-  void appOrigin;
+  if (!response.ok) {
+    // Bounded, not the full body: a provider error page is not something
+    // to echo back wholesale into a log line.
+    const detail = await response.text().catch(() => '');
+    throw new Error(`Resend API error (${response.status}): ${detail.slice(0, 300)}`);
+  }
 }
 
 /** Where the Worker itself is reachable — the link Apple/Google-style
@@ -147,4 +167,20 @@ export function serializeUser(user) {
     displayName: user.display_name,
     tokenBalance: user.token_balance,
   };
+}
+
+/**
+ * Whether this signed-in user may see/manage the admin inbox (promoted-slot
+ * approvals today). A comma-separated allowlist in `env.ADMIN_EMAILS`
+ * rather than a `users.role` column — the set of people this needs to cover
+ * is one person right now, and a migration plus a role-management UI would
+ * be more code than the feature it protects. Revisit if that ever changes.
+ */
+export function isAdmin(env, user) {
+  if (!user) return false;
+  const allowlist = (env.ADMIN_EMAILS || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  return allowlist.includes(user.email.toLowerCase());
 }

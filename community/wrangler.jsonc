@@ -13,15 +13,12 @@
       "database_id": "04e0ab03-b954-40a5-8418-4d5d01a94568",
     },
   ],
-  "send_email": [
-    {
-      "name": "EMAIL",
-    },
-  ],
   "vars": {
-    // Must be a domain onboarded with `wrangler email sending enable <domain>` —
-    // see community/README.md. Magic links silently fail to send until this
-    // is a real, onboarded address.
+    // Sent via Resend (see lib/auth.js `sendMagicLinkEmail`), not Cloudflare's
+    // own Email Sending — that product is paid-tier only. Must be an address
+    // on a domain verified in your Resend account, or sends fail with a
+    // clean error. The API key itself is a secret: `wrangler secret put
+    // RESEND_API_KEY`, never a plain var here.
     "EMAIL_FROM_ADDRESS": "noreply@example.com",
     "EMAIL_FROM_NAME": "AppMates",
     // The web app's origin — CORS is locked to exactly this one origin
@@ -31,5 +28,10 @@
     // Where the dashboard is served from, relative to APP_ORIGIN — `/` is
     // the public landing page. A verified sign-in link redirects here.
     "APP_PATH": "/app.html",
+    // Comma-separated allowlist checked by `isAdmin` (lib/auth.js) — who can
+    // see/manage the "Feature your app here" inbox (views/admin.js). Not a
+    // secret (it's an email, not a credential), so a plain var rather than
+    // `wrangler secret put` is enough.
+    "ADMIN_EMAILS": "appmates.contact@gmail.com",
   },
 }

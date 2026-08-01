@@ -28,3 +28,19 @@ export const LEADERBOARD_MAX_LIMIT = 100;
 // board. Small on purpose: the point is a visible reward for giving back,
 // not a second full marketplace.
 export const CONTRIBUTOR_SHOWCASE_LIMIT = 6;
+
+// Kept in sync by hand with `RAIL_COLORS` in web/landing.js — the swatches
+// a "Feature your app here" submission can pick from. Validated here so a
+// crafted request can't store a `color` the rail-card CSS has no rule for.
+export const PROMO_COLORS = [
+  'blue', 'green', 'violet', 'orange', 'pink', 'teal', 'red', 'amber', 'indigo', 'slate',
+];
+// Same bar as a test request's pitch (`MIN_REQUEST_MESSAGE_LENGTH` above):
+// long enough to say something real about the app, short enough it isn't a
+// second feedback box.
+export const MIN_PROMO_MESSAGE_LENGTH = 20;
+export const MAX_PROMO_MESSAGE_LENGTH = 1000;
+
+// A message on a test session's thread — deliberately looser than a first
+// pitch (no minimum): "ok, sent you a new invite" is a complete message.
+export const MAX_SESSION_MESSAGE_LENGTH = 2000;

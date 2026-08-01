@@ -443,7 +443,30 @@ async function renderRails() {
     return out;
   };
 
-  const [leftCards, rightCards] = [await resolve(RAIL_LEFT), await resolve(RAIL_RIGHT)];
+  // Approved "Feature your app here" requests (see `views/admin.js`), when
+  // there's a community backend to ask — this is what makes approving a
+  // request there actually put a card on the page, no redeploy required.
+  // Split across the two rails by parity so both columns grow as more get
+  // approved. Any failure here (backend unreachable, nothing approved yet)
+  // just means the static config below is all that renders, exactly as it
+  // did before this existed.
+  const community = new CommunityClient();
+  let dynamicLeft = [];
+  let dynamicRight = [];
+  if (community.configured) {
+    try {
+      const slots = await community.featuredPromoSlots();
+      dynamicLeft = slots.filter((_, i) => i % 2 === 0);
+      dynamicRight = slots.filter((_, i) => i % 2 === 1);
+    } catch {
+      /* static RAIL_LEFT/RAIL_RIGHT below still render */
+    }
+  }
+
+  const [leftCards, rightCards] = [
+    await resolve([...RAIL_LEFT, ...dynamicLeft]),
+    await resolve([...RAIL_RIGHT, ...dynamicRight]),
+  ];
   left.innerHTML = leftCards.join('');
   right.innerHTML = rightCards.join('');
   fillRailHeight(left);
@@ -517,10 +540,18 @@ const RAIL_COLORS = [
   { id: 'slate', label: 'Slate', hex: '#4a5568' },
 ];
 
-function promoMailto(color, appQuery) {
-  const subject = 'Featuring my app on AppMates';
-  const body =
-    `App Store id / bundle id: ${appQuery || '(not provided yet)'}\n` + `Preferred card colour: ${color}\n`;
+const PROMO_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function promoMailto({ color, app, name, email, message }) {
+  const subject = `Featuring ${app?.name ?? 'my app'} on AppMates`;
+  const body = [
+    `App: ${app?.name ?? '(not provided)'}${app?.storeUrl ? ` — ${app.storeUrl}` : ''}`,
+    `Preferred card colour: ${color}`,
+    `Name: ${name || '(not provided)'}`,
+    `Email: ${email || '(not provided)'}`,
+    '',
+    message || '(no message)',
+  ].join('\n');
   return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
@@ -553,140 +584,276 @@ function setPromoPreviewIcon(preview, artworkUrl) {
 }
 
 /**
- * The info a visitor needs before asking for an open slot — reuses the
- * app's own `.modal-overlay`/`.modal`/`.field` look (see `views/community.js`
- * for the same pattern with the "request to test" dialog) rather than a
- * landing-page-only component, so the two feel like the same product.
+ * Two steps in one overlay — reuses the app's own `.modal-overlay`/`.modal`/
+ * `.field` look (see `views/community.js`'s "request to test" dialog)
+ * rather than a landing-page-only component, so the two feel like the same
+ * product. Each step wholesale-replaces `overlay.innerHTML`, which both
+ * rebuilds its own listeners and discards the previous step's — simpler
+ * than tracking two parallel sets of handlers on the same nodes. State that
+ * has to survive the swap (`selected`, `resolvedApp`, `appQuery`) lives in
+ * this function's closure, not in the DOM.
  *
- * The preview sits first, before either control that shapes it, so it
- * reads as "here's your card" rather than a form with a diagram bolted on
- * the side. Typing an id resolves the real icon/name/category the same way
- * the rails themselves do; picking a colour never touches that lookup, so
- * the two controls can be used in either order or not at all.
- *
- * Pricing is a promise, not a form: nothing here submits anywhere, since
- * there is no backend yet to receive it. "Request this slot" is a `mailto`
- * link seeded with whatever's been filled in, the same handoff every other
- * "Ask here" on this page already uses — reviewed and priced by a person,
- * not auto-charged, which is the point the pricing note itself makes.
+ * Step one is the pitch: a live preview (icon/name/category resolved from
+ * the App Store the same way the rails themselves are), a colour, and the
+ * price. Step two only exists once a real app has resolved — you can't ask
+ * for a slot for an app nobody can identify — and asks for the context a
+ * human reviewer needs: who's asking, and why. Nothing here auto-publishes
+ * anything; a request lands as `pending` for manual approval (see
+ * `views/admin.js`), same as the pricing note already promises nothing is
+ * auto-charged.
  */
 function openPromoDialog() {
   let selected = RAIL_COLORS[0].id;
+  let resolvedApp = null; // { name, genre, artwork, storeUrl, trackId }
+  let appQuery = '';
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.id = 'promoModal';
-  overlay.innerHTML = `
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="promoTitle">
-      <div class="modal-head">
-        <div>
-          <h3 id="promoTitle">Feature your app here</h3>
-          <p class="modal-sub">A promoted slot in the sidebar, linked straight to your store listing.</p>
-        </div>
-        <button class="modal-close" type="button" aria-label="Close">✕</button>
-      </div>
-
-      <div class="promo-preview-wrap">
-        <div class="rail-card rail-card--${selected}" id="promoPreviewCard" aria-label="Card preview">
-          <span class="promo-preview-icon" aria-hidden="true">📱</span>
-          <span class="rail-name">Your app</span>
-          <span class="rail-genre">Category</span>
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="promoAppInput">Your app</label>
-        <input id="promoAppInput" type="text" placeholder="1438388363 or com.example.app" autocomplete="off">
-        <span class="promo-app-status" id="promoAppStatus"></span>
-      </div>
-
-      <div class="field">
-        <label id="promoColorLabel">Card colour</label>
-        <div class="promo-swatches" role="radiogroup" aria-labelledby="promoColorLabel">
-          ${RAIL_COLORS.map(
-            (c, i) => `
-            <button type="button" class="promo-swatch${i === 0 ? ' selected' : ''}"
-              data-color="${c.id}" style="--swatch:${c.hex}"
-              role="radio" aria-checked="${i === 0}" aria-label="${escapeHtml(c.label)}"></button>`,
-          ).join('')}
-        </div>
-      </div>
-
-      <div class="promo-price">
-        <span class="promo-price-old">$20/mo</span>
-        <span class="promo-price-new">Free</span>
-      </div>
-      <p class="modal-sub">
-        Free while AppMates is growing. As traffic and demand pick up, pricing may
-        change — at most once a month, never mid-cycle — but you'll always hear about
-        it first by email. Nothing is ever charged without your confirmation.
-      </p>
-
-      <a id="promoRequestBtn" class="landing-cta" style="width:100%;margin-top:.4rem;text-align:center"
-        href="${promoMailto(selected, '')}">Request this slot</a>
-    </div>`;
   document.body.appendChild(overlay);
 
-  const preview = overlay.querySelector('#promoPreviewCard');
-  const request = overlay.querySelector('#promoRequestBtn');
-  const appInput = overlay.querySelector('#promoAppInput');
-  const appStatus = overlay.querySelector('#promoAppStatus');
-  let appQuery = '';
-
-  overlay.querySelectorAll('.promo-swatch').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      overlay.querySelectorAll('.promo-swatch').forEach((b) => {
-        b.classList.remove('selected');
-        b.setAttribute('aria-checked', 'false');
-      });
-      btn.classList.add('selected');
-      btn.setAttribute('aria-checked', 'true');
-      selected = btn.dataset.color;
-      preview.className = `rail-card rail-card--${selected}`;
-      request.href = promoMailto(selected, appQuery);
-    });
-  });
-
   const itunes = new ITunesClient();
+  const community = new CommunityClient();
   let lookupTimer;
-  appInput.addEventListener('input', () => {
-    clearTimeout(lookupTimer);
-    appQuery = appInput.value.trim();
-    request.href = promoMailto(selected, appQuery);
 
-    if (!appQuery) {
-      appStatus.textContent = '';
-      preview.querySelector('.rail-name').textContent = 'Your app';
-      preview.querySelector('.rail-genre').textContent = 'Category';
-      setPromoPreviewIcon(preview, '');
-      return;
+  function renderPitchStep() {
+    overlay.innerHTML = `
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="promoTitle">
+        <div class="modal-head">
+          <div>
+            <h3 id="promoTitle">Feature your app here</h3>
+            <p class="modal-sub">A promoted slot in the sidebar, linked straight to your store listing.</p>
+          </div>
+          <button class="modal-close" type="button" aria-label="Close">✕</button>
+        </div>
+
+        <div class="promo-preview-wrap">
+          <div class="rail-card rail-card--${selected}" id="promoPreviewCard" aria-label="Card preview">
+            <span class="promo-preview-icon" aria-hidden="true">📱</span>
+            <span class="rail-name">Your app</span>
+            <span class="rail-genre">Category</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="promoAppInput">Your app</label>
+          <input id="promoAppInput" type="text" placeholder="1438388363 or com.example.app" autocomplete="off">
+          <span class="promo-app-status" id="promoAppStatus"></span>
+        </div>
+
+        <div class="field">
+          <label id="promoColorLabel">Card colour</label>
+          <div class="promo-swatches" role="radiogroup" aria-labelledby="promoColorLabel">
+            ${RAIL_COLORS.map(
+              (c) => `
+              <button type="button" class="promo-swatch${c.id === selected ? ' selected' : ''}"
+                data-color="${c.id}" style="--swatch:${c.hex}"
+                role="radio" aria-checked="${c.id === selected}" aria-label="${escapeHtml(c.label)}"></button>`,
+            ).join('')}
+          </div>
+        </div>
+
+        <div class="promo-price">
+          <span class="promo-price-old">$20/mo</span>
+          <span class="promo-price-new">Free</span>
+        </div>
+        <p class="modal-sub">
+          Free while AppMates is growing. As traffic and demand pick up, pricing may
+          change — at most once a month, never mid-cycle — but you'll always hear about
+          it first by email. Nothing is ever charged without your confirmation.
+        </p>
+
+        <button type="button" id="promoRequestBtn" class="landing-cta" style="width:100%;margin-top:.4rem">
+          Request this slot
+        </button>
+      </div>`;
+
+      const modal = overlay.querySelector('.modal');
+      const preview = modal.querySelector('#promoPreviewCard');
+      const requestBtn = modal.querySelector('#promoRequestBtn');
+      const appInput = modal.querySelector('#promoAppInput');
+      const appStatus = modal.querySelector('#promoAppStatus');
+      appInput.value = appQuery;
+
+      const applyResolved = (entry) => {
+        preview.querySelector('.rail-name').textContent = entry ? entry.name : 'Your app';
+        preview.querySelector('.rail-genre').textContent = entry ? entry.genre : 'Category';
+        setPromoPreviewIcon(preview, entry ? entry.artwork : '');
+      };
+      if (resolvedApp) {
+        applyResolved(resolvedApp);
+        appStatus.textContent = `Found: ${resolvedApp.name}`;
+      }
+
+      modal.querySelectorAll('.promo-swatch').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          modal.querySelectorAll('.promo-swatch').forEach((b) => {
+            b.classList.remove('selected');
+            b.setAttribute('aria-checked', 'false');
+          });
+          btn.classList.add('selected');
+          btn.setAttribute('aria-checked', 'true');
+          selected = btn.dataset.color;
+          preview.className = `rail-card rail-card--${selected}`;
+        });
+      });
+
+      appInput.addEventListener('input', () => {
+        clearTimeout(lookupTimer);
+        appQuery = appInput.value.trim();
+        appStatus.classList.remove('error');
+
+        if (!appQuery) {
+          resolvedApp = null;
+          appStatus.textContent = '';
+          applyResolved(null);
+          return;
+        }
+
+        appStatus.textContent = 'Looking up…';
+        lookupTimer = setTimeout(async () => {
+          let entry = null;
+          try {
+            entry = await itunes.lookup(appQuery, { country: 'us' });
+          } catch {
+            appStatus.textContent = "Couldn't reach the App Store catalogue — try again in a moment.";
+            return;
+          }
+          if (!entry) {
+            resolvedApp = null;
+            appStatus.textContent = "Couldn't find that app — check the id.";
+            return;
+          }
+          resolvedApp = {
+            trackId: String(entry.trackId ?? appQuery),
+            name: entry.trackName,
+            genre: entry.primaryGenreName ?? '',
+            artwork: entry.artworkUrl100 ?? entry.artworkUrl512 ?? '',
+            storeUrl: entry.trackViewUrl ?? '',
+          };
+          appStatus.textContent = `Found: ${entry.trackName}`;
+          applyResolved(resolvedApp);
+        }, 500);
+      });
+
+      requestBtn.addEventListener('click', () => {
+        if (!resolvedApp) {
+          appStatus.textContent = 'Add a valid app above first.';
+          appStatus.classList.add('error');
+          appInput.focus();
+          return;
+        }
+        renderConfirmStep();
+      });
+
+      modal.querySelector('.modal-close').addEventListener('click', closePromoDialog);
+  }
+
+  function renderConfirmStep() {
+    overlay.innerHTML = `
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="promoConfirmTitle">
+        <div class="modal-head">
+          <div>
+            <h3 id="promoConfirmTitle">Confirm your request</h3>
+            <p class="modal-sub">I review every request by hand — this is what I read to decide.</p>
+          </div>
+          <button class="modal-close" type="button" aria-label="Close">✕</button>
+        </div>
+
+        <div class="promo-preview-wrap">
+          <div class="rail-card rail-card--${selected} promo-shine" aria-label="Card preview">
+            ${resolvedApp.artwork ? `<img class="rail-icon" src="${escapeHtml(resolvedApp.artwork)}" alt="">` : '<span class="promo-preview-icon" aria-hidden="true">📱</span>'}
+            <span class="rail-name">${escapeHtml(resolvedApp.name)}</span>
+            ${resolvedApp.genre ? `<span class="rail-genre">${escapeHtml(resolvedApp.genre)}</span>` : ''}
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="promoName">Your name</label>
+          <input id="promoName" type="text" placeholder="Jane Doe" autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="promoEmail">Your email</label>
+          <input id="promoEmail" type="email" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="promoMessage">What's your app about?</label>
+          <textarea id="promoMessage" rows="4"
+            placeholder="What it does, who it's for, and why you'd like a slot here. If there are more requests than open slots, this is what decides it."></textarea>
+        </div>
+
+        <div id="promoSendStatus" class="status"></div>
+
+        <div style="display:flex;gap:.6rem;margin-top:.6rem">
+          <button type="button" id="promoBackBtn">Back</button>
+          <button type="button" id="promoSendBtn" class="primary" style="flex:1">Send request</button>
+        </div>
+      </div>`;
+
+    const modal = overlay.querySelector('.modal');
+    modal.querySelector('.modal-close').addEventListener('click', closePromoDialog);
+    modal.querySelector('#promoBackBtn').addEventListener('click', renderPitchStep);
+    modal.querySelector('#promoSendBtn').addEventListener('click', () => submitPromoRequest(modal, community));
+  }
+
+  async function submitPromoRequest(modal, communityClient) {
+    const name = modal.querySelector('#promoName').value.trim();
+    const email = modal.querySelector('#promoEmail').value.trim();
+    const message = modal.querySelector('#promoMessage').value.trim();
+    const status = modal.querySelector('#promoSendStatus');
+    const sendBtn = modal.querySelector('#promoSendBtn');
+
+    if (!name) return showSendError(status, 'Your name is required.');
+    if (!PROMO_EMAIL_RE.test(email)) return showSendError(status, 'A valid email is required.');
+    if (message.length < 20) {
+      return showSendError(status, 'Say a bit more — at least 20 characters helps me understand your app.');
     }
 
-    appStatus.textContent = 'Looking up…';
-    lookupTimer = setTimeout(async () => {
-      let entry = null;
+    sendBtn.disabled = true;
+    status.className = 'status';
+    status.textContent = 'Sending…';
+
+    if (communityClient.configured) {
       try {
-        entry = await itunes.lookup(appQuery, { country: 'us' });
-      } catch {
-        appStatus.textContent = "Couldn't reach the App Store catalogue — try again in a moment.";
+        await communityClient.submitPromoRequest({
+          trackId: resolvedApp.trackId,
+          name: resolvedApp.name,
+          genre: resolvedApp.genre,
+          artworkUrl: resolvedApp.artwork,
+          storeUrl: resolvedApp.storeUrl,
+          color: selected,
+          message,
+          requesterName: name,
+          email,
+        });
+        status.className = 'status ok';
+        status.textContent = "Sent — I'll email you either way once I've reviewed it.";
+        sendBtn.textContent = 'Sent';
         return;
+      } catch (err) {
+        // Falls through to the `mailto` handoff below rather than leaving
+        // the visitor stuck on a dead button — the backend rejecting or
+        // being unreachable shouldn't cost them the request entirely.
+        status.textContent = `Couldn't submit directly (${err.message}) — opening your email app instead.`;
       }
-      if (!entry) {
-        appStatus.textContent = "Couldn't find that app — check the id.";
-        return;
-      }
-      appStatus.textContent = `Found: ${entry.trackName}`;
-      preview.querySelector('.rail-name').textContent = entry.trackName;
-      preview.querySelector('.rail-genre').textContent = entry.primaryGenreName ?? '';
-      setPromoPreviewIcon(preview, entry.artworkUrl100 ?? entry.artworkUrl512 ?? '');
-    }, 500);
-  });
+    }
+
+    window.location.href = promoMailto({ color: selected, app: resolvedApp, name, email, message });
+    status.className = 'status ok';
+    status.textContent = 'Opened in your email app — send it to finish the request.';
+    sendBtn.disabled = false;
+  }
+
+  function showSendError(status, message) {
+    status.className = 'status error';
+    status.textContent = message;
+  }
+
+  renderPitchStep();
 
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) closePromoDialog();
   });
-  overlay.querySelector('.modal-close').addEventListener('click', closePromoDialog);
-  request.addEventListener('click', closePromoDialog);
   document.addEventListener('keydown', onPromoKeydown);
 }
 

@@ -20,7 +20,7 @@ export class CommunityError extends Error {
  * README. `null` disables the whole feature: the nav item stays hidden and
  * nothing here is ever called.
  */
-export const COMMUNITY_API_URL = null;
+export const COMMUNITY_API_URL = 'https://launchpilot-community.kaizenapp-contact.workers.dev';
 
 export class CommunityClient {
   constructor({ fetchImpl, baseUrl = COMMUNITY_API_URL } = {}) {
@@ -155,6 +155,55 @@ export class CommunityClient {
 
   completeSession(id) {
     return this._request(`/test-sessions/${id}/complete`, { method: 'POST' });
+  }
+
+  /** The message thread on one test session, oldest first — everything
+   * exchanged after the opening pitch, in either direction. */
+  sessionMessages(id) {
+    return this._request(`/test-sessions/${id}/messages`).then((d) => d.messages);
+  }
+
+  sendSessionMessage(id, body) {
+    return this._request(`/test-sessions/${id}/messages`, { method: 'POST', body: { body } }).then(
+      (d) => d.message,
+    );
+  }
+
+  /** Submits the landing page's "Feature your app here" dialog. No sign-in
+   * required — `requesterName`/`email` are who to reply to, not an account. */
+  submitPromoRequest({ trackId, name, genre, artworkUrl, storeUrl, color, message, requesterName, email }) {
+    return this._request('/promo/requests', {
+      method: 'POST',
+      body: {
+        trackId,
+        appName: name,
+        appGenre: genre,
+        artworkUrl,
+        storeUrl,
+        color,
+        message,
+        requesterName,
+        email,
+      },
+    }).then((d) => d.request);
+  }
+
+  /** Every "Feature your app here" submission, admin-only — see
+   * `views/admin.js`. Throws a `CommunityError` with `status === 403` for
+   * anyone signed in but not on the admin allowlist. */
+  adminListPromoRequests() {
+    return this._request('/promo/requests').then((d) => d.requests);
+  }
+
+  adminReviewPromoRequest(id, action) {
+    return this._request(`/promo/requests/${id}/${action}`, { method: 'POST' }).then((d) => d.request);
+  }
+
+  /** Public: the approved promo requests a landing page can render as
+   * promoted rail cards, shaped exactly like `RAIL_LEFT`/`RAIL_RIGHT` in
+   * `landing-demo.js` so `renderRails` can merge these in directly. */
+  featuredPromoSlots() {
+    return this._request('/promo/featured').then((d) => d.slots);
   }
 
   tokens() {
