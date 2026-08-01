@@ -24,7 +24,7 @@ import {
 
 const ROW_LIMIT = 6;
 /** Rows the board starts at, and how many each "Show more" adds. */
-const BOARD_PAGE = 7;
+const BOARD_PAGE = 15;
 /** Catalogue lookups are throttled, so a fully expanded board would spend a
  * long time filling in rows nobody scrolled to. */
 const RATINGS_LOOKUP_LIMIT = 10;
@@ -502,7 +502,7 @@ function fillRailHeight(rail) {
 /** The palette an open slot can be requested in — muted, deep tones rather
  * than a bright candy palette, closer to what a marketplace like
  * trustmrr.com uses for its sponsor cards. Kept in sync by hand with the
- * `.rail-card--*` rules in `landing.css` — six is few enough that a shared
+ * `.rail-card--*` rules in `landing.css` — ten is few enough that a shared
  * lookup table would cost more to read than it saves. */
 const RAIL_COLORS = [
   { id: 'blue', label: 'Blue', hex: '#2f5fa8' },
@@ -511,6 +511,10 @@ const RAIL_COLORS = [
   { id: 'orange', label: 'Orange', hex: '#b5502a' },
   { id: 'pink', label: 'Pink', hex: '#8a2f4a' },
   { id: 'teal', label: 'Teal', hex: '#2c6470' },
+  { id: 'red', label: 'Red', hex: '#a8342f' },
+  { id: 'amber', label: 'Amber', hex: '#a87e1f' },
+  { id: 'indigo', label: 'Indigo', hex: '#4340a0' },
+  { id: 'slate', label: 'Slate', hex: '#4a5568' },
 ];
 
 function promoMailto(color, appQuery) {
