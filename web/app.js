@@ -26,9 +26,13 @@ import { initSpecs } from './views/specs.js';
 import { initOverview, selectedApp, loadApp } from './views/overview.js';
 import { initFavoritesTray } from './views/favorites-tray.js';
 import { initCommunity } from './views/community.js';
+import { initAdmin } from './views/admin.js';
 import { CommunityClient } from './lib/community.js';
 
-/** Title and one-line purpose per view, shown in the top bar. */
+/** Title and one-line purpose per view, shown in the top bar.
+ * `admin` has no `.nav-item` in the sidebar (see views/admin.js for why),
+ * but still needs an entry here or `route()` would bounce `#admin` back
+ * to overview. */
 const VIEWS = {
   overview: ['Overview', 'Your app, and what is left to fix'],
   screenshots: ['Screenshots', 'Validate and repair store assets'],
@@ -41,6 +45,7 @@ const VIEWS = {
   testers: ['Play testers', 'The 12-for-14-days production gate'],
   community: ['Get testers', 'Real closed testers, and real users at launch'],
   specs: ['Specs', 'The bundled catalogue and its provenance'],
+  admin: ['Admin', 'Review "Feature your app here" requests'],
 };
 
 function route() {
@@ -148,7 +153,9 @@ async function boot() {
   // The same throttled iTunes client every tool shares, so listing cards can
   // re-derive an app's public catalogue facts rather than trusting numbers
   // the person who posted the listing typed in.
-  initCommunity(new CommunityClient(), { getCurrentApp: selectedApp, itunes: client });
+  const communityClient = new CommunityClient();
+  initCommunity(communityClient, { getCurrentApp: selectedApp, itunes: client });
+  initAdmin(communityClient);
 
   const apple = specs.stores.apple;
   const google = specs.stores.google;

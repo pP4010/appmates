@@ -588,6 +588,7 @@ input[type=file] { display: none; }
 
 .status { font-size: .84rem; color: var(--muted); margin: .8rem 0; display: flex; align-items: center; gap: .5rem; }
 .status.error { color: var(--bad); }
+.status.ok { color: var(--ok); }
 .spinner {
   width: 13px; height: 13px; border-radius: 50%;
   border: 2px solid var(--border-strong);
@@ -787,6 +788,17 @@ a.brand:hover { background: var(--surface-3); border-color: var(--border-strong)
 .eval-fields { display: flex; gap: 1rem; flex-wrap: wrap; margin: .5rem 0; font-size: .83rem; }
 .eval-fields label { display: flex; align-items: center; gap: .35rem; color: var(--text-2); }
 .eval-summary { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .3rem; }
+
+/* A test session's message thread — the tester and the listing owner
+   coordinating once a request is `accepted`, past the single opening
+   pitch. `.mine` (the signed-in viewer's own messages) leans on the
+   surface tokens rather than a hardcoded colour, so it reads correctly for
+   *either* party: whoever is looking at the thread sees their own
+   messages picked out the same way. */
+.comm-thread { margin-top: .5rem; padding: .6rem .7rem; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface-2); }
+.thread-list { display: flex; flex-direction: column; gap: .5rem; max-height: 14rem; overflow-y: auto; }
+.thread-message { padding: .4rem .55rem; border-radius: var(--r-sm); background: var(--surface); font-size: .84rem; }
+.thread-message.mine { background: var(--accent-soft); }
 
 .leaderboard-row {
   display: grid; grid-template-columns: 2rem 1fr auto; gap: .6rem; align-items: center;
