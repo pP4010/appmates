@@ -122,20 +122,30 @@ export const DEMO_LAUNCHED = [
  * shipped anything yet, and a board that implied otherwise would misread
  * who this community is for — so the column shows a dash, not a blank.
  * `ratings` stands in for what the live board re-reads from the public
- * catalogue; it is a property of the app, never a score earned here. */
+ * catalogue; it is a property of the app, never a score earned here.
+ *
+ * `ownApp` is usually a plain string — a name with no catalogue entry
+ * behind it, same as the rest of this sample data. The two rows below are
+ * the exception: the site owner's own apps, given as `{ name, trackId,
+ * country }` the same shape `RAIL_LEFT`/`RAIL_RIGHT` use below, so
+ * `landing.js` resolves their icon, real title and category from the
+ * catalogue instead of showing this file's guess. `ownAppDesc`/`ratings`
+ * stay `null` for those two — filled in live, not worth going stale here. */
 export const DEMO_LEADERBOARD = [
   { rank: 1, name: 'Mara V.', tests: 23, apps: 14, ownApp: 'Habitloop', ownAppDesc: 'Productivity · Habit streaks', ratings: '1,204' },
   { rank: 2, name: 'devonp', tests: 19, apps: 11, ownApp: null, ownAppDesc: null, ratings: null },
   { rank: 3, name: 'Kit Sørensen', tests: 17, apps: 12, ownApp: 'Ferment', ownAppDesc: 'Food & Drink · Sourdough timers', ratings: '318' },
   { rank: 4, name: 'anna.builds', tests: 15, apps: 9, ownApp: 'Inkwell', ownAppDesc: 'Productivity · Markdown notes', ratings: '96' },
-  { rank: 5, name: 'Tobi A.', tests: 13, apps: 10, ownApp: null, ownAppDesc: null, ratings: null },
-  { rank: 6, name: 'nine_lives', tests: 12, apps: 6, ownApp: 'Cadence', ownAppDesc: 'Music · Metronome & setlists', ratings: '1,309' },
-  { rank: 7, name: 'Priya R.', tests: 11, apps: 8, ownApp: 'Quietly', ownAppDesc: 'Health & Fitness · Sleep sounds', ratings: '47' },
-  { rank: 8, name: 'joon.dev', tests: 9, apps: 7, ownApp: null, ownAppDesc: null, ratings: null },
-  { rank: 9, name: 'Elif K.', tests: 8, apps: 5, ownApp: 'Fernweh', ownAppDesc: 'Travel · Offline city maps', ratings: '624' },
-  { rank: 10, name: 'marcus_b', tests: 7, apps: 6, ownApp: 'Trailmix', ownAppDesc: 'Health & Fitness · Trail routes', ratings: '12' },
-  { rank: 11, name: 'Sofia L.', tests: 6, apps: 4, ownApp: null, ownAppDesc: null, ratings: null },
-  { rank: 12, name: 'pixelwright', tests: 5, apps: 5, ownApp: 'Bulletpoint', ownAppDesc: 'Productivity · Outliner', ratings: '431' },
+  { rank: 5, name: 'Paolo A.', tests: 14, apps: 9, ownApp: { name: 'Kaizen', trackId: '6768688178', country: 'us' }, ownAppDesc: null, ratings: null },
+  { rank: 6, name: 'Tobi A.', tests: 13, apps: 10, ownApp: null, ownAppDesc: null, ratings: null },
+  { rank: 7, name: 'nine_lives', tests: 12, apps: 6, ownApp: 'Cadence', ownAppDesc: 'Music · Metronome & setlists', ratings: '1,309' },
+  { rank: 8, name: 'Priya R.', tests: 11, apps: 8, ownApp: 'Quietly', ownAppDesc: 'Health & Fitness · Sleep sounds', ratings: '47' },
+  { rank: 9, name: 'Paolo A.', tests: 10, apps: 7, ownApp: { name: 'Rebuild', trackId: '6782585843', country: 'us' }, ownAppDesc: null, ratings: null },
+  { rank: 10, name: 'joon.dev', tests: 9, apps: 7, ownApp: null, ownAppDesc: null, ratings: null },
+  { rank: 11, name: 'Elif K.', tests: 8, apps: 5, ownApp: 'Fernweh', ownAppDesc: 'Travel · Offline city maps', ratings: '624' },
+  { rank: 12, name: 'marcus_b', tests: 7, apps: 6, ownApp: 'Trailmix', ownAppDesc: 'Health & Fitness · Trail routes', ratings: '12' },
+  { rank: 13, name: 'Sofia L.', tests: 6, apps: 4, ownApp: null, ownAppDesc: null, ratings: null },
+  { rank: 14, name: 'pixelwright', tests: 5, apps: 5, ownApp: 'Bulletpoint', ownAppDesc: 'Productivity · Outliner', ratings: '431' },
 ];
 
 /**
