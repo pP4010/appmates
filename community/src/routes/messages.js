@@ -2,7 +2,8 @@ import { json, error, newId } from '../lib/http.js';
 import { currentUser } from '../lib/auth.js';
 import { isValidMessage } from '../lib/validate.js';
 import { MAX_SESSION_MESSAGE_LENGTH } from '../lib/config.js';
-import { notifyNewMessage } from '../lib/push.js';
+import { notifyNewMessage, scheduleEchoReply } from '../lib/push.js';
+import { ECHO_BOT_USER_ID } from '../lib/config.js';
 
 /** Both parties on a test session — the only two people allowed to read or
  * post to its thread. Kept as one small lookup rather than joined into the
@@ -88,11 +89,26 @@ export async function send(request, env, id, ctx) {
   // response — the sender is waiting on it, the recipient's notification
   // is not something they're watching a spinner for.
   const recipientId = session.tester_user_id === user.id ? session.listing_owner_id : session.tester_user_id;
-  ctx.waitUntil(
-    notifyNewMessage(env, recipientId, { appName: session.app_name, preview: text.trim().slice(0, 120) }).catch(
-      (err) => console.error('push notify failed', err),
-    ),
-  );
+  if (recipientId === ECHO_BOT_USER_ID) {
+    // The recipient here is the echo bot, which has no subscriptions of its
+    // own — a real notifyNewMessage call would just be a no-op DB read.
+    // What the sender actually wants is the bot's delayed reply back to
+    // *them*, which is its own push a few seconds from now.
+    ctx.waitUntil(
+      scheduleEchoReply(env, {
+        sessionId: id,
+        appName: session.app_name,
+        recipientUserId: user.id,
+        originalText: text.trim(),
+      }).catch((err) => console.error('echo reply failed', err)),
+    );
+  } else {
+    ctx.waitUntil(
+      notifyNewMessage(env, recipientId, { appName: session.app_name, preview: text.trim().slice(0, 120) }).catch(
+        (err) => console.error('push notify failed', err),
+      ),
+    );
+  }
 
   return json(env, request, { message: serialize(row) }, { status: 201 });
 }

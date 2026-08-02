@@ -85,6 +85,7 @@ export default {
 
       if (path === '/push/subscribe' && method === 'POST') return await push.subscribe(request, env);
       if (path === '/push/unsubscribe' && method === 'POST') return await push.unsubscribe(request, env);
+      if (path === '/push/test-session' && method === 'GET') return await push.testSession(request, env);
 
       if (path === '/tokens/me' && method === 'GET') return await tokens.me(request, env);
       if (path === '/leaderboard' && method === 'GET') return await leaderboard.top(request, env);

@@ -44,3 +44,13 @@ export const MAX_PROMO_MESSAGE_LENGTH = 1000;
 // A message on a test session's thread — deliberately looser than a first
 // pitch (no minimum): "ok, sent you a new invite" is a complete message.
 export const MAX_SESSION_MESSAGE_LENGTH = 2000;
+
+// The one non-real participant in the system: a fixed bot user + app +
+// listing (see migrations/0005_echo_test_conversation.sql) that echoes
+// back whatever you send it, so push notifications can be watched arriving
+// for real — tab open (a toast) or backgrounded/closed (a system
+// notification) — without a second real account. `status = 'closed'` on
+// its listing keeps it out of the public marketplace forever.
+export const ECHO_BOT_USER_ID = '00000000-0000-4000-8000-000000000001';
+export const ECHO_BOT_LISTING_ID = '00000000-0000-4000-8000-000000000003';
+export const ECHO_REPLY_DELAY_MS = 5000;

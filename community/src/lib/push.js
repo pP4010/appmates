@@ -1,4 +1,6 @@
 import webpush from 'web-push';
+import { newId } from './http.js';
+import { ECHO_BOT_USER_ID, ECHO_REPLY_DELAY_MS } from './config.js';
 
 /**
  * Sends a "new message" push to every browser the recipient has subscribed
@@ -46,4 +48,29 @@ export async function notifyNewMessage(env, recipientUserId, { appName, preview 
       }
     }),
   );
+}
+
+/**
+ * The echo bot's half of a conversation: waits a few seconds, inserts a
+ * reply "from" `ECHO_BOT_USER_ID`, and pushes it to the real user exactly
+ * the way a real reply would be — same insert, same `notifyNewMessage`.
+ * The delay is deliberate, not incidental: it gives you time to background
+ * the tab (or close it) after sending, so what you're watching for is the
+ * system-notification path, not just the in-app-toast one `scheduleEchoReply`
+ * would still return during if it replied instantly.
+ *
+ * Called via `ctx.waitUntil` from `routes/messages.js`, so this runs after
+ * the sender's own request has already returned — `scheduler.wait` doesn't
+ * burn CPU time while it waits, only wall-clock, which `waitUntil` grants
+ * up to 30 seconds of.
+ */
+export async function scheduleEchoReply(env, { sessionId, appName, recipientUserId, originalText }) {
+  await scheduler.wait(ECHO_REPLY_DELAY_MS);
+
+  const body = `Echo: ${originalText}`.slice(0, 500);
+  await env.DB.prepare('INSERT INTO session_messages (id, session_id, sender_user_id, body) VALUES (?, ?, ?, ?)')
+    .bind(newId(), sessionId, ECHO_BOT_USER_ID, body)
+    .run();
+
+  await notifyNewMessage(env, recipientUserId, { appName, preview: body });
 }

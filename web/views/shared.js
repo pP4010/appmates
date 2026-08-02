@@ -118,6 +118,24 @@ export function empty(icon, title, hint) {
   </div>`;
 }
 
+/** A push arrived while a tab had focus — see `push-sw.js` and
+ * `lib/push.js`'s `listenForInAppToasts`. Auto-dismisses; clicking it runs
+ * `onClick` (typically a hash change into the relevant thread) and closes
+ * it early. */
+export function showToast({ title, body, onClick }) {
+  const toast = document.createElement('button');
+  toast.type = 'button';
+  toast.className = 'toast';
+  toast.innerHTML = `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(body)}</span>`;
+  toast.addEventListener('click', () => {
+    onClick?.();
+    toast.remove();
+  });
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 7000);
+  return toast;
+}
+
 export function skeleton(rows = 5) {
   return Array.from({ length: rows }, () => '<div class="skeleton-row"></div>').join('');
 }

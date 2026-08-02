@@ -22,8 +22,9 @@
  * none of this ever touches App Store/Play reviews or ratings.
  */
 
-import { el, escapeHtml, empty, withStatus, appIcon, bar, toneFor, ring } from './shared.js';
+import { el, escapeHtml, empty, withStatus, appIcon, bar, toneFor, ring, showToast } from './shared.js';
 import { checkAppHealth, profileFromEntry } from '../lib/app-profile.js';
+import { enablePush, listenForInAppToasts, pushPermissionState, pushSupported } from '../lib/push.js';
 
 const MIN_MESSAGE_LENGTH = 20;
 
@@ -35,8 +36,9 @@ const MAX_ENRICHED_CARDS = 12;
 
 const TABS = {
   browse: 'Marketplace',
-  leaderboard: 'Leaderboard',
+  inbox: 'Inbox',
   mine: 'Your testing',
+  leaderboard: 'Leaderboard',
 };
 
 let client = null;
@@ -66,6 +68,22 @@ export function initCommunity(communityClient, { getCurrentApp: getApp, itunes: 
     );
     return;
   }
+
+  // Registered once, independent of which tab is open — a push can arrive
+  // while the user is looking at Screenshots or Rank, not just Inbox.
+  listenForInAppToasts(({ title, body }) => {
+    showToast({
+      title,
+      body,
+      onClick: () => {
+        location.hash = '#community';
+        if (activeTab !== 'inbox') {
+          activeTab = 'inbox';
+          renderShell();
+        }
+      },
+    });
+  });
 
   refreshSession();
 }
@@ -164,6 +182,7 @@ function renderActiveTab() {
   renderGeneration += 1;
   if (activeTab === 'browse') renderBrowseTab();
   else if (activeTab === 'leaderboard') renderLeaderboardTab();
+  else if (activeTab === 'inbox') renderInboxTab();
   else renderYourTestingTab();
 }
 
@@ -1288,6 +1307,251 @@ function renderThread(id, thread, messages) {
   sendBtn.addEventListener('click', sendMessage);
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') sendMessage();
+  });
+}
+
+/* ------------------------------ inbox tab -------------------------------- */
+
+// "Seen" state lives client-side, keyed by session id — the backend has no
+// read/unread column, and adding one for a single device's convenience isn't
+// worth a migration yet. The tradeoff: unread state doesn't follow you to a
+// second device. Worth revisiting only if that turns out to matter in
+// practice.
+const INBOX_SEEN_PREFIX = 'launchpilot:inbox:seen:';
+
+function inboxSeenId(sessionId) {
+  try {
+    return localStorage.getItem(INBOX_SEEN_PREFIX + sessionId);
+  } catch {
+    return null;
+  }
+}
+
+function markInboxSeen(sessionId, messageId) {
+  try {
+    localStorage.setItem(INBOX_SEEN_PREFIX + sessionId, messageId);
+  } catch {
+    /* private browsing or a full quota — unread state just won't persist */
+  }
+}
+
+function relativeTime(iso) {
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+/**
+ * Every conversation the signed-in user is party to, from both sides of the
+ * marketplace at once — sessions on listings they own, and sessions where
+ * they're the tester. Neither side has its own "all my conversations"
+ * endpoint, so this fans out to the per-listing and per-session routes that
+ * already exist and flattens the result client-side, rather than adding a
+ * new aggregate backend route for what is, in a private beta, a handful of
+ * calls.
+ */
+async function gatherConversations() {
+  const [listings, testerSessions] = await Promise.all([client.myListings(), client.mySessions()]);
+
+  const ownerConversations = (
+    await Promise.all(
+      listings.map((l) =>
+        client
+          .listingSessions(l.id)
+          .then((sessions) =>
+            sessions.map((s) => ({
+              session: s,
+              role: 'owner',
+              appName: l.app.name,
+              artworkUrl: l.app.artworkUrl,
+            })),
+          )
+          .catch(() => []),
+      ),
+    )
+  ).flat();
+
+  const testerConversations = testerSessions.map((s) => ({
+    session: s,
+    role: 'tester',
+    appName: s.listing.appName,
+    artworkUrl: s.listing.artworkUrl,
+  }));
+
+  const conversations = [...ownerConversations, ...testerConversations].filter((c) =>
+    MESSAGEABLE_STATUSES.has(c.session.status),
+  );
+
+  const withMessages = await Promise.all(
+    conversations.map(async (c) => ({ ...c, messages: await client.sessionMessages(c.session.id).catch(() => []) })),
+  );
+
+  return withMessages
+    .map((c) => {
+      const last = c.messages.length ? c.messages[c.messages.length - 1] : null;
+      const activityAt = last?.createdAt || c.session.respondedAt || c.session.createdAt;
+      const unread = Boolean(last) && last.senderUserId !== user?.id && inboxSeenId(c.session.id) !== last.id;
+      return { ...c, last, activityAt, unread };
+    })
+    .sort((a, b) => new Date(b.activityAt) - new Date(a.activityAt));
+}
+
+/** Only shown when permission hasn't been asked for yet — once granted or
+ * denied, the browser itself is the source of truth and there's nothing
+ * left for this banner to offer. */
+function notificationsBannerHtml() {
+  if (!pushSupported() || pushPermissionState() !== 'default') return '';
+  return `
+    <div class="callout" style="margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap">
+      <span>Get notified in your browser when a message arrives.</span>
+      <button class="primary" id="commEnablePush" type="button">Enable notifications</button>
+    </div>`;
+}
+
+function wireNotificationsBanner() {
+  const btn = el('commEnablePush');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    try {
+      await enablePush(client);
+      btn.closest('.callout')?.remove();
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = err.message;
+    }
+  });
+}
+
+/** Always visible, unlike the notifications banner — enabling push and
+ * actually seeing one arrive are two different things to confirm, and this
+ * is useful regardless of which state that permission is in. Opens (or, on
+ * a first click, lazily creates) the echo-bot conversation from
+ * `push/test-session`; the reply comes back a few seconds later through
+ * the exact same send/notify path a real message would. */
+function testConversationBannerHtml() {
+  return `
+    <div class="callout" style="margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap">
+      <span>Want to check notifications actually arrive? The test conversation replies a few
+      seconds after you message it — try it with the tab open, then again after switching away
+      or closing it.</span>
+      <button class="ghost" id="commOpenTestConvo" type="button">Open test conversation</button>
+    </div>`;
+}
+
+function wireTestConversationBanner() {
+  const btn = el('commOpenTestConvo');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    try {
+      const sessionId = await client.testConversation();
+      await renderInboxTab();
+      const row = document.querySelector(`.inbox-row[data-session="${sessionId}"]`);
+      row?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      row?.click();
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = err.message;
+      setTimeout(() => {
+        btn.textContent = originalText;
+      }, 3000);
+    }
+  });
+}
+
+async function renderInboxTab() {
+  if (!user) {
+    el('commTabPanel').innerHTML = empty(
+      '◍',
+      'Sign in to see your messages',
+      'Conversations open once a testing request is accepted, on either side.',
+    );
+    return;
+  }
+
+  const generation = renderGeneration;
+  el('commTabPanel').innerHTML = '<div class="status"><span class="spinner"></span> Loading</div>';
+  try {
+    const conversations = await gatherConversations();
+    if (generation !== renderGeneration) return;
+
+    const banners = notificationsBannerHtml() + testConversationBannerHtml();
+
+    if (!conversations.length) {
+      el('commTabPanel').innerHTML =
+        banners +
+        empty(
+          '◍',
+          'No conversations yet',
+          "They open here once a testing request is accepted — on a listing you own, or one you're testing.",
+        );
+      wireNotificationsBanner();
+      wireTestConversationBanner();
+      return;
+    }
+
+    el('commTabPanel').innerHTML = `${banners}<div id="commInboxList"></div>`;
+    wireNotificationsBanner();
+    wireTestConversationBanner();
+    const container = el('commInboxList');
+    container.innerHTML = conversations.map(inboxRowHtml).join('');
+    wireInboxRows(container, conversations);
+  } catch (err) {
+    el('commTabPanel').innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function inboxRowHtml(c) {
+  const { session: s, appName, artworkUrl, role, last, unread } = c;
+  const counterparty = role === 'owner' ? s.testerDisplayName || s.testerEmail : 'the app owner';
+  const roleLabel = role === 'owner' ? 'Testing your app ·' : "You're testing ·";
+  const preview = last ? escapeHtml(last.body).slice(0, 90) : 'No messages yet — say hello.';
+
+  return `
+    <button class="inbox-row${unread ? ' unread' : ''}" type="button" data-session="${s.id}">
+      ${appIcon(artworkUrl, appName)}
+      <div class="inbox-row-body">
+        <div class="inbox-row-head">
+          <strong>${escapeHtml(appName)}</strong>
+          <span class="muted">${roleLabel} ${escapeHtml(counterparty)}</span>
+          ${last ? `<span class="inbox-row-time muted">${relativeTime(last.createdAt)}</span>` : ''}
+        </div>
+        <div class="inbox-row-preview muted">${preview}</div>
+      </div>
+      ${unread ? '<span class="inbox-dot" aria-label="Unread"></span>' : ''}
+    </button>
+    <div class="comm-thread" data-session="${s.id}" hidden></div>`;
+}
+
+function wireInboxRows(container, conversations) {
+  container.querySelectorAll('.inbox-row').forEach((row) => {
+    row.addEventListener('click', async () => {
+      const id = row.dataset.session;
+      const thread = container.querySelector(`.comm-thread[data-session="${id}"]`);
+      if (!thread) return;
+
+      const opening = thread.hidden;
+      thread.hidden = !opening;
+      if (!opening) return;
+
+      if (!thread.dataset.loaded) {
+        thread.dataset.loaded = '1';
+        await loadThread(id, thread);
+      }
+      const conv = conversations.find((c) => c.session.id === id);
+      if (conv?.last) {
+        markInboxSeen(id, conv.last.id);
+        row.classList.remove('unread');
+        row.querySelector('.inbox-dot')?.remove();
+      }
+    });
   });
 }
 

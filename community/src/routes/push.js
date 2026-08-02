@@ -1,5 +1,6 @@
 import { json, error, newId } from '../lib/http.js';
 import { currentUser } from '../lib/auth.js';
+import { ECHO_BOT_LISTING_ID } from '../lib/config.js';
 
 /** Registers (or re-registers) one browser's push subscription against the
  * signed-in user. `endpoint` is unique per browser/device, not per user —
@@ -54,4 +55,33 @@ export async function unsubscribe(request, env) {
     .bind(endpoint, user.id)
     .run();
   return json(env, request, { ok: true });
+}
+
+/**
+ * Gets or lazily creates the signed-in user's own test_sessions row against
+ * the shared echo-bot listing (migrations/0005_echo_test_conversation.sql)
+ * — created `accepted` outright, skipping the normal request/accept dance,
+ * since there's no real owner on the other end to review anything. Once it
+ * exists it's a completely ordinary messageable session and needs no
+ * special handling anywhere else — it shows up in `mySessions()` and the
+ * Inbox like any other conversation.
+ */
+export async function testSession(request, env) {
+  const user = await currentUser(env, request);
+  if (!user) return error(env, request, 401, 'sign in required');
+
+  const existing = await env.DB.prepare('SELECT id FROM test_sessions WHERE listing_id = ? AND tester_user_id = ?')
+    .bind(ECHO_BOT_LISTING_ID, user.id)
+    .first();
+  if (existing) return json(env, request, { sessionId: existing.id });
+
+  const sessionId = newId();
+  await env.DB.prepare(
+    `INSERT INTO test_sessions (id, listing_id, tester_user_id, status, request_message, responded_at)
+     VALUES (?, ?, ?, 'accepted', 'Automated — testing push notifications.', datetime('now'))`,
+  )
+    .bind(sessionId, ECHO_BOT_LISTING_ID, user.id)
+    .run();
+
+  return json(env, request, { sessionId });
 }
