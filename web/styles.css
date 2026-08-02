@@ -192,6 +192,15 @@ code, .mono, .num {
   line-height: 1.35;
 }
 
+.sidebar-legal-links {
+  display: flex;
+  gap: .7rem;
+  padding: 0 .1rem;
+  font-size: .72rem;
+}
+.sidebar-legal-links a { color: var(--muted); }
+.sidebar-legal-links a:hover { color: var(--text); }
+
 /* ============================ main ============================ */
 
 .main { min-width: 0; display: flex; flex-direction: column; }
@@ -799,6 +808,51 @@ a.brand:hover { background: var(--surface-3); border-color: var(--border-strong)
 .thread-list { display: flex; flex-direction: column; gap: .5rem; max-height: 14rem; overflow-y: auto; }
 .thread-message { padding: .4rem .55rem; border-radius: var(--r-sm); background: var(--surface); font-size: .84rem; }
 .thread-message.mine { background: var(--accent-soft); }
+
+.inbox-row {
+  display: flex; align-items: center; gap: .7rem;
+  width: 100%; text-align: left;
+  padding: .75rem .9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  margin-bottom: .5rem;
+  cursor: pointer;
+  font: inherit; color: inherit;
+}
+.inbox-row:hover { border-color: var(--border-strong); }
+.inbox-row.unread { border-color: var(--accent); background: var(--accent-soft); }
+.inbox-row-body { flex: 1; min-width: 0; }
+.inbox-row-head { display: flex; align-items: baseline; gap: .35rem; flex-wrap: wrap; font-size: .85rem; }
+.inbox-row-time { margin-left: auto; font-size: .75rem; white-space: nowrap; }
+.inbox-row-preview { font-size: .82rem; margin-top: .15rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inbox-dot { width: .5rem; height: .5rem; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+.toast {
+  position: fixed;
+  right: 1.2rem;
+  bottom: 1.2rem;
+  z-index: 200;
+  max-width: 20rem;
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+  text-align: left;
+  padding: .8rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  box-shadow: 0 8px 28px rgba(0,0,0,.28);
+  cursor: pointer;
+  font: inherit; color: inherit;
+  animation: toast-in .18s ease-out;
+}
+.toast strong { font-size: .86rem; }
+.toast span { font-size: .8rem; color: var(--muted); }
+@keyframes toast-in {
+  from { transform: translateY(.5rem); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
 
 .leaderboard-row {
   display: grid; grid-template-columns: 2rem 1fr auto; gap: .6rem; align-items: center;

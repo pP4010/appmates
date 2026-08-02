@@ -1,13 +1,20 @@
 /**
  * Public App Store catalogue client for the browser.
  *
- * The endpoint answers with `access-control-allow-origin: *`, which is the only
- * reason the market tools can run here at all — the page calls Apple directly
- * and no server of ours ever sees a request.
+ * Talks to Apple directly by default (`LOOKUP_URL`/`SEARCH_URL` below), the
+ * only mode a fresh clone with no backend configured ever has — and every
+ * lookup this makes is public catalogue data, never anything about the
+ * person running it. A deployment that *has* configured `community/`
+ * instead routes every instance of this client through that Worker's
+ * `/itunes/*` relay (see `itunesRelayOptions` in `lib/community.js`,
+ * wired in by both `app.js` and `landing.js`) — a server-to-server fetch
+ * has no CORS story to break, unlike a direct request to Apple's
+ * undocumented endpoint, whose answer on that front has flip-flopped more
+ * than once during this project.
  *
- * It is still somebody else's free service. This client is as polite from the
- * browser as the Python one is from a terminal: responses are cached, requests
- * are spaced, and nothing is fetched twice within a session.
+ * It is still somebody else's free service either way. This client is as
+ * polite as the Python one is from a terminal: responses are cached,
+ * requests are spaced, and nothing is fetched twice within a session.
  */
 
 export const SEARCH_URL = 'https://itunes.apple.com/search';
@@ -19,10 +26,11 @@ export const LOOKUP_URL = 'https://itunes.apple.com/lookup';
  * exactly as it did before, reporting withheld screenshots as "not exposed"
  * rather than fetching them from anywhere.
  *
- * This is the one request this page ever sends anywhere other than Apple.
- * It carries only a track id and a country code, both already public — set
- * this only once you have read `worker/README.md` and are comfortable with
- * what it does.
+ * A separate Worker from the `community/` one `itunesRelayOptions` points
+ * at — this one only ever receives a track id and a country code, both
+ * already public, and exists purely to recover screenshots the catalogue
+ * response withholds. Set this only once you have read `worker/README.md`
+ * and are comfortable with what it does.
  */
 export const SCREENSHOT_RELAY_URL = 'https://launchpilot-screenshot-relay.kaizenapp-contact.workers.dev';
 
@@ -101,16 +109,42 @@ class ResponseCache {
 }
 
 export class ITunesClient {
+  /**
+   * `lookupUrl`/`searchUrl` default to Apple directly — what a fresh clone
+   * with no `community/` backend deployed gets, since there is nowhere
+   * else to route through. Every caller in this app (`app.js`,
+   * `landing.js`) overrides them via `itunesRelayOptions()` in
+   * `lib/community.js` once a backend *is* configured, so catalogue
+   * lookups go through that Worker's `/itunes/lookup` and `/itunes/search`
+   * instead — a server-to-server fetch has no CORS story to break, unlike
+   * a request straight from the browser to Apple's undocumented endpoint.
+   *
+   * `searchFallbackUrl` only matters when `searchUrl` points at the relay:
+   * Apple rate-limits `/search` by source IP, and the relay's IP is
+   * Cloudflare's own shared Workers egress range — shared with every other
+   * customer's Workers, not just this one. That range has been observed
+   * getting rate-limited for stretches longer than a single retry window,
+   * while direct-from-browser calls kept working the whole time. So a
+   * failed relay search retries once, straight against Apple — trading
+   * back a little of the CORS flakiness the relay exists to avoid, only
+   * when the relay itself is the thing failing.
+   */
   constructor({
     cache = new ResponseCache(),
     minInterval = MIN_REQUEST_INTERVAL_MS,
     fetchImpl,
     screenshotRelayUrl = SCREENSHOT_RELAY_URL,
+    lookupUrl = LOOKUP_URL,
+    searchUrl = SEARCH_URL,
+    searchFallbackUrl = SEARCH_URL,
   } = {}) {
     this.cache = cache;
     this.minInterval = minInterval;
     this.fetchImpl = fetchImpl ?? ((...args) => globalThis.fetch(...args));
     this.screenshotRelayUrl = screenshotRelayUrl;
+    this.lookupUrl = lookupUrl;
+    this.searchUrl = searchUrl;
+    this.searchFallbackUrl = searchFallbackUrl;
     this.lastRequestAt = null;
   }
 
@@ -134,8 +168,7 @@ export class ITunesClient {
       response = await this.fetchImpl(`${url}?${query}`);
     } catch (err) {
       throw new MarketDataError(
-        `Could not reach the App Store catalogue: ${err.message}. ` +
-          'Check your connection — this page talks to Apple directly.',
+        `Could not reach the App Store catalogue: ${err.message}. Check your connection and try again.`,
       );
     } finally {
       this.lastRequestAt = Date.now();
@@ -178,13 +211,24 @@ export class ITunesClient {
    * market.
    */
   async search(term, { country = 'us', limit = 200 } = {}) {
+    try {
+      return await this.searchAt(this.searchUrl, term, { country, limit });
+    } catch (err) {
+      // No distinct fallback configured (fresh clone, direct-to-Apple
+      // already) — nothing left to retry against.
+      if (this.searchUrl === this.searchFallbackUrl) throw err;
+      return await this.searchAt(this.searchFallbackUrl, term, { country, limit });
+    }
+  }
+
+  async searchAt(url, term, { country, limit }) {
     const attempts = [limit, ...FALLBACK_LIMITS.filter((l) => l < limit)];
     let lastError = null;
 
     for (const attempt of attempts) {
       try {
         const payload = await this.get(
-          SEARCH_URL,
+          url,
           { term, country: country.toLowerCase(), entity: 'software', limit: String(attempt) },
           { subject: term },
         );
@@ -205,12 +249,11 @@ export class ITunesClient {
   /**
    * Fetch one app by numeric App Store id or by bundle id.
    *
-   * `country` is always sent now. Apple's lookup endpoint currently answers
-   * `?id=X` alone with no CORS headers at all — the browser blocks the
-   * response and the request fails with an opaque "Failed to fetch" — while
-   * `?id=X&country=us` answers with `access-control-allow-origin: *`. That is
-   * the reverse of what this endpoint used to do, so dropping the parameter
-   * for numeric ids (as this client once did) now breaks every lookup by id.
+   * `country` is always sent. Whether Apple's lookup endpoint returns CORS
+   * headers for `?id=X` alone versus `?id=X&country=us` has flipped more
+   * than once during this project — sending both params is the safer bet
+   * either way, and callers who can't afford to be at the mercy of that
+   * (the landing page) route around it entirely via `lookupUrl`.
    */
   async lookup(appId, { country = 'us' } = {}) {
     const isNumericId = /^\d+$/.test(appId);
@@ -218,7 +261,7 @@ export class ITunesClient {
       ? { id: appId, country: country.toLowerCase() }
       : { bundleId: appId, country: country.toLowerCase() };
 
-    const payload = await this.get(LOOKUP_URL, params, { subject: appId });
+    const payload = await this.get(this.lookupUrl, params, { subject: appId });
     return payload.results?.[0] ?? null;
   }
 

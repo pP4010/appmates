@@ -1,0 +1,55 @@
+/* Shared prose layout for the standalone legal pages (terms.html,
+ * privacy.html, legal-notice.html). Reuses styles.css's variables and
+ * landing.css's header/footer, adds only what a plain text document needs
+ * on top of those. */
+
+.legal-body { height: auto; }
+
+.legal-main {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+}
+
+.legal-main h1 {
+  font-size: 1.6rem;
+  margin: 0 0 .3rem;
+}
+
+.legal-updated {
+  color: var(--muted);
+  font-size: .85rem;
+  margin: 0 0 2.2rem;
+}
+
+.legal-main h2 {
+  font-size: 1.05rem;
+  margin: 2.2rem 0 .7rem;
+  padding-top: .2rem;
+  border-top: 1px solid var(--border);
+}
+
+.legal-main h2:first-of-type { border-top: none; padding-top: 0; }
+
+.legal-main p, .legal-main li {
+  font-size: .9rem;
+  line-height: 1.65;
+  color: var(--text-2, var(--text));
+}
+
+.legal-main ul { padding-left: 1.2rem; margin: .5rem 0; }
+.legal-main li { margin: .35rem 0; }
+
+.legal-main a { color: inherit; }
+
+.legal-main strong { color: var(--text); }
+
+.legal-nav {
+  display: flex;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+  font-size: .85rem;
+  margin-top: 2.6rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--border);
+}

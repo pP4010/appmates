@@ -27,7 +27,7 @@ import { initOverview, selectedApp, loadApp } from './views/overview.js';
 import { initFavoritesTray } from './views/favorites-tray.js';
 import { initCommunity } from './views/community.js';
 import { initAdmin } from './views/admin.js';
-import { CommunityClient } from './lib/community.js';
+import { CommunityClient, itunesRelayOptions } from './lib/community.js';
 
 /** Title and one-line purpose per view, shown in the top bar.
  * `admin` has no `.nav-item` in the sidebar (see views/admin.js for why),
@@ -91,8 +91,12 @@ async function boot() {
   fillCountrySelects();
 
   // A single client so the throttle and cache are shared across every tool
-  // rather than each view hammering Apple on its own schedule.
-  const client = new ITunesClient();
+  // rather than each view hammering Apple on its own schedule. Routes
+  // through the community Worker's `/itunes/*` relay (see
+  // `itunesRelayOptions` in lib/community.js) rather than straight from
+  // the browser to Apple — a server-to-server fetch has no CORS story to
+  // break, unlike a direct request to Apple's undocumented endpoint.
+  const client = new ITunesClient(itunesRelayOptions());
 
   // The app card doubles as the selector: choosing one here prefills the tools
   // that need an id, which is the point of having a selection at all.

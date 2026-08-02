@@ -8,6 +8,8 @@
  * here ever touches localStorage/sessionStorage with anything sensitive.
  */
 
+import { SEARCH_URL as APPLE_SEARCH_URL } from './itunes.js';
+
 export class CommunityError extends Error {
   constructor(message, status) {
     super(message);
@@ -21,6 +23,34 @@ export class CommunityError extends Error {
  * nothing here is ever called.
  */
 export const COMMUNITY_API_URL = 'https://launchpilot-community.kaizenapp-contact.workers.dev';
+
+/**
+ * Options for `new ITunesClient(...)` that route catalogue lookups through
+ * this Worker's `/itunes/*` relay instead of straight from the browser to
+ * Apple. Used everywhere in this app now (`app.js`, `landing.js`) — a
+ * server-to-server fetch has no CORS story to break, and Apple's
+ * undocumented endpoint has flip-flopped on returning CORS headers for a
+ * direct browser request more than once during this project. Falls back
+ * to `ITunesClient`'s own defaults (direct to Apple) when no backend is
+ * configured, same as every other community feature.
+ *
+ * `searchFallbackUrl` is set explicitly to Apple's own endpoint even
+ * though that's `ITunesClient`'s default anyway: Apple rate-limits
+ * `/search` per source IP, and the relay's IP is Cloudflare's shared
+ * Workers egress range — observed rate-limited for stretches longer than
+ * a single retry, independent of anything this app did. `/lookup` has
+ * shown no such trouble, so it gets no fallback; a search that fails
+ * through the relay retries once, straight against Apple, rather than
+ * failing outright while the relay's shared IP is in that state.
+ */
+export function itunesRelayOptions() {
+  if (!COMMUNITY_API_URL) return {};
+  return {
+    lookupUrl: `${COMMUNITY_API_URL}/itunes/lookup`,
+    searchUrl: `${COMMUNITY_API_URL}/itunes/search`,
+    searchFallbackUrl: APPLE_SEARCH_URL,
+  };
+}
 
 export class CommunityClient {
   constructor({ fetchImpl, baseUrl = COMMUNITY_API_URL } = {}) {
@@ -167,6 +197,21 @@ export class CommunityClient {
     return this._request(`/test-sessions/${id}/messages`, { method: 'POST', body: { body } }).then(
       (d) => d.message,
     );
+  }
+
+  subscribePush({ endpoint, keys }) {
+    return this._request('/push/subscribe', { method: 'POST', body: { endpoint, keys } });
+  }
+
+  unsubscribePush(endpoint) {
+    return this._request('/push/unsubscribe', { method: 'POST', body: { endpoint } });
+  }
+
+  /** Gets (creating on first call) the signed-in user's echo-bot test
+   * conversation — send it anything and it replies a few seconds later, to
+   * check a push actually arrives. See community/migrations/0005_*. */
+  testConversation() {
+    return this._request('/push/test-session').then((d) => d.sessionId);
   }
 
   /** Submits the landing page's "Feature your app here" dialog. No sign-in

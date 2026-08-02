@@ -12,7 +12,7 @@
  */
 
 import { escapeHtml } from './views/shared.js';
-import { CommunityClient } from './lib/community.js';
+import { CommunityClient, itunesRelayOptions } from './lib/community.js';
 import { ITunesClient } from './lib/itunes.js';
 import {
   DEMO_TESTING,
@@ -301,7 +301,7 @@ async function fillAppFacts(apps) {
   const withApps = apps.filter((a) => a.trackId).slice(0, RATINGS_LOOKUP_LIMIT);
   if (!withApps.length) return;
 
-  const itunes = new ITunesClient();
+  const itunes = new ITunesClient(itunesRelayOptions());
   for (const app of withApps) {
     const key = CSS.escape(String(app.trackId));
     let ratings = NONE;
@@ -415,7 +415,7 @@ async function renderRails() {
   markWrappedNames(left);
   markWrappedNames(right);
 
-  const itunes = new ITunesClient();
+  const itunes = new ITunesClient(itunesRelayOptions());
   const resolve = async (slots) => {
     const out = [];
     for (const slot of slots) {
@@ -612,7 +612,7 @@ function openPromoDialog() {
   overlay.id = 'promoModal';
   document.body.appendChild(overlay);
 
-  const itunes = new ITunesClient();
+  const itunes = new ITunesClient(itunesRelayOptions());
   const community = new CommunityClient();
   let lookupTimer;
 
