@@ -6,7 +6,7 @@
  * them instead of a tab buried inside "Get testers".
  */
 
-import { el, escapeHtml, empty, appIcon, showToast, MESSAGEABLE_STATUSES } from './shared.js';
+import { el, escapeHtml, empty, iconOrInitial, showToast, MESSAGEABLE_STATUSES } from './shared.js';
 import { enablePush, listenForInAppToasts, needsPushEnable } from '../lib/push.js';
 
 let client = null;
@@ -321,6 +321,15 @@ function renderList() {
   });
 }
 
+/** The real name of who you're talking to, when the data actually says —
+ * only true for the owner role, since a tester-side session never carries
+ * the listing owner's identity. "the app owner" is a placeholder label,
+ * not a real name, so it's never used as an avatar-initial source; the
+ * app's own name is a better fallback than a meaningless "T". */
+function counterpartyName(c) {
+  return c.role === 'owner' ? c.session.testerDisplayName || c.session.testerEmail : c.appName;
+}
+
 function conversationRowHtml(c) {
   const counterparty = c.role === 'owner' ? c.session.testerDisplayName || c.session.testerEmail : 'the app owner';
   const roleLabel = c.role === 'owner' ? 'Testing your app' : "You're testing";
@@ -332,7 +341,7 @@ function conversationRowHtml(c) {
 
   return `
     <button class="${classes}" type="button" data-session="${c.session.id}">
-      ${appIcon(c.artworkUrl, c.appName)}
+      ${iconOrInitial(c.artworkUrl, counterpartyName(c))}
       <div class="inbox-row-body">
         <div class="inbox-row-head">
           ${favourite ? '<span class="inbox-fav-star" title="Favourite">★</span>' : ''}
@@ -380,7 +389,7 @@ async function renderThreadPane() {
 
   pane.innerHTML = `
     <div class="inbox-thread-head">
-      ${appIcon(conv.artworkUrl, conv.appName)}
+      ${iconOrInitial(conv.artworkUrl, counterpartyName(conv))}
       <div class="inbox-thread-head-info">
         <strong>${escapeHtml(conv.appName)}</strong>
         <span class="muted">${escapeHtml(counterparty)}</span>
@@ -388,7 +397,7 @@ async function renderThreadPane() {
       ${state.reported ? '<span class="pill warn">Reported</span>' : ''}
       <div class="inbox-thread-menu-wrap">
         <button class="ghost inbox-thread-menu-btn" id="inboxThreadMenuBtn" type="button" aria-haspopup="true" aria-expanded="false">⋯</button>
-        <div class="inbox-thread-menu" id="inboxThreadMenu" hidden></div>
+        <div class="inbox-thread-menu hidden" id="inboxThreadMenu"></div>
       </div>
     </div>
     <div class="inbox-thread-messages" id="inboxThreadMessages">
@@ -476,7 +485,7 @@ function renderThreadMenu(conv) {
     <button type="button" class="inbox-menu-item" data-action="archive">${state.archived ? '↺ Reopen' : '✓ Mark as completed'}</button>`;
 
   const closeMenu = () => {
-    menu.hidden = true;
+    menu.classList.add('hidden');
     btn.setAttribute('aria-expanded', 'false');
     document.removeEventListener('click', onDocClick);
   };
@@ -486,8 +495,8 @@ function renderThreadMenu(conv) {
 
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
-    const opening = menu.hidden;
-    menu.hidden = !opening;
+    const opening = menu.classList.contains('hidden');
+    menu.classList.toggle('hidden', !opening);
     btn.setAttribute('aria-expanded', String(opening));
     if (opening) document.addEventListener('click', onDocClick);
     else document.removeEventListener('click', onDocClick);
@@ -615,7 +624,7 @@ function renderDetailsPane() {
 
   const appCard = `
     <div class="inbox-detail-card">
-      ${appIcon(conv.artworkUrl, conv.appName)}
+      ${iconOrInitial(conv.artworkUrl, conv.appName)}
       <strong>${escapeHtml(conv.appName)}</strong>
       <div class="inbox-detail-pills">
         ${conv.kind ? `<span class="pill ${conv.kind === 'testing' ? 'info' : 'ok'}">${conv.kind === 'testing' ? 'Looking for testers' : 'Launch / update'}</span>` : ''}

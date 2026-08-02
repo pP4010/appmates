@@ -81,6 +81,16 @@ export function appIcon(url, alt = '') {
     : '<span class="app-icon"></span>';
 }
 
+/** Same slot as `appIcon`, but falls back to a coloured initial instead of
+ * an empty box when there's no image — for the Inbox, where the icon
+ * often stands in for a *person* on the other end of a conversation, not
+ * just an app that legitimately has no artwork yet. */
+export function iconOrInitial(url, name) {
+  if (url) return appIcon(url, name);
+  const letter = (name || '').trim().charAt(0).toUpperCase() || '?';
+  return `<span class="app-icon letter-avatar">${escapeHtml(letter)}</span>`;
+}
+
 /** Overlapping icon row, for showing a field of apps in one cell. */
 export function iconStack(urls, limit = 5) {
   if (!urls?.length) return '';
