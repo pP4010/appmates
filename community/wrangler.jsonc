@@ -13,14 +13,36 @@
       "database_id": "04e0ab03-b954-40a5-8418-4d5d01a94568",
     },
   ],
+  // Per-client-IP quotas on the two Apple catalogue relay routes
+  // (routes/itunes.js) — the only routes anyone can hit unauthenticated at
+  // volume. `period` is Cloudflare's own ceiling: only 10 or 60 (seconds)
+  // is valid, so 60 is the closest fit to a "per minute" budget.
+  "ratelimits": [
+    {
+      "name": "ITUNES_LOOKUP_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 30, "period": 60 },
+    },
+    {
+      "name": "ITUNES_SEARCH_LIMITER",
+      "namespace_id": "1002",
+      "simple": { "limit": 20, "period": 60 },
+    },
+  ],
   "vars": {
     // Sent via Resend (see lib/auth.js `sendMagicLinkEmail`), not Cloudflare's
     // own Email Sending — that product is paid-tier only. Must be an address
     // on a domain verified in your Resend account, or sends fail with a
     // clean error. The API key itself is a secret: `wrangler secret put
     // RESEND_API_KEY`, never a plain var here.
-    "EMAIL_FROM_ADDRESS": "noreply@example.com",
+    "EMAIL_FROM_ADDRESS": "noreply@appmates.heykaizen.app",
     "EMAIL_FROM_NAME": "AppMates",
+    // Where this Worker itself is reachable — `sendMagicLinkEmail` builds the
+    // `/auth/verify` link against this, not `APP_ORIGIN` (the web app's
+    // origin, a different host). Without this var, `selfOrigin` in lib/auth.js
+    // falls back to its localhost dev default, and every sign-in email ships
+    // a dead link.
+    "WORKER_ORIGIN": "https://launchpilot-community.kaizenapp-contact.workers.dev",
     // The web app's origin — CORS is locked to exactly this one origin
     // because, unlike the anonymous screenshot relay, these requests carry
     // an auth cookie.

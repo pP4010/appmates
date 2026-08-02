@@ -17,7 +17,6 @@ import * as itunes from './routes/itunes.js';
 
 export default {
   async fetch(request, env, ctx) {
-    void ctx;
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders(env, request) });
     }
@@ -93,8 +92,8 @@ export default {
       }
       if (path === '/promo/featured' && method === 'GET') return await promo.featured(request, env);
 
-      if (path === '/itunes/lookup' && method === 'GET') return await itunes.lookup(request, env);
-      if (path === '/itunes/search' && method === 'GET') return await itunes.search(request, env);
+      if (path === '/itunes/lookup' && method === 'GET') return await itunes.lookup(request, env, ctx);
+      if (path === '/itunes/search' && method === 'GET') return await itunes.search(request, env, ctx);
 
       return error(env, request, 404, 'not found');
     } catch (err) {
