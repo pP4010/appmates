@@ -24,7 +24,7 @@
 
 import { el, escapeHtml, empty, withStatus, appIcon, bar, toneFor, ring, showToast } from './shared.js';
 import { checkAppHealth, profileFromEntry } from '../lib/app-profile.js';
-import { enablePush, listenForInAppToasts, pushPermissionState, pushSupported } from '../lib/push.js';
+import { enablePush, listenForInAppToasts, needsPushEnable } from '../lib/push.js';
 
 const MIN_MESSAGE_LENGTH = 20;
 
@@ -1401,11 +1401,14 @@ async function gatherConversations() {
     .sort((a, b) => new Date(b.activityAt) - new Date(a.activityAt));
 }
 
-/** Only shown when permission hasn't been asked for yet — once granted or
- * denied, the browser itself is the source of truth and there's nothing
- * left for this banner to offer. */
-function notificationsBannerHtml() {
-  if (!pushSupported() || pushPermissionState() !== 'default') return '';
+/** Shown whenever there's no working subscription yet — not just when
+ * permission has never been asked for. See `needsPushEnable` in
+ * lib/push.js for why that distinction matters: permission can be
+ * `'granted'` forever with no subscription behind it if `subscribe()`
+ * failed after the prompt, and without this check there'd be no way back
+ * to a retry button. */
+async function notificationsBannerHtml() {
+  if (!(await needsPushEnable())) return '';
   return `
     <div class="callout" style="margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap">
       <span>Get notified in your browser when a message arrives.</span>
@@ -1482,7 +1485,7 @@ async function renderInboxTab() {
     const conversations = await gatherConversations();
     if (generation !== renderGeneration) return;
 
-    const banners = notificationsBannerHtml() + testConversationBannerHtml();
+    const banners = (await notificationsBannerHtml()) + testConversationBannerHtml();
 
     if (!conversations.length) {
       el('commTabPanel').innerHTML =

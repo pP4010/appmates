@@ -29,6 +29,28 @@ export function pushPermissionState() {
   return pushSupported() ? Notification.permission : 'unsupported';
 }
 
+/**
+ * Whether there's anything useful to offer the "enable notifications"
+ * button for. Deliberately not just `pushPermissionState() === 'default'`:
+ * permission is a one-way, permanent browser setting once granted, but
+ * *subscribing* can still fail after that (exactly what happened before the
+ * `serviceWorker.ready` fix above — permission got granted, then
+ * `pushManager.subscribe` threw). A person in that state has permission
+ * `'granted'` forever with no working subscription behind it and, without
+ * this check, no way back to the button that would fix it.
+ */
+export async function needsPushEnable() {
+  if (!pushSupported()) return false;
+  const permission = Notification.permission;
+  if (permission === 'default') return true;
+  if (permission === 'denied') return false; // nothing a button here can do about that
+
+  const registration = await navigator.serviceWorker.getRegistration('./push-sw.js');
+  if (!registration) return true;
+  const subscription = await registration.pushManager.getSubscription();
+  return !subscription;
+}
+
 let swRegistration = null;
 
 /**
