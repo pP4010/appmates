@@ -2,15 +2,20 @@ import { json, error, newId } from '../lib/http.js';
 import { currentUser } from '../lib/auth.js';
 import { isValidMessage } from '../lib/validate.js';
 import { MAX_SESSION_MESSAGE_LENGTH } from '../lib/config.js';
+import { notifyNewMessage } from '../lib/push.js';
 
 /** Both parties on a test session — the only two people allowed to read or
  * post to its thread. Kept as one small lookup rather than joined into the
  * message queries below, so `list` and `send` share the exact same
- * membership check instead of two slightly different WHERE clauses. */
+ * membership check instead of two slightly different WHERE clauses.
+ * `app_name` rides along for `send`'s push notification, not needed by
+ * `list` but cheap enough not to warrant a second query. */
 async function sessionParties(env, id) {
   return env.DB.prepare(
-    `SELECT ts.id, ts.tester_user_id, l.owner_user_id AS listing_owner_id
-     FROM test_sessions ts JOIN listings l ON l.id = ts.listing_id
+    `SELECT ts.id, ts.tester_user_id, l.owner_user_id AS listing_owner_id, a.name AS app_name
+     FROM test_sessions ts
+     JOIN listings l ON l.id = ts.listing_id
+     JOIN apps a ON a.id = l.app_id
      WHERE ts.id = ?`,
   )
     .bind(id)
@@ -53,7 +58,7 @@ export async function list(request, env, id) {
   return json(env, request, { messages: results.map(serialize) });
 }
 
-export async function send(request, env, id) {
+export async function send(request, env, id, ctx) {
   const user = await currentUser(env, request);
   if (!user) return error(env, request, 401, 'sign in required');
 
@@ -78,5 +83,16 @@ export async function send(request, env, id) {
     .run();
 
   const row = await env.DB.prepare('SELECT * FROM session_messages WHERE id = ?').bind(msgId).first();
+
+  // Backgrounded so a slow or unreachable push service never delays this
+  // response — the sender is waiting on it, the recipient's notification
+  // is not something they're watching a spinner for.
+  const recipientId = session.tester_user_id === user.id ? session.listing_owner_id : session.tester_user_id;
+  ctx.waitUntil(
+    notifyNewMessage(env, recipientId, { appName: session.app_name, preview: text.trim().slice(0, 120) }).catch(
+      (err) => console.error('push notify failed', err),
+    ),
+  );
+
   return json(env, request, { message: serialize(row) }, { status: 201 });
 }

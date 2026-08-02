@@ -14,6 +14,7 @@ import * as leaderboard from './routes/leaderboard.js';
 import * as promo from './routes/promo.js';
 import * as messages from './routes/messages.js';
 import * as itunes from './routes/itunes.js';
+import * as push from './routes/push.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -79,8 +80,11 @@ export default {
         return await messages.list(request, env, m[1]);
       }
       if ((m = path.match(/^\/test-sessions\/([^/]+)\/messages$/)) && method === 'POST') {
-        return await messages.send(request, env, m[1]);
+        return await messages.send(request, env, m[1], ctx);
       }
+
+      if (path === '/push/subscribe' && method === 'POST') return await push.subscribe(request, env);
+      if (path === '/push/unsubscribe' && method === 'POST') return await push.unsubscribe(request, env);
 
       if (path === '/tokens/me' && method === 'GET') return await tokens.me(request, env);
       if (path === '/leaderboard' && method === 'GET') return await leaderboard.top(request, env);
