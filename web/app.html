@@ -43,6 +43,7 @@
     <a class="nav-item" href="#testers"><span class="nav-icon">◷</span> Play testers</a>
 
     <div class="nav-section">Community</div>
+    <a class="nav-item" href="#inbox"><span class="nav-icon">✉</span> Inbox</a>
     <a class="nav-item" href="#community"><span class="nav-icon">◍</span> Get testers</a>
 
     <div class="nav-section">Reference</div>
@@ -382,6 +383,14 @@
   { "date": "2026-07-03", "opted_in": 13 }
 ]'></textarea>
         <div id="testHistoryStatus" class="status"></div>
+      </section>
+
+      <!-- ==================== inbox ====================
+           Full-bleed three-pane layout (see #view-inbox.active override in
+           styles.css) — conversations, thread, context — everything else
+           in JS via views/inbox.js. -->
+      <section class="view" id="view-inbox">
+        <div class="inbox-shell" id="inboxShell"></div>
       </section>
 
       <!-- ==================== community ==================== -->

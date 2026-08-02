@@ -30,6 +30,9 @@ function serializeSession(row) {
     listing: {
       id: row.listing_id,
       kind: row.kind,
+      platform: row.platform,
+      link: row.link,
+      description: row.description,
       appName: row.name,
       artworkUrl: row.artwork_url,
       storeUrl: row.store_url,
@@ -39,13 +42,16 @@ function serializeSession(row) {
 
 /** The sessions the signed-in user has requested or is testing for, newest
  * first — including ones still `requested`, so a tester can see what's
- * still awaiting a reply without the client remembering session ids. */
+ * still awaiting a reply without the client remembering session ids.
+ * `l.link`/`l.description`/`l.platform` ride along for the Inbox's details
+ * pane (views/inbox.js) — not needed by `mySessionCard` in
+ * views/community.js, but cheap enough not to warrant a second query. */
 export async function mine(request, env) {
   const user = await currentUser(env, request);
   if (!user) return error(env, request, 401, 'sign in required');
 
   const { results } = await env.DB.prepare(
-    `SELECT ts.*, l.kind, a.name, a.artwork_url, a.store_url
+    `SELECT ts.*, l.kind, l.platform, l.link, l.description, a.name, a.artwork_url, a.store_url
      FROM test_sessions ts
      JOIN listings l ON l.id = ts.listing_id
      JOIN apps a ON a.id = l.app_id
