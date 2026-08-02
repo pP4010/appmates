@@ -13,12 +13,18 @@ let client = null;
 let user = null;
 let conversations = [];
 let selectedId = null;
+let activeFilter = 'main';
 
-// "Seen" state lives client-side, keyed by session id — the backend has no
-// read/unread column, and adding one for a single device's convenience
-// isn't worth a migration yet. The tradeoff: unread state doesn't follow
-// you to a second device.
+/* ------------------------------ local state -------------------------------- */
+
+// Everything here — seen/favourite/hidden/archived/reported — is this
+// device's own view of the inbox, not the backend's. The backend has no
+// columns for any of it (reporting aside, which also writes server-side —
+// see below); adding them for a single browser's convenience isn't worth a
+// migration. The tradeoff is the same one already made for "seen": none of
+// this follows you to a second device.
 const SEEN_PREFIX = 'launchpilot:inbox:seen:';
+const STATE_PREFIX = 'launchpilot:inbox:state:';
 
 function seenId(sessionId) {
   try {
@@ -33,6 +39,22 @@ function markSeen(sessionId, messageId) {
     localStorage.setItem(SEEN_PREFIX + sessionId, messageId);
   } catch {
     /* private browsing or a full quota — unread state just won't persist */
+  }
+}
+
+function getConvState(sessionId) {
+  try {
+    return JSON.parse(localStorage.getItem(STATE_PREFIX + sessionId)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function setConvState(sessionId, patch) {
+  try {
+    localStorage.setItem(STATE_PREFIX + sessionId, JSON.stringify({ ...getConvState(sessionId), ...patch }));
+  } catch {
+    /* private browsing or a full quota — the action still happened this session, just won't persist */
   }
 }
 
@@ -165,16 +187,58 @@ async function gatherConversations() {
     .sort((a, b) => new Date(b.activityAt) - new Date(a.activityAt));
 }
 
+/* ------------------------------- filtering ---------------------------------- */
+
+const FILTER_COPY = {
+  main: ['No conversations yet', "They open here once a testing request is accepted — on a listing you own, or one you're testing."],
+  completed: ['No completed conversations', "Mark one as completed from its ⋯ menu and it lands here."],
+  hidden: ['No hidden conversations', "Hide one from its ⋯ menu and it moves here instead of the main list."],
+  reported: ['No reported conversations', "Conversations you've flagged for review show up here."],
+};
+
+function conversationsForFilter(filter) {
+  return conversations.filter((c) => {
+    const state = getConvState(c.session.id);
+    if (filter === 'completed') return Boolean(state.archived);
+    if (filter === 'hidden') return Boolean(state.hidden) && !state.archived;
+    if (filter === 'reported') return Boolean(state.reported);
+    return !state.hidden && !state.archived; // 'main'
+  });
+}
+
+function sortWithFavouritesFirst(list) {
+  return [...list].sort((a, b) => {
+    const af = getConvState(a.session.id).favorite ? 1 : 0;
+    const bf = getConvState(b.session.id).favorite ? 1 : 0;
+    if (af !== bf) return bf - af;
+    return new Date(b.activityAt) - new Date(a.activityAt);
+  });
+}
+
+/* --------------------------------- shell ------------------------------------ */
+
 function renderShell() {
   el('inboxShell').innerHTML = `
     <aside class="inbox-list-pane">
-      <div class="inbox-list-head"><h2>Inbox</h2></div>
+      <div class="inbox-list-head">
+        <h2>Inbox</h2>
+        <select class="inbox-filter-select" id="inboxFilter">
+          <option value="main"${activeFilter === 'main' ? ' selected' : ''}>Main</option>
+          <option value="completed"${activeFilter === 'completed' ? ' selected' : ''}>Completed</option>
+          <option value="hidden"${activeFilter === 'hidden' ? ' selected' : ''}>Hidden</option>
+          <option value="reported"${activeFilter === 'reported' ? ' selected' : ''}>Reported</option>
+        </select>
+      </div>
       <div id="inboxBanners"></div>
       <div class="inbox-list" id="inboxList"></div>
     </aside>
     <div class="inbox-thread-pane" id="inboxThreadPane"></div>
     <aside class="inbox-details-pane" id="inboxDetailsPane"></aside>
   `;
+  el('inboxFilter').addEventListener('change', (e) => {
+    activeFilter = e.target.value;
+    renderList();
+  });
   renderBanners();
   renderList();
   renderThreadPane();
@@ -223,6 +287,9 @@ async function renderBanners() {
     try {
       const sessionId = await client.testConversation();
       await refresh();
+      activeFilter = 'main';
+      el('inboxFilter').value = 'main';
+      renderList();
       selectConversation(sessionId);
     } catch (err) {
       btn.disabled = false;
@@ -240,16 +307,15 @@ function renderList() {
   const host = el('inboxList');
   if (!host) return;
 
-  if (!conversations.length) {
-    host.innerHTML = empty(
-      '✉',
-      'No conversations yet',
-      "They open here once a testing request is accepted — on a listing you own, or one you're testing.",
-    );
+  const filtered = sortWithFavouritesFirst(conversationsForFilter(activeFilter));
+
+  if (!filtered.length) {
+    const [title, hint] = FILTER_COPY[activeFilter];
+    host.innerHTML = empty('✉', title, hint);
     return;
   }
 
-  host.innerHTML = conversations.map(conversationRowHtml).join('');
+  host.innerHTML = filtered.map(conversationRowHtml).join('');
   host.querySelectorAll('.inbox-row').forEach((row) => {
     row.addEventListener('click', () => selectConversation(row.dataset.session));
   });
@@ -262,12 +328,14 @@ function conversationRowHtml(c) {
   const classes = ['inbox-row', c.unread && 'unread', c.session.id === selectedId && 'selected']
     .filter(Boolean)
     .join(' ');
+  const favourite = getConvState(c.session.id).favorite;
 
   return `
     <button class="${classes}" type="button" data-session="${c.session.id}">
       ${appIcon(c.artworkUrl, c.appName)}
       <div class="inbox-row-body">
         <div class="inbox-row-head">
+          ${favourite ? '<span class="inbox-fav-star" title="Favourite">★</span>' : ''}
           <strong>${escapeHtml(c.appName)}</strong>
           ${c.last ? `<span class="inbox-row-time muted">${relativeTime(c.last.createdAt)}</span>` : ''}
         </div>
@@ -308,13 +376,19 @@ async function renderThreadPane() {
   }
 
   const counterparty = conv.role === 'owner' ? conv.session.testerDisplayName || conv.session.testerEmail : 'App owner';
+  const state = getConvState(conv.session.id);
 
   pane.innerHTML = `
     <div class="inbox-thread-head">
       ${appIcon(conv.artworkUrl, conv.appName)}
-      <div>
+      <div class="inbox-thread-head-info">
         <strong>${escapeHtml(conv.appName)}</strong>
         <span class="muted">${escapeHtml(counterparty)}</span>
+      </div>
+      ${state.reported ? '<span class="pill warn">Reported</span>' : ''}
+      <div class="inbox-thread-menu-wrap">
+        <button class="ghost inbox-thread-menu-btn" id="inboxThreadMenuBtn" type="button" aria-haspopup="true" aria-expanded="false">⋯</button>
+        <div class="inbox-thread-menu" id="inboxThreadMenu" hidden></div>
       </div>
     </div>
     <div class="inbox-thread-messages" id="inboxThreadMessages">
@@ -326,6 +400,7 @@ async function renderThreadPane() {
     </div>
     <div class="status" id="inboxComposerStatus"></div>`;
 
+  renderThreadMenu(conv);
   renderMessages(conv.messages);
   try {
     const messages = await client.sessionMessages(conv.session.id);
@@ -381,6 +456,114 @@ function renderMessages(messages) {
         .join('')
     : '<p class="muted" style="font-size:.85rem">No messages yet. Say hello.</p>';
   host.scrollTop = host.scrollHeight;
+}
+
+/* ----------------------------- thread ⋯ menu --------------------------------- */
+
+function renderThreadMenu(conv) {
+  const btn = el('inboxThreadMenuBtn');
+  const menu = el('inboxThreadMenu');
+  if (!btn || !menu) return;
+  const id = conv.session.id;
+  const state = getConvState(id);
+
+  menu.innerHTML = `
+    <button type="button" class="inbox-menu-item" data-action="favorite">
+      ${state.favorite ? '★ Remove from favourites' : '☆ Add to favourites'}
+    </button>
+    <button type="button" class="inbox-menu-item" data-action="report">🚩 Report</button>
+    <button type="button" class="inbox-menu-item" data-action="hide">${state.hidden ? 'Unhide' : '🙈 Hide'}</button>
+    <button type="button" class="inbox-menu-item" data-action="archive">${state.archived ? '↺ Reopen' : '✓ Mark as completed'}</button>`;
+
+  const closeMenu = () => {
+    menu.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('click', onDocClick);
+  };
+  const onDocClick = (e) => {
+    if (!menu.contains(e.target) && e.target !== btn) closeMenu();
+  };
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const opening = menu.hidden;
+    menu.hidden = !opening;
+    btn.setAttribute('aria-expanded', String(opening));
+    if (opening) document.addEventListener('click', onDocClick);
+    else document.removeEventListener('click', onDocClick);
+  });
+
+  menu.querySelector('[data-action="favorite"]').addEventListener('click', () => {
+    closeMenu();
+    setConvState(id, { favorite: !state.favorite });
+    renderList();
+    renderThreadPane();
+  });
+
+  menu.querySelector('[data-action="hide"]').addEventListener('click', () => {
+    closeMenu();
+    setConvState(id, { hidden: !state.hidden });
+    afterMembershipChange(id);
+  });
+
+  menu.querySelector('[data-action="archive"]').addEventListener('click', () => {
+    closeMenu();
+    setConvState(id, { archived: !state.archived });
+    afterMembershipChange(id);
+  });
+
+  menu.querySelector('[data-action="report"]').addEventListener('click', () => {
+    renderReportForm(menu, conv);
+  });
+}
+
+function renderReportForm(menu, conv) {
+  menu.innerHTML = `
+    <div class="inbox-report-form">
+      <textarea id="inboxReportReason" rows="3" placeholder="What's going on? (10 characters minimum)"></textarea>
+      <div class="inbox-report-actions">
+        <button type="button" class="ghost" id="inboxReportCancel">Cancel</button>
+        <button type="button" class="primary" id="inboxReportSubmit">Send report</button>
+      </div>
+      <div class="status" id="inboxReportStatus"></div>
+    </div>`;
+
+  el('inboxReportCancel').addEventListener('click', () => renderThreadPane());
+
+  el('inboxReportSubmit').addEventListener('click', async () => {
+    const reason = el('inboxReportReason').value.trim();
+    const statusEl = el('inboxReportStatus');
+    if (reason.length < 10) {
+      statusEl.className = 'status error';
+      statusEl.textContent = 'Please write at least 10 characters.';
+      return;
+    }
+    const btn = el('inboxReportSubmit');
+    btn.disabled = true;
+    try {
+      await client.reportSession(conv.session.id, reason);
+      setConvState(conv.session.id, { reported: true });
+      renderList();
+      renderThreadPane();
+    } catch (err) {
+      btn.disabled = false;
+      statusEl.className = 'status error';
+      statusEl.textContent = err.message;
+    }
+  });
+}
+
+function afterMembershipChange(id) {
+  renderList();
+  if (selectedId !== id) return;
+  const stillVisible = conversationsForFilter(activeFilter).some((c) => c.session.id === id);
+  if (!stillVisible) {
+    selectedId = null;
+    renderThreadPane();
+    renderDetailsPane();
+  } else {
+    renderThreadPane();
+  }
 }
 
 /* -------------------------------- details ---------------------------------- */

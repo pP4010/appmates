@@ -43,6 +43,7 @@ async function refresh() {
     return;
   }
   loadRequests();
+  loadReports();
 }
 
 function renderSignIn() {
@@ -163,4 +164,43 @@ async function review(id, action, btn) {
     return;
   }
   loadRequests();
+}
+
+async function loadReports() {
+  const host = el('adminReportsBody');
+  if (!host) return;
+  host.innerHTML = '<div class="status"><span class="spinner"></span> Loading…</div>';
+
+  let reports;
+  try {
+    reports = await client.adminListReports();
+  } catch (err) {
+    // The promo-requests section above already surfaces a 403 with an
+    // explanation; this section just stays quiet rather than repeating it.
+    host.innerHTML = err.status === 403 ? '' : `<div class="status error">${escapeHtml(err.message)}</div>`;
+    return;
+  }
+
+  if (!reports.length) {
+    host.innerHTML = empty('🚩', 'Nothing reported', 'Flagged conversations will show up here.');
+    return;
+  }
+  host.innerHTML = reports.map(reportCard).join('');
+}
+
+function reportCard(r) {
+  const who =
+    r.targetType === 'session' && (r.testerEmail || r.ownerEmail)
+      ? `${escapeHtml(r.appName || 'Unknown app')} — tester ${escapeHtml(r.testerEmail || '?')}, owner ${escapeHtml(r.ownerEmail || '?')}`
+      : `${escapeHtml(r.targetType)} ${escapeHtml(r.targetId)}`;
+
+  return `
+    <div class="panel" style="margin-bottom:.9rem;padding:1rem">
+      <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start">
+        <strong style="font-size:.86rem">${who}</strong>
+        <span class="muted" style="font-size:.78rem;white-space:nowrap">${escapeHtml(new Date(r.createdAt).toLocaleString())}</span>
+      </div>
+      <div class="muted" style="font-size:.78rem;margin-top:.2rem">Reported by ${escapeHtml(r.reporterEmail)}</div>
+      <p style="white-space:pre-wrap;font-size:.86rem;margin:.6rem 0 0">${escapeHtml(r.reason)}</p>
+    </div>`;
 }
