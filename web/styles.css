@@ -437,6 +437,13 @@ td.tight { padding-top: .35rem; padding-bottom: .35rem; }
   background: var(--surface-2);
   flex: 0 0 auto;
 }
+.letter-avatar {
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem; font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
 .app-name { font-weight: 550; line-height: 1.25; }
 .app-seller { color: var(--muted); font-size: .76rem; }
 
