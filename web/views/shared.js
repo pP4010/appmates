@@ -9,6 +9,16 @@ export function el(id) {
   return document.getElementById(id);
 }
 
+/** Which test-session statuses have anything to coordinate. Only once a
+ * request has been accepted is there something to arrange — a device the
+ * tester doesn't have, a build that needs a fresh TestFlight invite. Before
+ * that the pitch (`requestMessage`) already says everything there is to
+ * say, and after `declined`/`abandoned` there's nothing left to arrange, so
+ * neither status gets a thread. Shared between `community.js` (inline
+ * per-session threads) and `inbox.js` (the dedicated conversation list),
+ * so the two can never drift on what counts as a conversation. */
+export const MESSAGEABLE_STATUSES = new Set(['accepted', 'submitted', 'completed']);
+
 export function escapeHtml(value) {
   return String(value ?? '').replace(
     /[&<>"']/g,

@@ -1,0 +1,470 @@
+/**
+ * Every conversation the signed-in user is party to, in one place — a
+ * three-pane layout (conversation list, thread, context) rather than the
+ * inline collapsible threads `views/community.js` still uses under each
+ * session card. Same backend, same messages, just a dedicated home for
+ * them instead of a tab buried inside "Get testers".
+ */
+
+import { el, escapeHtml, empty, appIcon, showToast, MESSAGEABLE_STATUSES } from './shared.js';
+import { enablePush, listenForInAppToasts, needsPushEnable } from '../lib/push.js';
+
+let client = null;
+let user = null;
+let conversations = [];
+let selectedId = null;
+
+// "Seen" state lives client-side, keyed by session id — the backend has no
+// read/unread column, and adding one for a single device's convenience
+// isn't worth a migration yet. The tradeoff: unread state doesn't follow
+// you to a second device.
+const SEEN_PREFIX = 'launchpilot:inbox:seen:';
+
+function seenId(sessionId) {
+  try {
+    return localStorage.getItem(SEEN_PREFIX + sessionId);
+  } catch {
+    return null;
+  }
+}
+
+function markSeen(sessionId, messageId) {
+  try {
+    localStorage.setItem(SEEN_PREFIX + sessionId, messageId);
+  } catch {
+    /* private browsing or a full quota — unread state just won't persist */
+  }
+}
+
+function relativeTime(iso) {
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+export function initInbox(communityClient) {
+  client = communityClient;
+
+  const navItem = document.querySelector('.nav-item[href="#inbox"]');
+  if (!client.configured) {
+    navItem?.classList.add('hidden');
+    el('inboxShell').innerHTML = empty(
+      '✉',
+      'Not set up yet',
+      'This deployment has no community backend configured. See community/README.md.',
+    );
+    return;
+  }
+
+  // Registered once, independent of which view is open — a push can
+  // arrive while the user is looking at Screenshots or Rank, not just here.
+  listenForInAppToasts(({ title, body }) => {
+    showToast({
+      title,
+      body,
+      onClick: () => {
+        location.hash = '#inbox';
+        refresh();
+      },
+    });
+  });
+
+  window.addEventListener('hashchange', () => {
+    if (location.hash === '#inbox') refresh();
+  });
+
+  refresh();
+}
+
+async function refresh() {
+  try {
+    user = await client.me();
+    if (!user) {
+      el('inboxShell').innerHTML = empty(
+        '✉',
+        'Sign in to see your messages',
+        'Conversations open once a testing request is accepted, on either side. Sign in from the Get testers page.',
+      );
+      return;
+    }
+    conversations = await gatherConversations();
+    if (selectedId && !conversations.some((c) => c.session.id === selectedId)) selectedId = null;
+    renderShell();
+  } catch (err) {
+    el('inboxShell').innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+/**
+ * Every messageable session the user is party to, from both sides of the
+ * marketplace at once — sessions on listings they own, and sessions where
+ * they're the tester. Neither side has its own "all my conversations"
+ * endpoint, so this fans out to the per-listing and per-session routes
+ * that already exist and flattens the result client-side, rather than
+ * adding a new aggregate backend route for what is, in a private beta, a
+ * handful of calls.
+ */
+async function gatherConversations() {
+  const [listings, testerSessions] = await Promise.all([client.myListings(), client.mySessions()]);
+
+  const ownerConversations = (
+    await Promise.all(
+      listings.map((l) =>
+        client
+          .listingSessions(l.id)
+          .then((sessions) =>
+            sessions.map((s) => ({
+              session: s,
+              role: 'owner',
+              appName: l.app.name,
+              artworkUrl: l.app.artworkUrl,
+              storeUrl: l.app.storeUrl,
+              link: l.link,
+              description: l.description,
+              platform: l.platform,
+              kind: l.kind,
+            })),
+          )
+          .catch(() => []),
+      ),
+    )
+  ).flat();
+
+  const testerConversations = testerSessions.map((s) => ({
+    session: s,
+    role: 'tester',
+    appName: s.listing.appName,
+    artworkUrl: s.listing.artworkUrl,
+    storeUrl: s.listing.storeUrl,
+    link: s.listing.link,
+    description: s.listing.description,
+    platform: s.listing.platform,
+    kind: s.listing.kind,
+  }));
+
+  const merged = [...ownerConversations, ...testerConversations].filter((c) =>
+    MESSAGEABLE_STATUSES.has(c.session.status),
+  );
+
+  const withMessages = await Promise.all(
+    merged.map(async (c) => ({ ...c, messages: await client.sessionMessages(c.session.id).catch(() => []) })),
+  );
+
+  return withMessages
+    .map((c) => {
+      const last = c.messages.length ? c.messages[c.messages.length - 1] : null;
+      const activityAt = last?.createdAt || c.session.respondedAt || c.session.createdAt;
+      const unread = Boolean(last) && last.senderUserId !== user?.id && seenId(c.session.id) !== last.id;
+      return { ...c, last, activityAt, unread };
+    })
+    .sort((a, b) => new Date(b.activityAt) - new Date(a.activityAt));
+}
+
+function renderShell() {
+  el('inboxShell').innerHTML = `
+    <aside class="inbox-list-pane">
+      <div class="inbox-list-head"><h2>Inbox</h2></div>
+      <div id="inboxBanners"></div>
+      <div class="inbox-list" id="inboxList"></div>
+    </aside>
+    <div class="inbox-thread-pane" id="inboxThreadPane"></div>
+    <aside class="inbox-details-pane" id="inboxDetailsPane"></aside>
+  `;
+  renderBanners();
+  renderList();
+  renderThreadPane();
+  renderDetailsPane();
+}
+
+/* ------------------------------- banners --------------------------------- */
+
+async function renderBanners() {
+  const host = el('inboxBanners');
+  if (!host) return;
+
+  const pushBanner = (await needsPushEnable())
+    ? `
+    <div class="callout inbox-banner">
+      <span>Get notified in your browser when a message arrives.</span>
+      <button class="primary" id="inboxEnablePush" type="button">Enable notifications</button>
+    </div>`
+    : '';
+
+  const testBanner = `
+    <div class="callout inbox-banner">
+      <span>Want to check notifications actually arrive? The test conversation replies a few
+      seconds after you message it.</span>
+      <button class="ghost" id="inboxOpenTestConvo" type="button">Open test conversation</button>
+    </div>`;
+
+  host.innerHTML = pushBanner + testBanner;
+
+  el('inboxEnablePush')?.addEventListener('click', async (event) => {
+    const btn = event.currentTarget;
+    btn.disabled = true;
+    try {
+      await enablePush(client);
+      btn.closest('.callout')?.remove();
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = err.message;
+    }
+  });
+
+  el('inboxOpenTestConvo')?.addEventListener('click', async (event) => {
+    const btn = event.currentTarget;
+    btn.disabled = true;
+    const original = btn.textContent;
+    try {
+      const sessionId = await client.testConversation();
+      await refresh();
+      selectConversation(sessionId);
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = err.message;
+      setTimeout(() => {
+        btn.textContent = original;
+      }, 3000);
+    }
+  });
+}
+
+/* --------------------------------- list ----------------------------------- */
+
+function renderList() {
+  const host = el('inboxList');
+  if (!host) return;
+
+  if (!conversations.length) {
+    host.innerHTML = empty(
+      '✉',
+      'No conversations yet',
+      "They open here once a testing request is accepted — on a listing you own, or one you're testing.",
+    );
+    return;
+  }
+
+  host.innerHTML = conversations.map(conversationRowHtml).join('');
+  host.querySelectorAll('.inbox-row').forEach((row) => {
+    row.addEventListener('click', () => selectConversation(row.dataset.session));
+  });
+}
+
+function conversationRowHtml(c) {
+  const counterparty = c.role === 'owner' ? c.session.testerDisplayName || c.session.testerEmail : 'the app owner';
+  const roleLabel = c.role === 'owner' ? 'Testing your app' : "You're testing";
+  const preview = c.last ? escapeHtml(c.last.body).slice(0, 70) : 'No messages yet — say hello.';
+  const classes = ['inbox-row', c.unread && 'unread', c.session.id === selectedId && 'selected']
+    .filter(Boolean)
+    .join(' ');
+
+  return `
+    <button class="${classes}" type="button" data-session="${c.session.id}">
+      ${appIcon(c.artworkUrl, c.appName)}
+      <div class="inbox-row-body">
+        <div class="inbox-row-head">
+          <strong>${escapeHtml(c.appName)}</strong>
+          ${c.last ? `<span class="inbox-row-time muted">${relativeTime(c.last.createdAt)}</span>` : ''}
+        </div>
+        <div class="inbox-row-sub muted">${roleLabel} · ${escapeHtml(counterparty)}</div>
+        <div class="inbox-row-preview muted">${preview}</div>
+      </div>
+      ${c.unread ? '<span class="inbox-dot" aria-label="Unread"></span>' : ''}
+    </button>`;
+}
+
+function selectConversation(id) {
+  selectedId = id;
+  document.querySelectorAll('.inbox-row').forEach((row) => row.classList.toggle('selected', row.dataset.session === id));
+
+  const conv = conversations.find((c) => c.session.id === id);
+  if (conv?.last && conv.unread) {
+    markSeen(id, conv.last.id);
+    conv.unread = false;
+    const row = document.querySelector(`.inbox-row[data-session="${id}"]`);
+    row?.classList.remove('unread');
+    row?.querySelector('.inbox-dot')?.remove();
+  }
+
+  renderThreadPane();
+  renderDetailsPane();
+}
+
+/* -------------------------------- thread ----------------------------------- */
+
+async function renderThreadPane() {
+  const pane = el('inboxThreadPane');
+  if (!pane) return;
+
+  const conv = conversations.find((c) => c.session.id === selectedId);
+  if (!conv) {
+    pane.innerHTML = empty('✉', 'Select a conversation', 'Pick one on the left to read and reply.');
+    return;
+  }
+
+  const counterparty = conv.role === 'owner' ? conv.session.testerDisplayName || conv.session.testerEmail : 'App owner';
+
+  pane.innerHTML = `
+    <div class="inbox-thread-head">
+      ${appIcon(conv.artworkUrl, conv.appName)}
+      <div>
+        <strong>${escapeHtml(conv.appName)}</strong>
+        <span class="muted">${escapeHtml(counterparty)}</span>
+      </div>
+    </div>
+    <div class="inbox-thread-messages" id="inboxThreadMessages">
+      <div class="status"><span class="spinner"></span> Loading</div>
+    </div>
+    <div class="inbox-thread-composer">
+      <input type="text" id="inboxComposerInput" placeholder="Write a message…">
+      <button class="primary" id="inboxComposerSend">Send</button>
+    </div>
+    <div class="status" id="inboxComposerStatus"></div>`;
+
+  renderMessages(conv.messages);
+  try {
+    const messages = await client.sessionMessages(conv.session.id);
+    conv.messages = messages;
+    conv.last = messages.length ? messages[messages.length - 1] : null;
+    renderMessages(messages);
+  } catch (err) {
+    const host = el('inboxThreadMessages');
+    if (host) host.innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
+  }
+
+  const input = el('inboxComposerInput');
+  const sendBtn = el('inboxComposerSend');
+  const statusEl = el('inboxComposerStatus');
+
+  const send = async () => {
+    const body = input.value.trim();
+    if (!body) return;
+    sendBtn.disabled = true;
+    statusEl.textContent = '';
+    try {
+      await client.sendSessionMessage(conv.session.id, body);
+      input.value = '';
+      const messages = await client.sessionMessages(conv.session.id);
+      conv.messages = messages;
+      conv.last = messages.length ? messages[messages.length - 1] : null;
+      renderMessages(messages);
+    } catch (err) {
+      statusEl.className = 'status error';
+      statusEl.textContent = err.message;
+    } finally {
+      sendBtn.disabled = false;
+    }
+  };
+  sendBtn.addEventListener('click', send);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') send();
+  });
+}
+
+function renderMessages(messages) {
+  const host = el('inboxThreadMessages');
+  if (!host) return;
+  host.innerHTML = messages.length
+    ? messages
+        .map(
+          (m) => `
+        <div class="thread-message${m.senderUserId === user?.id ? ' mine' : ''}">
+          <div class="muted" style="font-size:.72rem">${escapeHtml(new Date(m.createdAt).toLocaleString())}</div>
+          <div>${escapeHtml(m.body)}</div>
+        </div>`,
+        )
+        .join('')
+    : '<p class="muted" style="font-size:.85rem">No messages yet. Say hello.</p>';
+  host.scrollTop = host.scrollHeight;
+}
+
+/* -------------------------------- details ---------------------------------- */
+
+const STATUS_LABEL = {
+  accepted: 'Accepted — active',
+  submitted: 'Feedback submitted',
+  completed: 'Completed',
+};
+
+function platformLabel(p) {
+  return p === 'ios' ? 'iOS' : p === 'android' ? 'Android' : 'iOS & Android';
+}
+
+function testerReliabilityBadge(count) {
+  if (!count) return '<span class="pill neutral">New tester</span>';
+  return `<span class="pill ok">${count} test${count === 1 ? '' : 's'} completed</span>`;
+}
+
+function feedbackBadgesHtml(s) {
+  const badges = [];
+  if (s.bugFound !== null && s.bugFound !== undefined) {
+    badges.push(`<span class="pill ${s.bugFound ? 'warn' : 'ok'}">${s.bugFound ? 'Bug found' : 'No bugs'}</span>`);
+  }
+  if (s.wouldUseAgain) {
+    badges.push(`<span class="pill neutral">Would use again: ${escapeHtml(s.wouldUseAgain)}</span>`);
+  }
+  return badges.length ? `<div class="inbox-detail-facts" style="margin-top:.5rem">${badges.join('')}</div>` : '';
+}
+
+/**
+ * The right pane — deliberately not a full dump of every field: a card for
+ * the app being tested (with the one link a tester actually needs to open
+ * the build), a card for the other person when there's anything real to
+ * show about them, and the session's own facts. Nothing here is fetched
+ * specially; it's all data the list already had.
+ */
+function renderDetailsPane() {
+  const pane = el('inboxDetailsPane');
+  if (!pane) return;
+
+  const conv = conversations.find((c) => c.session.id === selectedId);
+  if (!conv) {
+    pane.innerHTML = '';
+    return;
+  }
+
+  const { session: s, role } = conv;
+
+  const appCard = `
+    <div class="inbox-detail-card">
+      ${appIcon(conv.artworkUrl, conv.appName)}
+      <strong>${escapeHtml(conv.appName)}</strong>
+      <div class="inbox-detail-pills">
+        ${conv.kind ? `<span class="pill ${conv.kind === 'testing' ? 'info' : 'ok'}">${conv.kind === 'testing' ? 'Looking for testers' : 'Launch / update'}</span>` : ''}
+        ${conv.platform ? `<span class="pill neutral">${platformLabel(conv.platform)}</span>` : ''}
+      </div>
+      ${conv.description ? `<p class="muted inbox-detail-desc">${escapeHtml(conv.description)}</p>` : ''}
+      <div class="inbox-detail-links">
+        ${role === 'tester' && conv.link ? `<a href="${escapeHtml(conv.link)}" target="_blank" rel="noopener">Open build link →</a>` : ''}
+        ${conv.storeUrl ? `<a href="${escapeHtml(conv.storeUrl)}" target="_blank" rel="noopener">View on store →</a>` : ''}
+      </div>
+    </div>`;
+
+  const personCard =
+    role === 'owner'
+      ? `
+    <div class="inbox-detail-card">
+      <div class="inbox-detail-label">Tester</div>
+      <strong>${escapeHtml(s.testerDisplayName || s.testerEmail)}</strong>
+      ${testerReliabilityBadge(s.testerCompletedCount)}
+      ${s.requestMessage ? `<p class="muted inbox-detail-desc">"${escapeHtml(s.requestMessage)}"</p>` : ''}
+    </div>`
+      : '';
+
+  const factsCard = `
+    <div class="inbox-detail-card">
+      <div class="inbox-detail-label">Session</div>
+      <div class="inbox-detail-facts">
+        <span class="pill neutral">${STATUS_LABEL[s.status] || s.status}</span>
+        <span class="muted">Started ${relativeTime(s.createdAt)}</span>
+      </div>
+      ${feedbackBadgesHtml(s)}
+    </div>`;
+
+  pane.innerHTML = appCard + personCard + factsCard;
+}
