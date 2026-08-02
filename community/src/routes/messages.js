@@ -1,7 +1,7 @@
 import { json, error, newId } from '../lib/http.js';
 import { currentUser } from '../lib/auth.js';
 import { isValidMessage } from '../lib/validate.js';
-import { MAX_SESSION_MESSAGE_LENGTH } from '../lib/config.js';
+import { MAX_SESSION_MESSAGE_LENGTH, MIN_REPORT_REASON_LENGTH, MAX_REPORT_REASON_LENGTH } from '../lib/config.js';
 import { notifyNewMessage, scheduleEchoReply } from '../lib/push.js';
 import { ECHO_BOT_USER_ID } from '../lib/config.js';
 
@@ -111,4 +111,39 @@ export async function send(request, env, id, ctx) {
   }
 
   return json(env, request, { message: serialize(row) }, { status: 201 });
+}
+
+/**
+ * Flags a conversation for manual review — the report itself is invisible
+ * to the other party, and changes nothing about the session's state; it's
+ * purely a signal into `reports` for an admin to look at by hand (see
+ * `routes/reports.js`). Either party can report, same membership check as
+ * everywhere else on this session.
+ */
+export async function report(request, env, id) {
+  const user = await currentUser(env, request);
+  if (!user) return error(env, request, 401, 'sign in required');
+
+  const session = await sessionParties(env, id);
+  if (!isParty(session, user.id)) return error(env, request, 404, 'test session not found');
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return error(env, request, 400, 'expected JSON body');
+  }
+
+  const reason = String(body?.reason ?? '');
+  if (!isValidMessage(reason, { min: MIN_REPORT_REASON_LENGTH, max: MAX_REPORT_REASON_LENGTH })) {
+    return error(env, request, 400, `reason must be ${MIN_REPORT_REASON_LENGTH}-${MAX_REPORT_REASON_LENGTH} characters`);
+  }
+
+  await env.DB.prepare(
+    "INSERT INTO reports (id, reporter_user_id, target_type, target_id, reason) VALUES (?, ?, 'session', ?, ?)",
+  )
+    .bind(newId(), user.id, id, reason.trim())
+    .run();
+
+  return json(env, request, { ok: true }, { status: 201 });
 }

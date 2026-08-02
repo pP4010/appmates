@@ -214,6 +214,12 @@ export class CommunityClient {
     return this._request('/push/test-session').then((d) => d.sessionId);
   }
 
+  /** Flags a conversation for manual review — invisible to the other
+   * party, changes nothing about the session itself. */
+  reportSession(id, reason) {
+    return this._request(`/test-sessions/${id}/report`, { method: 'POST', body: { reason } });
+  }
+
   /** Submits the landing page's "Feature your app here" dialog. No sign-in
    * required — `requesterName`/`email` are who to reply to, not an account. */
   submitPromoRequest({ trackId, name, genre, artworkUrl, storeUrl, color, message, requesterName, email }) {
@@ -242,6 +248,12 @@ export class CommunityClient {
 
   adminReviewPromoRequest(id, action) {
     return this._request(`/promo/requests/${id}/${action}`, { method: 'POST' }).then((d) => d.request);
+  }
+
+  /** Every conversation report, for manual review — same 403-if-not-admin
+   * shape as `adminListPromoRequests`. */
+  adminListReports() {
+    return this._request('/reports').then((d) => d.reports);
   }
 
   /** Public: the approved promo requests a landing page can render as

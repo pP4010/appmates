@@ -45,6 +45,12 @@ export const MAX_PROMO_MESSAGE_LENGTH = 1000;
 // pitch (no minimum): "ok, sent you a new invite" is a complete message.
 export const MAX_SESSION_MESSAGE_LENGTH = 2000;
 
+// A conversation report — enough room to actually explain what's wrong,
+// short enough it isn't a second feedback box. Mirrors the bar a request
+// pitch clears (MIN_REQUEST_MESSAGE_LENGTH above).
+export const MIN_REPORT_REASON_LENGTH = 10;
+export const MAX_REPORT_REASON_LENGTH = 1000;
+
 // The one non-real participant in the system: a fixed bot user + app +
 // listing (see migrations/0005_echo_test_conversation.sql) that echoes
 // back whatever you send it, so push notifications can be watched arriving
