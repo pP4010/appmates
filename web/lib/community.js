@@ -113,6 +113,16 @@ export class CommunityClient {
     return this._request('/auth/logout', { method: 'POST' });
   }
 
+  updateProfile({ displayName, bio, avatarUrl }) {
+    return this._request('/profile', { method: 'POST', body: { displayName, bio, avatarUrl } }).then(
+      (d) => d.user,
+    );
+  }
+
+  profileStats() {
+    return this._request('/profile/stats');
+  }
+
   connectApp(app) {
     return this._request('/apps', { method: 'POST', body: app });
   }
