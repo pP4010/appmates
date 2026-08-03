@@ -12,8 +12,22 @@ import { ECHO_BOT_USER_ID, ECHO_REPLY_DELAY_MS } from './config.js';
  * system notification or an in-app toast (see web/push-sw.js) — this
  * function's only job is getting the encrypted payload to whichever
  * browsers are subscribed at all.
+ *
+ * `sessionId` gates on `muted_conversations` before any of that: mute is a
+ * per-user, per-conversation preference, and unlike favourite/hidden/
+ * archived in the Inbox it has to live server-side — the decision of
+ * whether to send a push at all is made here, and a Service Worker has no
+ * access to the browser's localStorage to check a client-side flag
+ * against.
  */
-export async function notifyNewMessage(env, recipientUserId, { appName, preview }) {
+export async function notifyNewMessage(env, recipientUserId, { sessionId, appName, preview }) {
+  if (sessionId) {
+    const muted = await env.DB.prepare('SELECT 1 FROM muted_conversations WHERE user_id = ? AND session_id = ?')
+      .bind(recipientUserId, sessionId)
+      .first();
+    if (muted) return;
+  }
+
   const { results } = await env.DB.prepare('SELECT * FROM push_subscriptions WHERE user_id = ?')
     .bind(recipientUserId)
     .all();
@@ -72,5 +86,5 @@ export async function scheduleEchoReply(env, { sessionId, appName, recipientUser
     .bind(newId(), sessionId, ECHO_BOT_USER_ID, body)
     .run();
 
-  await notifyNewMessage(env, recipientUserId, { appName, preview: body });
+  await notifyNewMessage(env, recipientUserId, { sessionId, appName, preview: body });
 }

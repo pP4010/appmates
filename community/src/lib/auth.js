@@ -1,4 +1,5 @@
 import { newId, readSessionToken } from './http.js';
+import { sendEmail } from './email.js';
 
 const MAGIC_LINK_TTL_MINUTES = 15;
 const SESSION_TTL_DAYS = 30;
@@ -49,14 +50,9 @@ export async function issueMagicLink(env, email) {
   return token;
 }
 
-/**
- * Sent via Resend's HTTP API rather than the Workers `send_email` binding —
- * that binding only reaches Cloudflare's "Email Sending" product, which is
- * paid-tier only. Resend's free tier (3,000/mo, no card required) covers
- * this comfortably, and a plain `fetch` needs no SDK and no Cloudflare
- * binding at all, so there's nothing here to swap back if that ever
- * changes other than this one function.
- */
+/** Sent via `sendEmail` (Resend's HTTP API), not the Workers `send_email`
+ * binding — that binding only reaches Cloudflare's "Email Sending"
+ * product, which is paid-tier only. */
 export async function sendMagicLinkEmail(env, email, token) {
   const verifyUrl = new URL('/auth/verify', selfOrigin(env)).toString() + `?token=${token}`;
   const html = `
@@ -68,27 +64,7 @@ export async function sendMagicLinkEmail(env, email, token) {
     `This link expires in ${MAGIC_LINK_TTL_MINUTES} minutes and can only be used once. ` +
     "If you didn't request this, ignore this email.";
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${env.RESEND_API_KEY}`,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: `${env.EMAIL_FROM_NAME} <${env.EMAIL_FROM_ADDRESS}>`,
-      to: email,
-      subject: 'Sign in to AppMates',
-      html,
-      text,
-    }),
-  });
-
-  if (!response.ok) {
-    // Bounded, not the full body: a provider error page is not something
-    // to echo back wholesale into a log line.
-    const detail = await response.text().catch(() => '');
-    throw new Error(`Resend API error (${response.status}): ${detail.slice(0, 300)}`);
-  }
+  await sendEmail(env, { to: email, subject: 'Sign in to AppMates', html, text });
 }
 
 /** Where the Worker itself is reachable — the link Apple/Google-style

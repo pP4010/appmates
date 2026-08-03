@@ -1,5 +1,6 @@
 import { json, error } from '../lib/http.js';
 import { currentUser, isAdmin } from '../lib/auth.js';
+import { sendEmail } from '../lib/email.js';
 
 /**
  * Every report, newest first, for manual review by an admin — nothing here
@@ -43,4 +44,38 @@ export async function adminList(request, env) {
       ownerEmail: r.owner_email,
     })),
   });
+}
+
+/**
+ * The one alert the admin allowlist actually gets pushed, rather than
+ * having to remember to check `#admin` — same `ADMIN_EMAILS` parsing as
+ * `isAdmin` in lib/auth.js. Called from `messages.report` right after the
+ * `reports` row is inserted; failures are logged by the caller and never
+ * block the reporter's own request, the same "backgrounded, best-effort"
+ * treatment every push notification in this app already gets.
+ */
+export async function notifyAdminsOfReport(env, { reporterEmail, appName, reason }) {
+  const admins = (env.ADMIN_EMAILS || '')
+    .split(',')
+    .map((e) => e.trim())
+    .filter(Boolean);
+  if (!admins.length) return;
+
+  const html = `
+    <p><strong>${escapeHtml(reporterEmail)}</strong> reported a conversation about
+    <strong>${escapeHtml(appName || 'an app')}</strong>.</p>
+    <p>${escapeHtml(reason)}</p>
+    <p><a href="${env.APP_ORIGIN}${env.APP_PATH}#admin">Open the admin inbox</a></p>`;
+  const text = `${reporterEmail} reported a conversation about ${appName || 'an app'}.\n\n${reason}\n\n${env.APP_ORIGIN}${env.APP_PATH}#admin`;
+
+  await Promise.all(
+    admins.map((to) => sendEmail(env, { to, subject: 'AppMates — conversation reported', html, text })),
+  );
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+  );
 }

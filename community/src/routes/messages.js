@@ -4,6 +4,7 @@ import { isValidMessage } from '../lib/validate.js';
 import { MAX_SESSION_MESSAGE_LENGTH, MIN_REPORT_REASON_LENGTH, MAX_REPORT_REASON_LENGTH } from '../lib/config.js';
 import { notifyNewMessage, scheduleEchoReply } from '../lib/push.js';
 import { ECHO_BOT_USER_ID } from '../lib/config.js';
+import { notifyAdminsOfReport } from './reports.js';
 
 /** Both parties on a test session — the only two people allowed to read or
  * post to its thread. Kept as one small lookup rather than joined into the
@@ -104,9 +105,11 @@ export async function send(request, env, id, ctx) {
     );
   } else {
     ctx.waitUntil(
-      notifyNewMessage(env, recipientId, { appName: session.app_name, preview: text.trim().slice(0, 120) }).catch(
-        (err) => console.error('push notify failed', err),
-      ),
+      notifyNewMessage(env, recipientId, {
+        sessionId: id,
+        appName: session.app_name,
+        preview: text.trim().slice(0, 120),
+      }).catch((err) => console.error('push notify failed', err)),
     );
   }
 
@@ -145,5 +148,52 @@ export async function report(request, env, id) {
     .bind(newId(), user.id, id, reason.trim())
     .run();
 
+  await notifyAdminsOfReport(env, { reporterEmail: user.email, appName: session.app_name, reason: reason.trim() }).catch(
+    (err) => console.error('report alert email failed', err),
+  );
+
   return json(env, request, { ok: true }, { status: 201 });
+}
+
+/** Silences push notifications for one conversation without touching
+ * anything else about it — same membership check as everywhere else on
+ * this session. Idempotent both ways: muting twice or unmuting something
+ * never muted are both just a no-op, not an error. */
+export async function mute(request, env, id) {
+  const user = await currentUser(env, request);
+  if (!user) return error(env, request, 401, 'sign in required');
+
+  const session = await sessionParties(env, id);
+  if (!isParty(session, user.id)) return error(env, request, 404, 'test session not found');
+
+  await env.DB.prepare('INSERT OR IGNORE INTO muted_conversations (user_id, session_id) VALUES (?, ?)')
+    .bind(user.id, id)
+    .run();
+  return json(env, request, { ok: true });
+}
+
+export async function unmute(request, env, id) {
+  const user = await currentUser(env, request);
+  if (!user) return error(env, request, 401, 'sign in required');
+
+  const session = await sessionParties(env, id);
+  if (!isParty(session, user.id)) return error(env, request, 404, 'test session not found');
+
+  await env.DB.prepare('DELETE FROM muted_conversations WHERE user_id = ? AND session_id = ?')
+    .bind(user.id, id)
+    .run();
+  return json(env, request, { ok: true });
+}
+
+/** Every session the signed-in user has muted — fetched once by the Inbox
+ * alongside its normal conversation list, rather than embedding a `muted`
+ * flag in every session-serializing query across listings.js/testSessions.js. */
+export async function mutedSessions(request, env) {
+  const user = await currentUser(env, request);
+  if (!user) return error(env, request, 401, 'sign in required');
+
+  const { results } = await env.DB.prepare('SELECT session_id FROM muted_conversations WHERE user_id = ?')
+    .bind(user.id)
+    .all();
+  return json(env, request, { sessionIds: results.map((r) => r.session_id) });
 }

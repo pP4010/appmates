@@ -86,6 +86,13 @@ export default {
       if ((m = path.match(/^\/test-sessions\/([^/]+)\/report$/)) && method === 'POST') {
         return await messages.report(request, env, m[1]);
       }
+      if ((m = path.match(/^\/test-sessions\/([^/]+)\/mute$/)) && method === 'POST') {
+        return await messages.mute(request, env, m[1]);
+      }
+      if ((m = path.match(/^\/test-sessions\/([^/]+)\/unmute$/)) && method === 'POST') {
+        return await messages.unmute(request, env, m[1]);
+      }
+      if (path === '/test-sessions/muted' && method === 'GET') return await messages.mutedSessions(request, env);
 
       if (path === '/push/subscribe' && method === 'POST') return await push.subscribe(request, env);
       if (path === '/push/unsubscribe' && method === 'POST') return await push.unsubscribe(request, env);

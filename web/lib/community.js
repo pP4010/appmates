@@ -220,6 +220,21 @@ export class CommunityClient {
     return this._request(`/test-sessions/${id}/report`, { method: 'POST', body: { reason } });
   }
 
+  /** Server-side, unlike the Inbox's other per-conversation view state
+   * (favourite/hidden/archived) — the Worker is what decides whether to
+   * send a push at all, so it's the only place that can check this. */
+  muteSession(id) {
+    return this._request(`/test-sessions/${id}/mute`, { method: 'POST' });
+  }
+
+  unmuteSession(id) {
+    return this._request(`/test-sessions/${id}/unmute`, { method: 'POST' });
+  }
+
+  mutedSessionIds() {
+    return this._request('/test-sessions/muted').then((d) => d.sessionIds);
+  }
+
   /** Submits the landing page's "Feature your app here" dialog. No sign-in
    * required — `requesterName`/`email` are who to reply to, not an account. */
   submitPromoRequest({ trackId, name, genre, artworkUrl, storeUrl, color, message, requesterName, email }) {
