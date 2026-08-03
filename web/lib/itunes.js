@@ -119,15 +119,16 @@ export class ITunesClient {
    * instead — a server-to-server fetch has no CORS story to break, unlike
    * a request straight from the browser to Apple's undocumented endpoint.
    *
-   * `searchFallbackUrl` only matters when `searchUrl` points at the relay:
-   * Apple rate-limits `/search` by source IP, and the relay's IP is
-   * Cloudflare's own shared Workers egress range — shared with every other
-   * customer's Workers, not just this one. That range has been observed
-   * getting rate-limited for stretches longer than a single retry window,
-   * while direct-from-browser calls kept working the whole time. So a
-   * failed relay search retries once, straight against Apple — trading
-   * back a little of the CORS flakiness the relay exists to avoid, only
-   * when the relay itself is the thing failing.
+   * `searchFallbackUrl`/`lookupFallbackUrl` only matter when `searchUrl`/
+   * `lookupUrl` point at the relay: Apple rate-limits its endpoints by
+   * source IP, and the relay's IP is Cloudflare's own shared Workers egress
+   * range — shared with every other customer's Workers, not just this one.
+   * That range has been observed getting rate-limited (and, on `/lookup`,
+   * returning a transient 5xx) for stretches longer than a single retry
+   * window, while direct-from-browser calls kept working the whole time. So
+   * a failed relay call retries once, straight against Apple — trading back
+   * a little of the CORS flakiness the relay exists to avoid, only when the
+   * relay itself is the thing failing.
    */
   constructor({
     cache = new ResponseCache(),
@@ -135,6 +136,7 @@ export class ITunesClient {
     fetchImpl,
     screenshotRelayUrl = SCREENSHOT_RELAY_URL,
     lookupUrl = LOOKUP_URL,
+    lookupFallbackUrl = LOOKUP_URL,
     searchUrl = SEARCH_URL,
     searchFallbackUrl = SEARCH_URL,
   } = {}) {
@@ -143,6 +145,7 @@ export class ITunesClient {
     this.fetchImpl = fetchImpl ?? ((...args) => globalThis.fetch(...args));
     this.screenshotRelayUrl = screenshotRelayUrl;
     this.lookupUrl = lookupUrl;
+    this.lookupFallbackUrl = lookupFallbackUrl;
     this.searchUrl = searchUrl;
     this.searchFallbackUrl = searchFallbackUrl;
     this.lastRequestAt = null;
@@ -261,8 +264,16 @@ export class ITunesClient {
       ? { id: appId, country: country.toLowerCase() }
       : { bundleId: appId, country: country.toLowerCase() };
 
-    const payload = await this.get(this.lookupUrl, params, { subject: appId });
-    return payload.results?.[0] ?? null;
+    try {
+      const payload = await this.get(this.lookupUrl, params, { subject: appId });
+      return payload.results?.[0] ?? null;
+    } catch (err) {
+      // No distinct fallback configured (fresh clone, direct-to-Apple
+      // already) — nothing left to retry against.
+      if (this.lookupUrl === this.lookupFallbackUrl) throw err;
+      const payload = await this.get(this.lookupFallbackUrl, params, { subject: appId });
+      return payload.results?.[0] ?? null;
+    }
   }
 
   /**
