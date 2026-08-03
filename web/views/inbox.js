@@ -256,22 +256,13 @@ async function renderBanners() {
   const host = el('inboxBanners');
   if (!host) return;
 
-  const pushBanner = (await needsPushEnable())
+  host.innerHTML = (await needsPushEnable())
     ? `
     <div class="callout inbox-banner">
       <span>Get notified in your browser when a message arrives.</span>
       <button class="primary" id="inboxEnablePush" type="button">Enable notifications</button>
     </div>`
     : '';
-
-  const testBanner = `
-    <div class="callout inbox-banner">
-      <span>Want to check notifications actually arrive? The test conversation replies a few
-      seconds after you message it.</span>
-      <button class="ghost" id="inboxOpenTestConvo" type="button">Open test conversation</button>
-    </div>`;
-
-  host.innerHTML = pushBanner + testBanner;
 
   el('inboxEnablePush')?.addEventListener('click', async (event) => {
     const btn = event.currentTarget;
@@ -282,26 +273,6 @@ async function renderBanners() {
     } catch (err) {
       btn.disabled = false;
       btn.textContent = err.message;
-    }
-  });
-
-  el('inboxOpenTestConvo')?.addEventListener('click', async (event) => {
-    const btn = event.currentTarget;
-    btn.disabled = true;
-    const original = btn.textContent;
-    try {
-      const sessionId = await client.testConversation();
-      await refresh();
-      activeFilter = 'main';
-      el('inboxFilter').value = 'main';
-      renderList();
-      selectConversation(sessionId);
-    } catch (err) {
-      btn.disabled = false;
-      btn.textContent = err.message;
-      setTimeout(() => {
-        btn.textContent = original;
-      }, 3000);
     }
   });
 }
@@ -675,6 +646,50 @@ function feedbackBadgesHtml(s) {
 }
 
 /**
+ * What the right pane shows before any conversation is picked — an empty
+ * panel read as "broken," not "nothing selected yet." Every number here is
+ * already in memory (the conversation list, `user` from `client.me()`),
+ * so this costs nothing extra to compute.
+ */
+function idleDetailsHtml() {
+  const total = conversations.length;
+  const unread = conversations.filter((c) => c.unread).length;
+  const favourites = conversations.filter((c) => getConvState(c.session.id).favorite).length;
+  const owner = conversations.filter((c) => c.role === 'owner').length;
+  const tester = conversations.filter((c) => c.role === 'tester').length;
+
+  const overviewCard = `
+    <div class="inbox-detail-card">
+      <div class="inbox-detail-label">Overview</div>
+      <div class="inbox-detail-facts">
+        <span class="pill neutral">${total} conversation${total === 1 ? '' : 's'}</span>
+        ${unread ? `<span class="pill info">${unread} unread</span>` : ''}
+        ${favourites ? `<span class="pill warn">${favourites} favourite${favourites === 1 ? '' : 's'}</span>` : ''}
+      </div>
+      ${total ? `<p class="muted inbox-detail-desc">${owner} on apps you own · ${tester} you're testing</p>` : ''}
+    </div>`;
+
+  const tokensCard = user
+    ? `
+    <div class="inbox-detail-card">
+      <div class="inbox-detail-label">Tokens</div>
+      <strong>${user.tokenBalance}</strong>
+      <p class="muted inbox-detail-desc">Earned by testing other people's apps — spend them to feature your own listing.</p>
+    </div>`
+    : '';
+
+  const guardrailCard = `
+    <div class="inbox-detail-card">
+      <div class="inbox-detail-label">Keep in mind</div>
+      <p class="muted inbox-detail-desc">Nobody here trades App Store or Play reviews — testers give private feedback on a
+      build, and whether anyone reviews your app is between them and the store. Keep passwords, payment details, and
+      other sensitive information out of messages too.</p>
+    </div>`;
+
+  return overviewCard + tokensCard + guardrailCard;
+}
+
+/**
  * The right pane — deliberately not a full dump of every field: a card for
  * the app being tested (with the one link a tester actually needs to open
  * the build), a card for the other person when there's anything real to
@@ -687,7 +702,7 @@ function renderDetailsPane() {
 
   const conv = conversations.find((c) => c.session.id === selectedId);
   if (!conv) {
-    pane.innerHTML = '';
+    pane.innerHTML = idleDetailsHtml();
     return;
   }
 
