@@ -132,7 +132,12 @@ async function refresh() {
  * handful of calls.
  */
 async function gatherConversations() {
-  const [listings, testerSessions] = await Promise.all([client.myListings(), client.mySessions()]);
+  const [listings, testerSessions, mutedIds] = await Promise.all([
+    client.myListings(),
+    client.mySessions(),
+    client.mutedSessionIds().catch(() => []),
+  ]);
+  const muted = new Set(mutedIds);
 
   const ownerConversations = (
     await Promise.all(
@@ -182,7 +187,7 @@ async function gatherConversations() {
       const last = c.messages.length ? c.messages[c.messages.length - 1] : null;
       const activityAt = last?.createdAt || c.session.respondedAt || c.session.createdAt;
       const unread = Boolean(last) && last.senderUserId !== user?.id && seenId(c.session.id) !== last.id;
-      return { ...c, last, activityAt, unread };
+      return { ...c, last, activityAt, unread, muted: muted.has(c.session.id) };
     })
     .sort((a, b) => new Date(b.activityAt) - new Date(a.activityAt));
 }
@@ -346,6 +351,7 @@ function conversationRowHtml(c) {
         <div class="inbox-row-head">
           ${favourite ? '<span class="inbox-fav-star" title="Favourite">★</span>' : ''}
           <strong>${escapeHtml(c.appName)}</strong>
+          ${c.muted ? '<span class="inbox-muted-icon muted" title="Muted">🔕</span>' : ''}
           ${c.last ? `<span class="inbox-row-time muted">${relativeTime(c.last.createdAt)}</span>` : ''}
         </div>
         <div class="inbox-row-sub muted">${roleLabel} · ${escapeHtml(counterparty)}</div>
@@ -403,6 +409,7 @@ async function renderThreadPane() {
     <div class="inbox-thread-messages" id="inboxThreadMessages">
       <div class="status"><span class="spinner"></span> Loading</div>
     </div>
+    <p class="thread-safety-note">🔒 Don't share passwords, payment details, or other sensitive information here.</p>
     <div class="inbox-thread-composer">
       <input type="text" id="inboxComposerInput" placeholder="Write a message…">
       <button class="primary" id="inboxComposerSend">Send</button>
@@ -480,6 +487,7 @@ function renderThreadMenu(conv) {
     <button type="button" class="inbox-menu-item" data-action="favorite">
       ${state.favorite ? '★ Remove from favourites' : '☆ Add to favourites'}
     </button>
+    <button type="button" class="inbox-menu-item" data-action="mute">${conv.muted ? '🔔 Unmute' : '🔕 Mute'}</button>
     <button type="button" class="inbox-menu-item" data-action="report">🚩 Report</button>
     <button type="button" class="inbox-menu-item" data-action="hide">${state.hidden ? 'Unhide' : '🙈 Hide'}</button>
     <button type="button" class="inbox-menu-item" data-action="archive">${state.archived ? '↺ Reopen' : '✓ Mark as completed'}</button>`;
@@ -507,6 +515,19 @@ function renderThreadMenu(conv) {
     setConvState(id, { favorite: !state.favorite });
     renderList();
     renderThreadPane();
+  });
+
+  menu.querySelector('[data-action="mute"]').addEventListener('click', async () => {
+    closeMenu();
+    try {
+      if (conv.muted) await client.unmuteSession(id);
+      else await client.muteSession(id);
+      conv.muted = !conv.muted;
+      renderList();
+      renderThreadPane();
+    } catch (err) {
+      console.error('mute toggle failed', err);
+    }
   });
 
   menu.querySelector('[data-action="hide"]').addEventListener('click', () => {

@@ -1253,7 +1253,8 @@ function renderThread(id, thread, messages) {
 
   thread.innerHTML = `
     <div class="thread-list">${list}</div>
-    <div style="display:flex;gap:.4rem;margin-top:.5rem">
+    <p class="thread-safety-note" style="padding:0">🔒 Don't share passwords, payment details, or other sensitive information here.</p>
+    <div style="display:flex;gap:.4rem;margin-top:.3rem">
       <input type="text" class="comm-thread-input" placeholder="Write a message…" style="flex:1">
       <button class="comm-thread-send">Send</button>
     </div>
