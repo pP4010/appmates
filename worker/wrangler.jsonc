@@ -6,4 +6,18 @@
   "observability": {
     "enabled": true,
   },
+  // Per-client-IP quota — this route is unauthenticated by design (the
+  // static web app has no accounts) and CORS-open to `*`, so nothing else
+  // stops a script that isn't our frontend from hitting it at volume, the
+  // same reasoning as `community/wrangler.jsonc`'s `ITUNES_*_LIMITER`
+  // bindings. `namespace_id` just has to be unique per binding within the
+  // account; picked well clear of community's 1001/1002 since both Workers
+  // can live in the same account.
+  "ratelimits": [
+    {
+      "name": "SCREENSHOT_LIMITER",
+      "namespace_id": "2001",
+      "simple": { "limit": 30, "period": 60 },
+    },
+  ],
 }

@@ -10,8 +10,17 @@ const VALID_REASONS = new Set(['earned_test', 'spent_feature', 'refund', 'adjust
  * `delta` may be negative (spending) — callers never write `token_balance`
  * directly, only through here, so the ledger stays the single source of
  * truth the balance is derived from.
+ *
+ * `extraStatements` join the same batch — so the state change a token
+ * movement is *for* (marking a test session completed, extending a
+ * listing's `featured_until`) commits or fails together with the ledger
+ * entry. Passing that as a follow-up statement outside the batch was the
+ * original shape here, and it had a real failure mode: if the ledger write
+ * succeeded but the follow-up threw, the token was spent or awarded with
+ * nothing to show for it, and no way to retry (the status guard that
+ * prevents double-awarding also blocks the retry).
  */
-async function applyDelta(env, userId, delta, reason, relatedId) {
+async function applyDelta(env, userId, delta, reason, relatedId, extraStatements = []) {
   if (!VALID_REASONS.has(reason)) throw new Error(`invalid ledger reason: ${reason}`);
 
   const id = newId();
@@ -23,22 +32,28 @@ async function applyDelta(env, userId, delta, reason, relatedId) {
       delta,
       userId,
     ),
+    ...extraStatements,
   ]);
 }
 
 /** Awarded only by a listing owner confirming a tester actually helped —
- * see routes/testSessions.js. Never self-service. */
-export async function awardTokens(env, userId, amount, reason, relatedId) {
+ * see routes/testSessions.js. Never self-service. `extraStatements` lets the
+ * caller land its own state change (e.g. marking the session `completed`)
+ * in the same atomic batch as the award — see `applyDelta`. */
+export async function awardTokens(env, userId, amount, reason, relatedId, extraStatements = []) {
   if (amount <= 0) throw new Error('award amount must be positive');
-  await applyDelta(env, userId, amount, reason, relatedId);
+  await applyDelta(env, userId, amount, reason, relatedId, extraStatements);
 }
 
 /**
  * Spends tokens, checked and deducted atomically against the *authoritative*
  * ledger sum (not the cached column) so a race between two spends from the
- * same user can't both succeed and overdraw the balance.
+ * same user can't both succeed and overdraw the balance. `extraStatements`
+ * lets the caller land what the spend paid for (e.g. extending a listing's
+ * `featured_until`) in the same atomic batch as the deduction — see
+ * `applyDelta`.
  */
-export async function spendTokens(env, userId, amount, reason, relatedId) {
+export async function spendTokens(env, userId, amount, reason, relatedId, extraStatements = []) {
   if (amount <= 0) throw new Error('spend amount must be positive');
 
   const row = await env.DB.prepare(
@@ -48,7 +63,7 @@ export async function spendTokens(env, userId, amount, reason, relatedId) {
     .first();
   if ((row?.balance ?? 0) < amount) throw new InsufficientTokensError();
 
-  await applyDelta(env, userId, -amount, reason, relatedId);
+  await applyDelta(env, userId, -amount, reason, relatedId, extraStatements);
 }
 
 export async function tokenHistory(env, userId, limit = 50) {

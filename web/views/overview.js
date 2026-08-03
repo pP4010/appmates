@@ -20,6 +20,14 @@ let onChange = null;
 /** The app currently rendered, so the star can be kept in sync when a
  * favorite is removed elsewhere (the top-bar tray), not just from here. */
 let displayedTrackId = null;
+/** Bumped at the start of every `load()` call. The button disables during a
+ * lookup, but Enter on `#ovApp` bypasses it, and `loadApp()` (the favorites
+ * tray) is a second entry point besides — so two lookups can still overlap.
+ * Whichever call started *last* is the one whose result should land; a
+ * slower earlier call resolving after it must not overwrite the correction
+ * with stale data, so each call checks it is still the most recent before
+ * touching the DOM or persisting anything. */
+let loadSeq = 0;
 
 /** The app the whole session is about. Null until one is chosen. */
 export function selectedApp() {
@@ -112,6 +120,7 @@ async function load() {
     return;
   }
 
+  const seq = ++loadSeq;
   let recoveredScreenshots = false;
 
   const report = await withStatus(el('ovStatus'), el('ovLoad'), results, async (say) => {
@@ -147,6 +156,10 @@ async function load() {
   });
 
   if (!report) return;
+  // A newer load (a correction typed and submitted before this one
+  // finished) has already taken over — don't let this slower, stale
+  // response overwrite it.
+  if (seq !== loadSeq) return;
 
   remember(report.profile, country);
   onChange?.();

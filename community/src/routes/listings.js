@@ -276,31 +276,32 @@ export async function feature(request, env, id) {
 
   const cost = days * FEATURE_COST_PER_DAY;
   try {
-    await spendTokens(env, user.id, cost, 'spent_feature', id);
+    // Extends from the current `featured_until` if it's still in the future,
+    // otherwise from now — computed entirely in SQL (see the note on
+    // `isRateLimited` in lib/auth.js for why: comparing a JS-formatted
+    // timestamp against SQLite's own `datetime('now')` as text silently
+    // never matches). This rides in the same D1 batch as the spend (see
+    // `spendTokens`/`applyDelta` in lib/tokens.js): tokens deducted with the
+    // listing never actually featured, and no way to retry once they're
+    // gone, was a real failure mode when these were two separate calls.
+    await spendTokens(env, user.id, cost, 'spent_feature', id, [
+      env.DB.prepare(
+        `UPDATE listings SET
+           featured_until = datetime(
+             CASE WHEN featured_until IS NOT NULL AND featured_until > datetime('now')
+                  THEN featured_until ELSE datetime('now') END,
+             ?
+           ),
+           updated_at = datetime('now')
+         WHERE id = ?`,
+      ).bind(`+${days} days`, id),
+    ]);
   } catch (err) {
     if (err instanceof InsufficientTokensError) {
       return error(env, request, 402, `not enough tokens — this costs ${cost}`);
     }
     throw err;
   }
-
-  // Extends from the current `featured_until` if it's still in the future,
-  // otherwise from now — computed entirely in SQL (see the note on
-  // `isRateLimited` in lib/auth.js for why: comparing a JS-formatted
-  // timestamp against SQLite's own `datetime('now')` as text silently
-  // never matches).
-  await env.DB.prepare(
-    `UPDATE listings SET
-       featured_until = datetime(
-         CASE WHEN featured_until IS NOT NULL AND featured_until > datetime('now')
-              THEN featured_until ELSE datetime('now') END,
-         ?
-       ),
-       updated_at = datetime('now')
-     WHERE id = ?`,
-  )
-    .bind(`+${days} days`, id)
-    .run();
 
   const updated = await env.DB.prepare('SELECT featured_until FROM listings WHERE id = ?')
     .bind(id)

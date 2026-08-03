@@ -182,12 +182,16 @@ export async function complete(request, env, id) {
     return error(env, request, 400, 'the tester has not submitted feedback yet');
   }
 
-  await env.DB.prepare(
-    'UPDATE test_sessions SET status = ?, completed_at = datetime(\'now\') WHERE id = ?',
-  )
-    .bind('completed', id)
-    .run();
-  await awardTokens(env, session.tester_user_id, TOKENS_PER_COMPLETED_TEST, 'earned_test', id);
+  // The status update rides in the same D1 batch as the token award (see
+  // `awardTokens`/`applyDelta` in lib/tokens.js) so the two can never split:
+  // a session left `completed` with no token minted (unrecoverable — the
+  // status guard above blocks any retry) was a real failure mode when these
+  // were two separate calls.
+  await awardTokens(env, session.tester_user_id, TOKENS_PER_COMPLETED_TEST, 'earned_test', id, [
+    env.DB.prepare(
+      'UPDATE test_sessions SET status = ?, completed_at = datetime(\'now\') WHERE id = ?',
+    ).bind('completed', id),
+  ]);
 
   return json(env, request, { ok: true, tokensAwarded: TOKENS_PER_COMPLETED_TEST });
 }
