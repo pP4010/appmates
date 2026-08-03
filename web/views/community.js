@@ -22,10 +22,15 @@
  * none of this ever touches App Store/Play reviews or ratings.
  */
 
-import { el, escapeHtml, empty, withStatus, appIcon, bar, toneFor, ring, MESSAGEABLE_STATUSES } from './shared.js';
+import {
+  el, escapeHtml, empty, withStatus, appIcon, iconOrInitial, bar, toneFor, ring, MESSAGEABLE_STATUSES,
+} from './shared.js';
 import { checkAppHealth, profileFromEntry } from '../lib/app-profile.js';
 
 const MIN_MESSAGE_LENGTH = 20;
+// Mirrors MAX_BIO_LENGTH in community/src/lib/config.js — the server is the
+// real limit (it truncates), this just keeps the on-page counter honest.
+const MAX_BIO_LENGTH = 180;
 
 /** Catalogue lookups are throttled to protect Apple's endpoint, so a page of
  * cards enriches over a noticeable stretch of time. Capping keeps that from
@@ -37,6 +42,7 @@ const TABS = {
   browse: 'Marketplace',
   leaderboard: 'Leaderboard',
   mine: 'Your testing',
+  profile: 'My profile',
 };
 
 let client = null;
@@ -164,6 +170,7 @@ function renderActiveTab() {
   renderGeneration += 1;
   if (activeTab === 'browse') renderBrowseTab();
   else if (activeTab === 'leaderboard') renderLeaderboardTab();
+  else if (activeTab === 'profile') renderProfileTab();
   else renderYourTestingTab();
 }
 
@@ -1386,4 +1393,103 @@ function wireMySessionActions(container) {
       }
     });
   });
+}
+
+/* ============================ profile tab ============================ */
+
+/**
+ * Who you are to everyone else in AppMates — the name, photo and bio shown
+ * next to a test request or a chat message, plus the track record
+ * (routes/profile.js `stats`) that's earned automatically and can't be
+ * edited here, same split as a listing's own reliability badge.
+ *
+ * The avatar is a pasted link, not an upload: this deployment has no object
+ * storage, and a URL field needs none — paste a Gravatar/LinkedIn/whatever
+ * link and it just works, same as an app's own artwork URL elsewhere.
+ */
+function renderProfileTab() {
+  if (!user) {
+    el('commTabPanel').innerHTML = empty(
+      '◍',
+      'Sign in to see your profile',
+      'Use the box above — this is what testers and builders see before they message you.',
+    );
+    return;
+  }
+
+  const bioLength = (user.bio || '').length;
+
+  el('commTabPanel').innerHTML = `
+    <div class="panel" style="padding:1rem 1.2rem;margin-bottom:1rem">
+      <h3 style="margin-top:0">My profile</h3>
+      <div class="form-grid">
+        <label for="commProfileAvatar">Avatar</label>
+        <div style="display:flex;gap:.7rem;align-items:center">
+          <span id="commProfileAvatarPreview">${iconOrInitial(user.avatarUrl, user.displayName || user.email)}</span>
+          <input id="commProfileAvatar" type="text" style="flex:1"
+            placeholder="Link to an image (optional)" value="${escapeHtml(user.avatarUrl || '')}">
+        </div>
+        <label for="commProfileName">Name</label>
+        <input id="commProfileName" type="text" maxlength="80" value="${escapeHtml(user.displayName || '')}">
+        <label for="commProfileBio">Bio</label>
+        <div>
+          <textarea id="commProfileBio" rows="3" maxlength="${MAX_BIO_LENGTH}"
+            placeholder="What are you building, or what are you looking to test?">${escapeHtml(user.bio || '')}</textarea>
+          <div class="muted" style="font-size:.75rem;text-align:right" id="commProfileBioCount">${bioLength}/${MAX_BIO_LENGTH}</div>
+        </div>
+      </div>
+      <div id="commProfileStatus" class="status"></div>
+      <button id="commProfileSave" class="primary">Save</button>
+    </div>
+    <div id="commProfileStats"></div>`;
+
+  el('commProfileAvatar').addEventListener('input', () => {
+    el('commProfileAvatarPreview').innerHTML = iconOrInitial(
+      el('commProfileAvatar').value.trim(),
+      el('commProfileName').value.trim() || user.email,
+    );
+  });
+  el('commProfileBio').addEventListener('input', () => {
+    el('commProfileBioCount').textContent = `${el('commProfileBio').value.length}/${MAX_BIO_LENGTH}`;
+  });
+  el('commProfileSave').addEventListener('click', saveProfile);
+
+  renderProfileStats();
+}
+
+async function saveProfile() {
+  await withStatus(el('commProfileStatus'), el('commProfileSave'), null, async () => {
+    const updated = await client.updateProfile({
+      displayName: el('commProfileName').value.trim(),
+      bio: el('commProfileBio').value.trim(),
+      avatarUrl: el('commProfileAvatar').value.trim(),
+    });
+    user = updated;
+    renderAuthBar();
+  });
+}
+
+/** The same badges a listing card shows for its owner (`reliabilityBadge`,
+ * `contributionBadge` above) — read-only here, since these numbers only
+ * ever move by completing or being completed for, never by editing a form. */
+async function renderProfileStats() {
+  const host = el('commProfileStats');
+  if (!host) return;
+  host.innerHTML = '<div class="status"><span class="spinner"></span> Loading</div>';
+  try {
+    const { reliability, contribution } = await client.profileStats();
+    host.innerHTML = `
+      <div class="panel" style="padding:1rem 1.2rem">
+        <h3 style="margin-top:0">Your track record</h3>
+        <p class="muted" style="font-size:.82rem;margin:-.4rem 0 0">
+          What testers and builders see about you elsewhere in AppMates — earned automatically.
+        </p>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.6rem">
+          ${reliabilityBadge(reliability)}
+          ${contributionBadge(contribution)}
+        </div>
+      </div>`;
+  } catch (err) {
+    host.innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
+  }
 }
