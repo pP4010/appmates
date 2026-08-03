@@ -818,14 +818,49 @@ a.brand:hover { background: var(--surface-3); border-color: var(--border-strong)
 
 /* ============================ inbox (dedicated view) ============================ */
 
-/* Bleeds out of `.content`'s padding and fills the space below the topbar —
- * a three-pane layout reads as an app section, not a document that scrolls
- * as one column like every other view. */
-#view-inbox.active {
-  display: flex;
-  margin: -1.5rem;
-  height: calc(100vh - 61px);
+/* A three-pane layout reads as an app section, not a document that scrolls
+ * as one column like every other view — each pane (list/thread/details)
+ * scrolls independently within a fixed-height shell instead.
+ *
+ * That took two attempts. The first used a negative margin on
+ * `#view-inbox.active` to bleed out of `.content`'s padding while giving it
+ * an explicit height — `.content` itself was never height-constrained
+ * (every other view relies on it auto-sizing to its content so the *page*
+ * scrolls), so a negative margin's contribution to that auto-height is
+ * fragile: it measured out ~200px taller than the viewport in testing,
+ * making `<body>` itself scrollable. Scrolling inside a thread with room
+ * left to scroll doesn't reach that 200px until the inner pane's own
+ * scroll is exhausted, but a short thread — nothing to scroll internally —
+ * forwards the very first scroll gesture straight to that phantom 200px on
+ * `<body>`, which reads as "the whole page slides."
+ *
+ * `:has()` fixes it at the source instead of patching the symptom: only
+ * while `#view-inbox.active` exists does anything here override the
+ * default auto-height chain, so every other view's normal whole-page
+ * scroll is completely untouched.
+ */
+/* Both html and body, not just body: which of the two is the actual root
+ * scroller is a browser-specific overflow-propagation call, not something
+ * safe to assume — locking only one left a ~19px sliver still scrollable
+ * in testing. */
+html:has(#view-inbox.active) {
+  height: 100vh;
+  overflow: hidden;
 }
+body:has(#view-inbox.active) {
+  height: 100vh;
+  overflow: hidden;
+}
+body:has(#view-inbox.active) .app { height: 100vh; min-height: 0; }
+body:has(#view-inbox.active) .main { height: 100vh; min-height: 0; }
+body:has(#view-inbox.active) .content {
+  height: calc(100vh - 61px); /* topbar's own height */
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+#view-inbox.active { display: flex; height: 100%; width: 100%; }
 .inbox-shell { display: flex; width: 100%; min-height: 0; }
 
 .inbox-list-pane {
