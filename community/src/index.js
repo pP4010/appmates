@@ -119,4 +119,11 @@ export default {
       return error(env, request, 500, 'internal error');
     }
   },
+
+  // Fires on the cron schedule in wrangler.jsonc's `triggers.crons` —
+  // the 48-hour email fallback for unseen reports (`escalateUnseenReports`
+  // in routes/reports.js). Nothing else on a schedule yet.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(reports.escalateUnseenReports(env).catch((err) => console.error('report escalation run failed', err)));
+  },
 };

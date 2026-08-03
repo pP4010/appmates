@@ -1,6 +1,45 @@
 import webpush from 'web-push';
 import { newId } from './http.js';
+import { adminUserIds } from './auth.js';
 import { ECHO_BOT_USER_ID, ECHO_REPLY_DELAY_MS } from './config.js';
+
+/**
+ * The low-level send: every subscription one user has, one payload, no
+ * opinion about what triggered it. `notifyNewMessage` and
+ * `notifyAdminsOfReportPush` below are both just this plus their own
+ * payload shape and (for messages) a mute check.
+ */
+async function sendPushToUser(env, userId, payload) {
+  const { results } = await env.DB.prepare('SELECT * FROM push_subscriptions WHERE user_id = ?')
+    .bind(userId)
+    .all();
+  if (!results.length) return;
+
+  webpush.setVapidDetails(env.VAPID_SUBJECT, env.VAPID_PUBLIC_KEY, env.VAPID_PRIVATE_KEY);
+  const payloadJson = JSON.stringify(payload);
+
+  await Promise.all(
+    results.map(async (sub) => {
+      try {
+        await webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          payloadJson,
+        );
+      } catch (err) {
+        // 404/410 means the push service itself has discarded this
+        // subscription (browser data cleared, extension uninstalled,
+        // endpoint expired) — prune it rather than paying to retry
+        // something that will never succeed again. Anything else is
+        // logged and left alone; it might be transient.
+        if (err.statusCode === 404 || err.statusCode === 410) {
+          await env.DB.prepare('DELETE FROM push_subscriptions WHERE id = ?').bind(sub.id).run();
+        } else {
+          console.error('push send failed', sub.id, err.statusCode, err.message);
+        }
+      }
+    }),
+  );
+}
 
 /**
  * Sends a "new message" push to every browser the recipient has subscribed
@@ -28,40 +67,32 @@ export async function notifyNewMessage(env, recipientUserId, { sessionId, appNam
     if (muted) return;
   }
 
-  const { results } = await env.DB.prepare('SELECT * FROM push_subscriptions WHERE user_id = ?')
-    .bind(recipientUserId)
-    .all();
-  if (!results.length) return;
-
-  webpush.setVapidDetails(env.VAPID_SUBJECT, env.VAPID_PUBLIC_KEY, env.VAPID_PRIVATE_KEY);
-
-  const payload = JSON.stringify({
+  await sendPushToUser(env, recipientUserId, {
     title: `New message · ${appName}`,
     body: preview,
     url: `${env.APP_ORIGIN}${env.APP_PATH}#community`,
   });
+}
 
-  await Promise.all(
-    results.map(async (sub) => {
-      try {
-        await webpush.sendNotification(
-          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          payload,
-        );
-      } catch (err) {
-        // 404/410 means the push service itself has discarded this
-        // subscription (browser data cleared, extension uninstalled,
-        // endpoint expired) — prune it rather than paying to retry
-        // something that will never succeed again. Anything else is
-        // logged and left alone; it might be transient.
-        if (err.statusCode === 404 || err.statusCode === 410) {
-          await env.DB.prepare('DELETE FROM push_subscriptions WHERE id = ?').bind(sub.id).run();
-        } else {
-          console.error('push send failed', sub.id, err.statusCode, err.message);
-        }
-      }
-    }),
-  );
+/**
+ * The immediate half of report alerting — a push to every admin who's
+ * subscribed, the moment a report lands. `routes/reports.js`
+ * `escalateUnseenReports` is the other half: an email, but only if 48
+ * hours pass with nobody having opened `#admin` to see this. Never mutes
+ * (there's no conversation-scoped mute check here, unlike
+ * `notifyNewMessage` — an admin alert isn't something a report's *subject*
+ * could ever silence).
+ */
+export async function notifyAdminsOfReportPush(env, { appName, reason }) {
+  const adminIds = await adminUserIds(env);
+  if (!adminIds.length) return;
+
+  const payload = {
+    title: `Reported · ${appName || 'conversation'}`,
+    body: reason.slice(0, 140),
+    url: `${env.APP_ORIGIN}${env.APP_PATH}#admin`,
+  };
+  await Promise.all(adminIds.map((id) => sendPushToUser(env, id, payload)));
 }
 
 /**

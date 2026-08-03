@@ -10,6 +10,14 @@
   "observability": {
     "enabled": true,
   },
+  // Drives `scheduled` in src/index.js — the 48-hour email fallback for
+  // reports nobody's opened #admin to see (routes/reports.js
+  // `escalateUnseenReports`). Hourly is frequent enough that the worst-case
+  // delay past the 48h mark is under an hour, and infrequent enough it's
+  // nowhere near Cron Triggers' invocation limits.
+  "triggers": {
+    "crons": ["0 * * * *"],
+  },
   "d1_databases": [
     {
       "binding": "DB",

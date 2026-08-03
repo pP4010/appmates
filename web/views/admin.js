@@ -13,7 +13,8 @@
  * check alone for something a stranger could otherwise read.
  */
 
-import { el, escapeHtml, empty, withStatus } from './shared.js';
+import { el, escapeHtml, empty, withStatus, REPORT_CAUSE_LABELS } from './shared.js';
+import { enablePush, needsPushEnable } from '../lib/push.js';
 
 let client = null;
 let user = null;
@@ -42,8 +43,38 @@ async function refresh() {
     renderSignIn();
     return;
   }
+  renderNotifBanner();
   loadRequests();
   loadReports();
+}
+
+/** So a new report's push (lib/push.js `notifyAdminsOfReportPush`) has
+ * somewhere to land — without this, the 48-hour email fallback would be
+ * doing all the work, which defeats the point of having a push tier at
+ * all. Same "needsPushEnable, not just permission state" logic as the
+ * Inbox's own banner (see lib/push.js for why that distinction matters). */
+async function renderNotifBanner() {
+  const host = el('adminNotifBanner');
+  if (!host || !(await needsPushEnable())) {
+    if (host) host.innerHTML = '';
+    return;
+  }
+  host.innerHTML = `
+    <div class="callout" style="margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap">
+      <span>Get notified in your browser the moment something's reported.</span>
+      <button class="primary" id="adminEnablePush" type="button">Enable notifications</button>
+    </div>`;
+  el('adminEnablePush').addEventListener('click', async (event) => {
+    const btn = event.currentTarget;
+    btn.disabled = true;
+    try {
+      await enablePush(client);
+      btn.closest('.callout')?.remove();
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = err.message;
+    }
+  });
 }
 
 function renderSignIn() {
@@ -193,11 +224,16 @@ function reportCard(r) {
     r.targetType === 'session' && (r.testerEmail || r.ownerEmail)
       ? `${escapeHtml(r.appName || 'Unknown app')} — tester ${escapeHtml(r.testerEmail || '?')}, owner ${escapeHtml(r.ownerEmail || '?')}`
       : `${escapeHtml(r.targetType)} ${escapeHtml(r.targetId)}`;
+  const causeLabel = REPORT_CAUSE_LABELS[r.cause] || r.cause;
 
   return `
     <div class="panel" style="margin-bottom:.9rem;padding:1rem">
       <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start">
-        <strong style="font-size:.86rem">${who}</strong>
+        <div>
+          <strong style="font-size:.86rem">${who}</strong>
+          ${r.wasNew ? '<span class="pill info" style="margin-left:.4rem">New</span>' : ''}
+          ${causeLabel ? `<div class="pill warn" style="margin-top:.35rem;display:inline-block">${escapeHtml(causeLabel)}</div>` : ''}
+        </div>
         <span class="muted" style="font-size:.78rem;white-space:nowrap">${escapeHtml(new Date(r.createdAt).toLocaleString())}</span>
       </div>
       <div class="muted" style="font-size:.78rem;margin-top:.2rem">Reported by ${escapeHtml(r.reporterEmail)}</div>

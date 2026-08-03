@@ -1,10 +1,15 @@
 import { json, error, newId } from '../lib/http.js';
 import { currentUser } from '../lib/auth.js';
 import { isValidMessage } from '../lib/validate.js';
-import { MAX_SESSION_MESSAGE_LENGTH, MIN_REPORT_REASON_LENGTH, MAX_REPORT_REASON_LENGTH } from '../lib/config.js';
-import { notifyNewMessage, scheduleEchoReply } from '../lib/push.js';
-import { ECHO_BOT_USER_ID } from '../lib/config.js';
-import { notifyAdminsOfReport } from './reports.js';
+import {
+  MAX_SESSION_MESSAGE_LENGTH,
+  MIN_REPORT_REASON_LENGTH,
+  MAX_REPORT_REASON_LENGTH,
+  MAX_REPORT_EVIDENCE_LENGTH,
+  REPORT_CAUSES,
+  ECHO_BOT_USER_ID,
+} from '../lib/config.js';
+import { notifyNewMessage, scheduleEchoReply, notifyAdminsOfReportPush } from '../lib/push.js';
 
 /** Both parties on a test session — the only two people allowed to read or
  * post to its thread. Kept as one small lookup rather than joined into the
@@ -122,6 +127,11 @@ export async function send(request, env, id, ctx) {
  * purely a signal into `reports` for an admin to look at by hand (see
  * `routes/reports.js`). Either party can report, same membership check as
  * everywhere else on this session.
+ *
+ * `evidence` is free text (links, quoted messages) folded into the same
+ * `reason` column as the explanation — this app doesn't have a file-upload
+ * system anywhere, and building one just for report attachments would be a
+ * separate project, not a natural extension of this one.
  */
 export async function report(request, env, id) {
   const user = await currentUser(env, request);
@@ -137,19 +147,25 @@ export async function report(request, env, id) {
     return error(env, request, 400, 'expected JSON body');
   }
 
-  const reason = String(body?.reason ?? '');
-  if (!isValidMessage(reason, { min: MIN_REPORT_REASON_LENGTH, max: MAX_REPORT_REASON_LENGTH })) {
+  const cause = REPORT_CAUSES.includes(body?.cause) ? body.cause : null;
+  if (!cause) return error(env, request, 400, `cause must be one of: ${REPORT_CAUSES.join(', ')}`);
+
+  const explanation = String(body?.reason ?? '');
+  if (!isValidMessage(explanation, { min: MIN_REPORT_REASON_LENGTH, max: MAX_REPORT_REASON_LENGTH })) {
     return error(env, request, 400, `reason must be ${MIN_REPORT_REASON_LENGTH}-${MAX_REPORT_REASON_LENGTH} characters`);
   }
 
+  const evidence = String(body?.evidence ?? '').trim().slice(0, MAX_REPORT_EVIDENCE_LENGTH);
+  const reason = evidence ? `${explanation.trim()}\n\nEvidence: ${evidence}` : explanation.trim();
+
   await env.DB.prepare(
-    "INSERT INTO reports (id, reporter_user_id, target_type, target_id, reason) VALUES (?, ?, 'session', ?, ?)",
+    "INSERT INTO reports (id, reporter_user_id, target_type, target_id, cause, reason) VALUES (?, ?, 'session', ?, ?, ?)",
   )
-    .bind(newId(), user.id, id, reason.trim())
+    .bind(newId(), user.id, id, cause, reason)
     .run();
 
-  await notifyAdminsOfReport(env, { reporterEmail: user.email, appName: session.app_name, reason: reason.trim() }).catch(
-    (err) => console.error('report alert email failed', err),
+  await notifyAdminsOfReportPush(env, { appName: session.app_name, reason }).catch((err) =>
+    console.error('report push alert failed', err),
   );
 
   return json(env, request, { ok: true }, { status: 201 });

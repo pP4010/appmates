@@ -6,7 +6,7 @@
  * them instead of a tab buried inside "Get testers".
  */
 
-import { el, escapeHtml, empty, iconOrInitial, showToast, MESSAGEABLE_STATUSES } from './shared.js';
+import { el, escapeHtml, empty, iconOrInitial, showToast, MESSAGEABLE_STATUSES, REPORT_CAUSE_LABELS } from './shared.js';
 import { enablePush, listenForInAppToasts, needsPushEnable } from '../lib/push.js';
 
 let client = null;
@@ -543,36 +543,86 @@ function renderThreadMenu(conv) {
   });
 
   menu.querySelector('[data-action="report"]').addEventListener('click', () => {
-    renderReportForm(menu, conv);
+    closeMenu();
+    openReportModal(conv);
   });
 }
 
-function renderReportForm(menu, conv) {
-  menu.innerHTML = `
-    <div class="inbox-report-form">
-      <textarea id="inboxReportReason" rows="3" placeholder="What's going on? (10 characters minimum)"></textarea>
-      <div class="inbox-report-actions">
-        <button type="button" class="ghost" id="inboxReportCancel">Cancel</button>
-        <button type="button" class="primary" id="inboxReportSubmit">Send report</button>
+function openReportModal(conv) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'inboxReportModal';
+  overlay.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="inboxReportTitle">
+      <div class="modal-head">
+        <div>
+          <h3 id="inboxReportTitle">Report this conversation</h3>
+          <p class="modal-sub">Reviewed by hand — invisible to the other person, and doesn't change anything about the conversation itself.</p>
+        </div>
+        <button class="modal-close" type="button" aria-label="Close">✕</button>
       </div>
-      <div class="status" id="inboxReportStatus"></div>
+      <div class="modal-fields">
+        <div class="field">
+          <label>Reason</label>
+          <div class="report-cause-list">
+            ${Object.entries(REPORT_CAUSE_LABELS)
+              .map(
+                ([value, label], i) => `
+              <label class="report-cause-option">
+                <input type="radio" name="inboxReportCause" value="${value}"${i === 0 ? ' checked' : ''}>
+                ${escapeHtml(label)}
+              </label>`,
+              )
+              .join('')}
+          </div>
+        </div>
+        <div class="field">
+          <label for="inboxReportExplanation">Explain what happened</label>
+          <textarea id="inboxReportExplanation" rows="3" placeholder="At least 10 characters"></textarea>
+        </div>
+        <div class="field">
+          <label for="inboxReportEvidence">Evidence <span class="muted">(optional — links, specific message quotes, anything that helps)</span></label>
+          <textarea id="inboxReportEvidence" rows="2"></textarea>
+        </div>
+      </div>
+      <div id="inboxReportStatus" class="status"></div>
+      <button id="inboxReportSubmit" class="primary" style="width:100%;margin-top:.5rem">Send report</button>
     </div>`;
+  document.body.appendChild(overlay);
 
-  el('inboxReportCancel').addEventListener('click', () => renderThreadPane());
+  const closeReportModal = () => {
+    overlay.remove();
+    document.removeEventListener('keydown', onKeydown);
+  };
+  const onKeydown = (e) => {
+    if (e.key === 'Escape') closeReportModal();
+  };
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeReportModal();
+  });
+  overlay.querySelector('.modal-close').addEventListener('click', closeReportModal);
+  document.addEventListener('keydown', onKeydown);
+  el('inboxReportExplanation').focus();
 
   el('inboxReportSubmit').addEventListener('click', async () => {
-    const reason = el('inboxReportReason').value.trim();
+    const cause = overlay.querySelector('input[name="inboxReportCause"]:checked')?.value;
+    const reason = el('inboxReportExplanation').value.trim();
+    const evidence = el('inboxReportEvidence').value.trim();
     const statusEl = el('inboxReportStatus');
+
     if (reason.length < 10) {
       statusEl.className = 'status error';
-      statusEl.textContent = 'Please write at least 10 characters.';
+      statusEl.textContent = 'Please write at least 10 characters explaining what happened.';
       return;
     }
+
     const btn = el('inboxReportSubmit');
     btn.disabled = true;
+    statusEl.textContent = '';
     try {
-      await client.reportSession(conv.session.id, reason);
+      await client.reportSession(conv.session.id, { cause, reason, evidence });
       setConvState(conv.session.id, { reported: true });
+      closeReportModal();
       renderList();
       renderThreadPane();
     } catch (err) {

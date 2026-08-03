@@ -50,6 +50,18 @@ export const MAX_SESSION_MESSAGE_LENGTH = 2000;
 // pitch clears (MIN_REQUEST_MESSAGE_LENGTH above).
 export const MIN_REPORT_REASON_LENGTH = 10;
 export const MAX_REPORT_REASON_LENGTH = 1000;
+export const MAX_REPORT_EVIDENCE_LENGTH = 1000;
+
+// The picked reason on a report — validated server-side so a crafted
+// request can't store a `cause` the admin view has no label for. Kept in
+// sync by hand with `REPORT_CAUSE_LABELS` in web/views/inbox.js.
+export const REPORT_CAUSES = ['fraud', 'abuse', 'spam', 'sensitive', 'other'];
+
+// How long an admin has to actually look at a report (opening #admin marks
+// every pending one "seen") before the push-only alert escalates to email —
+// long enough that a missed push overnight isn't already an email by
+// morning, short enough that nothing sits unnoticed for more than two days.
+export const REPORT_ESCALATION_HOURS = 48;
 
 // The one non-real participant in the system: a fixed bot user + app +
 // listing (see migrations/0005_echo_test_conversation.sql) that echoes

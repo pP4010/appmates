@@ -145,6 +145,13 @@ export function serializeUser(user) {
   };
 }
 
+function adminEmailAllowlist(env) {
+  return (env.ADMIN_EMAILS || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
+
 /**
  * Whether this signed-in user may see/manage the admin inbox (promoted-slot
  * approvals today). A comma-separated allowlist in `env.ADMIN_EMAILS`
@@ -154,9 +161,23 @@ export function serializeUser(user) {
  */
 export function isAdmin(env, user) {
   if (!user) return false;
-  const allowlist = (env.ADMIN_EMAILS || '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  return allowlist.includes(user.email.toLowerCase());
+  return adminEmailAllowlist(env).includes(user.email.toLowerCase());
+}
+
+/** The `users.id` for every admin email that has actually signed in at
+ * least once — an allowlisted address with no `users` row yet (never
+ * verified a magic link) just resolves to nothing here, since there's no
+ * account to attach a push subscription to. Used by
+ * `notifyAdminsOfReportPush` (lib/push.js); the email escalation in
+ * `routes/reports.js` doesn't need this at all, since it mails the
+ * allowlist directly regardless of whether anyone's ever signed in. */
+export async function adminUserIds(env) {
+  const emails = adminEmailAllowlist(env);
+  if (!emails.length) return [];
+
+  const placeholders = emails.map(() => '?').join(',');
+  const { results } = await env.DB.prepare(`SELECT id FROM users WHERE lower(email) IN (${placeholders})`)
+    .bind(...emails)
+    .all();
+  return results.map((r) => r.id);
 }

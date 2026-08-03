@@ -215,9 +215,10 @@ export class CommunityClient {
   }
 
   /** Flags a conversation for manual review — invisible to the other
-   * party, changes nothing about the session itself. */
-  reportSession(id, reason) {
-    return this._request(`/test-sessions/${id}/report`, { method: 'POST', body: { reason } });
+   * party, changes nothing about the session itself. `cause` must be one
+   * of REPORT_CAUSE_LABELS' keys (views/inbox.js); `evidence` is optional. */
+  reportSession(id, { cause, reason, evidence }) {
+    return this._request(`/test-sessions/${id}/report`, { method: 'POST', body: { cause, reason, evidence } });
   }
 
   /** Server-side, unlike the Inbox's other per-conversation view state
