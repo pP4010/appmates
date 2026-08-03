@@ -16,6 +16,7 @@ import * as messages from './routes/messages.js';
 import * as itunes from './routes/itunes.js';
 import * as push from './routes/push.js';
 import * as reports from './routes/reports.js';
+import * as profile from './routes/profile.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -37,6 +38,9 @@ export default {
       if (path === '/auth/verify' && method === 'GET') return await auth.verify(request, env);
       if (path === '/auth/logout' && method === 'POST') return await auth.logout(request, env);
       if (path === '/auth/me' && method === 'GET') return await auth.me(request, env);
+
+      if (path === '/profile' && method === 'POST') return await profile.update(request, env);
+      if (path === '/profile/stats' && method === 'GET') return await profile.stats(request, env);
 
       if (path === '/apps' && method === 'POST') return await apps.create(request, env);
       if (path === '/apps/mine' && method === 'GET') return await apps.mine(request, env);

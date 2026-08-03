@@ -100,7 +100,7 @@ export async function getOrCreateUser(env, email) {
 
   const id = newId();
   await env.DB.prepare('INSERT INTO users (id, email) VALUES (?, ?)').bind(id, email).run();
-  return { id, email, display_name: null, token_balance: 0, banned_at: null };
+  return { id, email, display_name: null, bio: null, avatar_url: null, token_balance: 0, banned_at: null };
 }
 
 export async function createSession(env, userId) {
@@ -141,6 +141,8 @@ export function serializeUser(user) {
     id: user.id,
     email: user.email,
     displayName: user.display_name,
+    bio: user.bio ?? null,
+    avatarUrl: user.avatar_url ?? null,
     tokenBalance: user.token_balance,
   };
 }

@@ -12,6 +12,10 @@ export const MAX_FEEDBACK_LENGTH = 4000;
 export const MIN_REQUEST_MESSAGE_LENGTH = 20;
 export const MAX_REQUEST_MESSAGE_LENGTH = 1000;
 export const MAX_NAME_LENGTH = 80;
+// A profile bio ("what are you building or looking to test?") — short on
+// purpose, same reasoning as TrustMRR's own 180-character cap: long enough
+// to say something real, short enough it can't turn into a pitch deck.
+export const MAX_BIO_LENGTH = 180;
 
 // Below this many resolved sessions, a completion rate is noise, not a
 // signal — showing one anyway would read as a real score for a coin flip.
