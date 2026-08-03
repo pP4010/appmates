@@ -13,15 +13,20 @@ const LOOKUP_CACHE_TTL_SECONDS = 24 * 60 * 60;
 const SEARCH_CACHE_TTL_SECONDS = 4 * 60 * 60;
 
 /**
- * A server-side relay for two catalogue lookups the *landing page*
- * specifically needs — the promoted rail cards, the leaderboard's
- * self-promoted rows, and the "Feature your app here" dialog's live
- * search. Everywhere else in this project (`app.js`, `views/*.js`) still
- * calls Apple directly from the browser, unchanged — that's the "Nothing
- * uploaded. No account. No server." promise on the actual dashboard, and
- * it stays true there. The landing page never made that promise; it
- * already talks to this Worker for the community features, so relaying a
- * public, non-sensitive catalogue lookup through it too costs nothing.
+ * A server-side relay for catalogue lookups, used by every `ITunesClient` in
+ * this project once `community/` is deployed (see `itunesRelayOptions()` in
+ * `web/lib/community.js`, wired into both `app.js` and `landing.js`) — the
+ * dashboard's own search and overview, the promoted rail cards, the
+ * leaderboard's self-promoted rows, and the "Feature your app here" dialog's
+ * live search all go through here. A fresh clone with no `community/`
+ * backend deployed falls back to `ITunesClient`'s own defaults and calls
+ * Apple directly from the browser instead — that's what keeps the "Nothing
+ * uploaded. No account. No server." promise true for that deployment shape.
+ *
+ * `/lookup` must accept both ways `ITunesClient.lookup` identifies an app —
+ * a numeric `id` or a `bundleId` (e.g. `com.paolo.kaizen`) — since callers
+ * choose between the two based on what the user typed in, not on whether a
+ * relay is in the way.
  *
  * The reason this exists at all: Apple's endpoint is undocumented, and
  * whether it returns CORS headers for a direct browser request has
@@ -112,21 +117,36 @@ async function cachedFetch(ctx, cacheKeyUrl, ttlSeconds, fetchOrigin) {
 export async function lookup(request, env, ctx) {
   const url = new URL(request.url);
   const id = url.searchParams.get('id') || '';
+  const bundleId = url.searchParams.get('bundleId') || '';
   const country = COUNTRY_RE.test(url.searchParams.get('country') || '') ? url.searchParams.get('country') : 'us';
 
-  if (!/^\d+$/.test(id)) return error(env, request, 400, 'id must be numeric');
+  // Mirrors `ITunesClient.lookup` on the client (web/lib/itunes.js): a
+  // numeric `id` and a `bundleId` (e.g. `com.paolo.kaizen`) are both valid
+  // ways to identify an app, and the caller sends exactly one of them.
+  let subject;
+  let appleQuery;
+  if (/^\d+$/.test(id)) {
+    subject = id;
+    appleQuery = `id=${encodeURIComponent(id)}`;
+  } else if (bundleId) {
+    subject = bundleId;
+    appleQuery = `bundleId=${encodeURIComponent(bundleId)}`;
+  } else {
+    return error(env, request, 400, 'id must be numeric, or bundleId must be provided');
+  }
+
   if (!(await withinLimit(env, 'ITUNES_LOOKUP_LIMITER', request))) return tooManyRequests(env, request);
 
-  const cacheKeyUrl = `https://itunes-relay-cache.internal/lookup?id=${id}&country=${country.toLowerCase()}`;
+  const cacheKeyUrl = `https://itunes-relay-cache.internal/lookup?${appleQuery}&country=${country.toLowerCase()}`;
 
   try {
     const payload = await cachedFetch(ctx, cacheKeyUrl, LOOKUP_CACHE_TTL_SECONDS, () =>
-      fetchApple(`${LOOKUP_URL}?id=${encodeURIComponent(id)}&country=${country.toLowerCase()}`, id),
+      fetchApple(`${LOOKUP_URL}?${appleQuery}&country=${country.toLowerCase()}`, subject),
     );
     return json(env, request, payload);
   } catch (err) {
     if (!(err instanceof UpstreamError)) throw err;
-    console.error('itunes lookup upstream failure', { id, country, status: err.status, message: err.message });
+    console.error('itunes lookup upstream failure', { subject, country, status: err.status, message: err.message });
     return error(env, request, err.status, err.message);
   }
 }
