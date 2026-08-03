@@ -393,8 +393,13 @@ async function renderThreadPane() {
     const messages = await client.sessionMessages(conv.session.id);
     conv.messages = messages;
     conv.last = messages.length ? messages[messages.length - 1] : null;
-    renderMessages(messages);
+    // The user may have switched to a different conversation while this was
+    // in flight — `#inboxThreadMessages` now belongs to that other thread,
+    // so writing here would silently show this conversation's messages
+    // under the wrong header.
+    if (selectedId === conv.session.id) renderMessages(messages);
   } catch (err) {
+    if (selectedId !== conv.session.id) return;
     const host = el('inboxThreadMessages');
     if (host) host.innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
   }
@@ -414,8 +419,11 @@ async function renderThreadPane() {
       const messages = await client.sessionMessages(conv.session.id);
       conv.messages = messages;
       conv.last = messages.length ? messages[messages.length - 1] : null;
-      renderMessages(messages);
+      // Same stale-pane hazard as the initial load: don't overwrite another
+      // conversation's thread if the user has since switched away from this one.
+      if (selectedId === conv.session.id) renderMessages(messages);
     } catch (err) {
+      if (selectedId !== conv.session.id) return;
       statusEl.className = 'status error';
       statusEl.textContent = err.message;
     } finally {

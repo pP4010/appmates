@@ -86,8 +86,19 @@ function extractScreenshots(html) {
 const ID_RE = /^\d+$/;
 const COUNTRY_RE = /^[a-z]{2}$/;
 
+/** `key` is the client's IP — the only identity an unauthenticated route
+ * has. Missing binding (e.g. a `wrangler dev` run without `--remote`) fails
+ * open rather than breaking local development — mirrors `withinLimit` in
+ * `community/src/routes/itunes.js`. */
+async function withinLimit(env, request) {
+  const limiter = env.SCREENSHOT_LIMITER;
+  if (!limiter) return true;
+  const { success } = await limiter.limit({ key: request.headers.get('cf-connecting-ip') || 'unknown' });
+  return success;
+}
+
 export default {
-  async fetch(request, _env, ctx) {
+  async fetch(request, env, ctx) {
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: CORS_HEADERS });
     }
@@ -104,6 +115,13 @@ export default {
     const country = (url.searchParams.get('country') ?? 'us').toLowerCase();
     if (!ID_RE.test(id) || !COUNTRY_RE.test(country)) {
       return json({ error: 'id must be numeric; country must be a 2-letter code' }, { status: 400 });
+    }
+
+    if (!(await withinLimit(env, request))) {
+      return json(
+        { error: 'Too many requests to the screenshot relay. Wait a minute and try again.' },
+        { status: 429, headers: { 'retry-after': '60' } },
+      );
     }
 
     // Public data, keyed only by the two public inputs — a normal HTTP cache
