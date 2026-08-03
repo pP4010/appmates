@@ -19,6 +19,20 @@ export function el(id) {
  * so the two can never drift on what counts as a conversation. */
 export const MESSAGEABLE_STATUSES = new Set(['accepted', 'submitted', 'completed']);
 
+/** Picked cause on a conversation report, kept in sync by hand with
+ * `REPORT_CAUSES` in community/src/lib/config.js — the server validates
+ * against that array, not against these labels, so a mismatch here would
+ * just show the wrong words for a real value rather than break anything.
+ * Shared between `inbox.js` (the report dialog) and `admin.js` (the
+ * reports queue), so both always show the same label for the same cause. */
+export const REPORT_CAUSE_LABELS = {
+  fraud: 'Suspected fraud or fake test',
+  abuse: 'Abusive or inappropriate messages',
+  spam: 'Spam or unrelated content',
+  sensitive: 'Sharing sensitive information',
+  other: 'Other',
+};
+
 export function escapeHtml(value) {
   return String(value ?? '').replace(
     /[&<>"']/g,
