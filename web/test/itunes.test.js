@@ -136,3 +136,68 @@ test('different ids are cached separately', async () => {
   await c.fetchPageScreenshots(2, { country: 'us' });
   assert.equal(calls, 2);
 });
+
+/**
+ * `lookup` sends `id` for a numeric App Store id and `bundleId` for
+ * everything else (e.g. `com.paolo.kaizen`) — this is the split the
+ * community relay's `/itunes/lookup` route has to mirror.
+ */
+test('lookup sends id for a numeric App Store id', async () => {
+  let seenUrl;
+  const c = client({
+    fetchImpl: async (url) => {
+      seenUrl = url;
+      return okResponse({ results: [{ trackId: 123 }] });
+    },
+  });
+  await c.lookup('6768688178', { country: 'us' });
+  const url = new URL(seenUrl);
+  assert.equal(url.searchParams.get('id'), '6768688178');
+  assert.equal(url.searchParams.has('bundleId'), false);
+});
+
+test('lookup sends bundleId for a non-numeric app id', async () => {
+  let seenUrl;
+  const c = client({
+    fetchImpl: async (url) => {
+      seenUrl = url;
+      return okResponse({ results: [{ trackId: 123 }] });
+    },
+  });
+  await c.lookup('com.paolo.kaizen', { country: 'us' });
+  const url = new URL(seenUrl);
+  assert.equal(url.searchParams.get('bundleId'), 'com.paolo.kaizen');
+  assert.equal(url.searchParams.has('id'), false);
+});
+
+test('lookup falls back to lookupFallbackUrl when the primary lookup fails', async () => {
+  const seenUrls = [];
+  const c = new ITunesClient({
+    cache: new ResponseCache(fakeStorage()),
+    minInterval: 0,
+    lookupUrl: 'https://relay.example/itunes/lookup',
+    lookupFallbackUrl: 'https://itunes.apple.com/lookup',
+    fetchImpl: async (url) => {
+      seenUrls.push(url);
+      if (url.startsWith('https://relay.example')) return { ok: false, status: 502, json: async () => ({}) };
+      return okResponse({ results: [{ trackId: 6782585843, bundleId: 'com.paolo.rebuildapp' }] });
+    },
+  });
+  const result = await c.lookup('com.paolo.rebuildapp', { country: 'us' });
+  assert.equal(result.trackId, 6782585843);
+  assert.equal(seenUrls.length, 2);
+  assert.match(seenUrls[0], /^https:\/\/relay\.example/);
+  assert.match(seenUrls[1], /^https:\/\/itunes\.apple\.com/);
+});
+
+test('lookup does not retry when no distinct fallback is configured', async () => {
+  let calls = 0;
+  const c = client({
+    fetchImpl: async () => {
+      calls += 1;
+      return { ok: false, status: 502, json: async () => ({}) };
+    },
+  });
+  await assert.rejects(() => c.lookup('com.paolo.kaizen', { country: 'us' }));
+  assert.equal(calls, 1);
+});

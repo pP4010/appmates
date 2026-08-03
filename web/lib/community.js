@@ -8,7 +8,7 @@
  * here ever touches localStorage/sessionStorage with anything sensitive.
  */
 
-import { SEARCH_URL as APPLE_SEARCH_URL } from './itunes.js';
+import { SEARCH_URL as APPLE_SEARCH_URL, LOOKUP_URL as APPLE_LOOKUP_URL } from './itunes.js';
 
 export class CommunityError extends Error {
   constructor(message, status) {
@@ -34,19 +34,20 @@ export const COMMUNITY_API_URL = 'https://launchpilot-community.kaizenapp-contac
  * to `ITunesClient`'s own defaults (direct to Apple) when no backend is
  * configured, same as every other community feature.
  *
- * `searchFallbackUrl` is set explicitly to Apple's own endpoint even
- * though that's `ITunesClient`'s default anyway: Apple rate-limits
- * `/search` per source IP, and the relay's IP is Cloudflare's shared
- * Workers egress range — observed rate-limited for stretches longer than
- * a single retry, independent of anything this app did. `/lookup` has
- * shown no such trouble, so it gets no fallback; a search that fails
- * through the relay retries once, straight against Apple, rather than
- * failing outright while the relay's shared IP is in that state.
+ * `searchFallbackUrl`/`lookupFallbackUrl` are set explicitly to Apple's own
+ * endpoints even though that's `ITunesClient`'s default anyway: both relay
+ * routes have been observed returning a transient failure for stretches
+ * longer than a single retry — `/search` from Apple's per-IP rate limit on
+ * the relay's shared Cloudflare egress range, `/lookup` from an occasional
+ * transient 5xx — independent of anything this app did. A relay call that
+ * fails retries once, straight against Apple, rather than failing outright
+ * while the relay is in that state.
  */
 export function itunesRelayOptions() {
   if (!COMMUNITY_API_URL) return {};
   return {
     lookupUrl: `${COMMUNITY_API_URL}/itunes/lookup`,
+    lookupFallbackUrl: APPLE_LOOKUP_URL,
     searchUrl: `${COMMUNITY_API_URL}/itunes/search`,
     searchFallbackUrl: APPLE_SEARCH_URL,
   };
