@@ -32,6 +32,31 @@ export function error(env, request, status, message) {
   return json(env, request, { error: message }, { status });
 }
 
+/**
+ * Wide-open CORS for the handful of routes that carry no session cookie and
+ * serve data that is public regardless of who asks (App Store catalogue
+ * lookups, approved promo slots) — unlike `corsHeaders`, this doesn't
+ * require `APP_ORIGIN` to exactly match wherever the landing page happens to
+ * be deployed. That match is easy to get wrong or leave stale, and the
+ * failure is silent: a browser CORS block on one of these routes doesn't
+ * throw an error a visitor (or a log) would surface, it just makes the
+ * requested data quietly not appear.
+ */
+export function publicJson(request, body, init = {}) {
+  return new Response(JSON.stringify(body), {
+    ...init,
+    headers: {
+      'content-type': 'application/json',
+      'access-control-allow-origin': '*',
+      ...init.headers,
+    },
+  });
+}
+
+export function publicError(request, status, message) {
+  return publicJson(request, { error: message }, { status });
+}
+
 const SESSION_COOKIE = 'lp_session';
 
 export function readSessionToken(request) {

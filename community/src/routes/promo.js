@@ -1,4 +1,4 @@
-import { json, error, newId } from '../lib/http.js';
+import { json, error, publicJson, newId } from '../lib/http.js';
 import { currentUser, isValidEmail, isAdmin } from '../lib/auth.js';
 import { isValidMessage } from '../lib/validate.js';
 import {
@@ -125,13 +125,19 @@ export async function adminReview(request, env, id, action) {
  * promoted rail cards. Shaped exactly like `RAIL_LEFT`/`RAIL_RIGHT` in
  * `web/landing-demo.js` (`trackId`/`name`/`color`/`country`) so
  * `renderRails` in `web/landing.js` can merge these in directly.
+ *
+ * `publicJson`, not `json`: this route carries no session cookie
+ * (`CommunityClient.featuredPromoSlots()` requests it with
+ * `credentials: 'omit'`), so it can answer with a wildcard origin instead
+ * of one locked to `APP_ORIGIN` — the rail cards keep working even if the
+ * landing page isn't deployed to exactly that origin.
  */
 export async function featured(request, env) {
   const { results } = await env.DB.prepare(
     `SELECT track_id, app_name, color FROM promo_requests
      WHERE status = 'approved' ORDER BY reviewed_at DESC LIMIT 20`,
   ).all();
-  return json(env, request, {
+  return publicJson(request, {
     slots: results.map((r) => ({ trackId: r.track_id, name: r.app_name, color: r.color, country: 'us' })),
   });
 }

@@ -1,16 +1,21 @@
-import { json, error } from '../lib/http.js';
+import { publicJson as json, publicError as error } from '../lib/http.js';
 
 const LOOKUP_URL = 'https://itunes.apple.com/lookup';
 const SEARCH_URL = 'https://itunes.apple.com/search';
 const COUNTRY_RE = /^[a-z]{2}$/i;
 
 // `/lookup` is keyed by a fixed app id — the metadata behind it (name, icon,
-// description) changes rarely, so a day-long cache is cheap to keep fresh.
-// `/search` reflects live ranking and new releases, so it gets a shorter
-// window: still enough to absorb repeat searches for the same term within a
-// session, without the top results going stale for very long.
-const LOOKUP_CACHE_TTL_SECONDS = 24 * 60 * 60;
-const SEARCH_CACHE_TTL_SECONDS = 4 * 60 * 60;
+// description) changes rarely, so it is refreshed once a day but kept around
+// (and served stale) for a month past that if Apple can't be reached, rather
+// than turning a transient upstream hiccup into a name-only card on every
+// landing page using this relay. `/search` reflects live ranking and new
+// releases, so both windows are tighter: still enough to absorb repeat
+// searches for the same term, without a stale top-10 sticking around long
+// after Apple recovers.
+const LOOKUP_SOFT_TTL_SECONDS = 24 * 60 * 60;
+const LOOKUP_HARD_TTL_SECONDS = 30 * 24 * 60 * 60;
+const SEARCH_SOFT_TTL_SECONDS = 4 * 60 * 60;
+const SEARCH_HARD_TTL_SECONDS = 24 * 60 * 60;
 
 /**
  * A server-side relay for catalogue lookups, used by every `ITunesClient` in
@@ -81,9 +86,8 @@ async function withinLimit(env, bindingName, request) {
   return success;
 }
 
-function tooManyRequests(env, request) {
+function tooManyRequests(request) {
   return json(
-    env,
     request,
     { error: 'Too many requests to the App Store catalogue relay. Wait a minute and try again.' },
     { status: 429, headers: { 'retry-after': '60' } },
@@ -93,25 +97,42 @@ function tooManyRequests(env, request) {
 /**
  * Cache-API read-through, keyed by a synthetic same-origin URL so identical
  * query params always hit the same cache entry regardless of the caller's
- * actual request headers. Only ever stores a *successful* payload — an
- * `UpstreamError` propagates past this function untouched, so a transient
- * 403 or 5xx from Apple is never what gets served to the next caller.
+ * actual request headers.
+ *
+ * `softTtlSeconds` is when a cached answer is refreshed; `hardTtlSeconds` is
+ * how long it is still served if that refresh fails. The stored entry's own
+ * age is tracked separately from `Cache-Control`, which is set to the *hard*
+ * TTL — otherwise the Cache API would evict the entry at the soft TTL and
+ * there would be nothing left to fall back to right when a fallback is
+ * needed most. Only a successful `fetchOrigin()` ever updates the entry, so
+ * a transient 403 or 5xx from Apple never overwrites a good cached payload
+ * with nothing — it just leaves the existing one to keep serving.
  */
-async function cachedFetch(ctx, cacheKeyUrl, ttlSeconds, fetchOrigin) {
+async function cachedFetch(ctx, cacheKeyUrl, softTtlSeconds, hardTtlSeconds, fetchOrigin) {
   const cache = caches.default;
   const cacheKey = new Request(cacheKeyUrl, { method: 'GET' });
 
   const hit = await cache.match(cacheKey);
-  if (hit) return hit.json();
+  const entry = hit ? await hit.json() : null;
+  const ageSeconds = entry ? (Date.now() - entry.storedAt) / 1000 : Infinity;
 
-  const payload = await fetchOrigin();
+  if (entry && ageSeconds < softTtlSeconds) return entry.payload;
 
-  const toCache = new Response(JSON.stringify(payload), {
-    headers: { 'content-type': 'application/json', 'cache-control': `max-age=${ttlSeconds}` },
-  });
-  ctx.waitUntil(cache.put(cacheKey, toCache));
-
-  return payload;
+  try {
+    const payload = await fetchOrigin();
+    const toCache = new Response(JSON.stringify({ storedAt: Date.now(), payload }), {
+      headers: { 'content-type': 'application/json', 'cache-control': `max-age=${hardTtlSeconds}` },
+    });
+    ctx.waitUntil(cache.put(cacheKey, toCache));
+    return payload;
+  } catch (err) {
+    // Apple is unreachable or erroring right now. An entry that has aged
+    // past its soft TTL but not its hard one is still a far better answer
+    // than an upstream error surfacing as a name-only card on every site
+    // using this relay, for data that rarely changes to begin with.
+    if (entry && ageSeconds < hardTtlSeconds) return entry.payload;
+    throw err;
+  }
 }
 
 export async function lookup(request, env, ctx) {
@@ -132,22 +153,22 @@ export async function lookup(request, env, ctx) {
     subject = bundleId;
     appleQuery = `bundleId=${encodeURIComponent(bundleId)}`;
   } else {
-    return error(env, request, 400, 'id must be numeric, or bundleId must be provided');
+    return error(request, 400, 'id must be numeric, or bundleId must be provided');
   }
 
-  if (!(await withinLimit(env, 'ITUNES_LOOKUP_LIMITER', request))) return tooManyRequests(env, request);
+  if (!(await withinLimit(env, 'ITUNES_LOOKUP_LIMITER', request))) return tooManyRequests(request);
 
   const cacheKeyUrl = `https://itunes-relay-cache.internal/lookup?${appleQuery}&country=${country.toLowerCase()}`;
 
   try {
-    const payload = await cachedFetch(ctx, cacheKeyUrl, LOOKUP_CACHE_TTL_SECONDS, () =>
+    const payload = await cachedFetch(ctx, cacheKeyUrl, LOOKUP_SOFT_TTL_SECONDS, LOOKUP_HARD_TTL_SECONDS, () =>
       fetchApple(`${LOOKUP_URL}?${appleQuery}&country=${country.toLowerCase()}`, subject),
     );
-    return json(env, request, payload);
+    return json(request, payload);
   } catch (err) {
     if (!(err instanceof UpstreamError)) throw err;
     console.error('itunes lookup upstream failure', { subject, country, status: err.status, message: err.message });
-    return error(env, request, err.status, err.message);
+    return error(request, err.status, err.message);
   }
 }
 
@@ -158,8 +179,8 @@ export async function search(request, env, ctx) {
   const limitParam = Number(url.searchParams.get('limit'));
   const limit = Number.isInteger(limitParam) && limitParam > 0 && limitParam <= 200 ? limitParam : 50;
 
-  if (!term.trim()) return error(env, request, 400, 'term is required');
-  if (!(await withinLimit(env, 'ITUNES_SEARCH_LIMITER', request))) return tooManyRequests(env, request);
+  if (!term.trim()) return error(request, 400, 'term is required');
+  if (!(await withinLimit(env, 'ITUNES_SEARCH_LIMITER', request))) return tooManyRequests(request);
 
   const query = new URLSearchParams({
     term,
@@ -170,13 +191,13 @@ export async function search(request, env, ctx) {
   const cacheKeyUrl = `https://itunes-relay-cache.internal/search?${query}`;
 
   try {
-    const payload = await cachedFetch(ctx, cacheKeyUrl, SEARCH_CACHE_TTL_SECONDS, () =>
+    const payload = await cachedFetch(ctx, cacheKeyUrl, SEARCH_SOFT_TTL_SECONDS, SEARCH_HARD_TTL_SECONDS, () =>
       fetchApple(`${SEARCH_URL}?${query}`, term),
     );
-    return json(env, request, payload);
+    return json(request, payload);
   } catch (err) {
     if (!(err instanceof UpstreamError)) throw err;
     console.error('itunes search upstream failure', { term, country, limit, status: err.status, message: err.message });
-    return error(env, request, err.status, err.message);
+    return error(request, err.status, err.message);
   }
 }
