@@ -63,7 +63,7 @@ export class CommunityClient {
     return Boolean(this.baseUrl);
   }
 
-  async _request(path, { method = 'GET', body } = {}) {
+  async _request(path, { method = 'GET', body, credentials = 'include' } = {}) {
     if (!this.baseUrl) {
       throw new CommunityError('Community features are not configured on this deployment yet.');
     }
@@ -72,7 +72,7 @@ export class CommunityClient {
     try {
       response = await this.fetchImpl(`${this.baseUrl}${path}`, {
         method,
-        credentials: 'include',
+        credentials,
         headers: body !== undefined ? { 'content-type': 'application/json' } : undefined,
         body: body !== undefined ? JSON.stringify(body) : undefined,
       });
@@ -285,9 +285,16 @@ export class CommunityClient {
 
   /** Public: the approved promo requests a landing page can render as
    * promoted rail cards, shaped exactly like `RAIL_LEFT`/`RAIL_RIGHT` in
-   * `landing-demo.js` so `renderRails` can merge these in directly. */
+   * `landing-demo.js` so `renderRails` can merge these in directly.
+   *
+   * `credentials: 'omit'` — this route needs no session and never reads
+   * one, so the request stays uncredentialed on purpose. That lets the
+   * Worker answer with a wildcard `Access-Control-Allow-Origin` instead of
+   * one locked to `APP_ORIGIN` (see `community/src/lib/http.js`), which
+   * means this card data keeps working even on a landing page deployed to
+   * a different origin than the one `APP_ORIGIN` happens to be set to. */
   featuredPromoSlots() {
-    return this._request('/promo/featured').then((d) => d.slots);
+    return this._request('/promo/featured', { credentials: 'omit' }).then((d) => d.slots);
   }
 
   tokens() {

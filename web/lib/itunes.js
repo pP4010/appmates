@@ -73,6 +73,20 @@ class ResponseCache {
     }
   }
 
+  /** Ignores the TTL entirely — used only as a last resort when a fresh
+   * request just failed, since a same-session answer that is merely old is
+   * still a better card than a name-only one for data that rarely changes. */
+  getStale(key) {
+    if (!this.storage) return null;
+    try {
+      const raw = this.storage.getItem(CACHE_PREFIX + key);
+      if (!raw) return null;
+      return JSON.parse(raw).payload;
+    } catch {
+      return null;
+    }
+  }
+
   set(key, payload) {
     if (!this.storage) return;
     try {
@@ -170,6 +184,8 @@ export class ITunesClient {
     try {
       response = await this.fetchImpl(`${url}?${query}`);
     } catch (err) {
+      const stale = this.cache?.getStale(key);
+      if (stale) return stale;
       throw new MarketDataError(
         `Could not reach the App Store catalogue: ${err.message}. Check your connection and try again.`,
       );
@@ -178,6 +194,8 @@ export class ITunesClient {
     }
 
     if (!response.ok) {
+      const stale = this.cache?.getStale(key);
+      if (stale) return stale;
       throw new MarketDataError(
         `The App Store catalogue returned ${response.status} for "${subject}". ` +
           'This endpoint rate-limits; wait a minute and try again.',
@@ -189,6 +207,8 @@ export class ITunesClient {
       payload = await response.json();
     } catch {
       // The endpoint answers throttled requests with a non-JSON body and a 200.
+      const stale = this.cache?.getStale(key);
+      if (stale) return stale;
       throw new MarketDataError(
         `The App Store catalogue returned an unreadable response for "${subject}". ` +
           'This usually means rate limiting; wait a minute and try again.',
@@ -252,26 +272,28 @@ export class ITunesClient {
   /**
    * Fetch one app by numeric App Store id or by bundle id.
    *
-   * `country` is always sent. Whether Apple's lookup endpoint returns CORS
-   * headers for `?id=X` alone versus `?id=X&country=us` has flipped more
-   * than once during this project — sending both params is the safer bet
-   * either way, and callers who can't afford to be at the mercy of that
-   * (the landing page) route around it entirely via `lookupUrl`.
+   * `country` is only omitted for a numeric id sent straight to Apple
+   * (`?id=X` keeps CORS headers; `?id=X&country=us` drops them entirely —
+   * see `web/README.md`). That quirk only matters to a *browser* fetch, so
+   * it only applies on the direct-to-Apple leg — the relay leg is
+   * server-to-server and has no CORS story to break, so it keeps sending
+   * `country` for the storefront-correct result.
    */
   async lookup(appId, { country = 'us' } = {}) {
     const isNumericId = /^\d+$/.test(appId);
-    const params = isNumericId
-      ? { id: appId, country: country.toLowerCase() }
-      : { bundleId: appId, country: country.toLowerCase() };
+    const paramsFor = (destinationUrl) => {
+      if (!isNumericId) return { bundleId: appId, country: country.toLowerCase() };
+      return destinationUrl === LOOKUP_URL ? { id: appId } : { id: appId, country: country.toLowerCase() };
+    };
 
     try {
-      const payload = await this.get(this.lookupUrl, params, { subject: appId });
+      const payload = await this.get(this.lookupUrl, paramsFor(this.lookupUrl), { subject: appId });
       return payload.results?.[0] ?? null;
     } catch (err) {
       // No distinct fallback configured (fresh clone, direct-to-Apple
       // already) — nothing left to retry against.
       if (this.lookupUrl === this.lookupFallbackUrl) throw err;
-      const payload = await this.get(this.lookupFallbackUrl, params, { subject: appId });
+      const payload = await this.get(this.lookupFallbackUrl, paramsFor(this.lookupFallbackUrl), { subject: appId });
       return payload.results?.[0] ?? null;
     }
   }
