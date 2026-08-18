@@ -129,47 +129,61 @@
           deliberately per territory.
         </p>
 
-        <div class="callout">
-          <strong>Connect your real App Store Connect data, in four steps:</strong>
-          <ol style="margin:.6rem 0 0; padding-left:1.3rem; line-height:1.7">
-            <li>Generate a key in App Store Connect → <strong>Users and Access → Integrations →
-              Team Keys</strong>. Give it the <strong>App Manager</strong> role — enough to read
-              and edit listings, short of full Admin access.</li>
-            <li>Save the downloaded <code>.p8</code> file somewhere outside any git repository —
-              e.g. <code>~/.appstoreconnect/private_keys/</code> — and run <code>chmod 600</code>
-              on it.</li>
-            <li>Copy <code>.env.example</code> to <code>.env</code> in the CLI's folder and fill in
-              the Key ID, Issuer ID and the path to that file.</li>
-            <li>Run <code>appmates asc pull &lt;bundle id&gt; --out listing.json</code>, then paste
-              the file's contents into the box below.</li>
-          </ol>
-        </div>
         <p class="lead">
           Subtitle, promotional text, the keyword field and real per-territory prices are
-          <strong>never public</strong> — no catalogue lookup can show them, which is why this
-          step exists at all. Importing fills every field below and Pricing's current-price
-          column, all at once.
+          <strong>never public</strong> — no catalogue lookup can show them, which is why the
+          step below exists at all. Importing fills every field on this page and Pricing's
+          current-price column, all at once.
         </p>
-        <p class="note">
-          <strong>Your private key never leaves your machine.</strong> It signs a short-lived
-          request token locally; only that token goes to Apple, straight from your computer. This
-          dashboard never talks to Apple and never sees the key — it only reads whatever you
-          paste into the box below, the same as any other text typed into this page. Full detail:
-          the CLI's <code>README.md</code>, section "<code>asc</code> — App Store Connect,
-          optional".
-        </p>
-        <div class="form-grid" style="grid-template-columns:1fr">
-          <label for="lnAscInput">Output of <code>appmates asc pull</code> (JSON)</label>
-          <textarea id="lnAscInput" rows="4" placeholder='{"locales": [...], "current_prices": [...]}'></textarea>
-        </div>
-        <div class="toolbar">
-          <div class="field" style="flex:1;min-width:12rem">
-            <label for="lnAscLocale">Locale to import</label>
-            <select id="lnAscLocale"></select>
+
+        <div class="asc-connect">
+          <div class="callout">
+            <strong>Connect your real App Store Connect data, in four steps:</strong>
+            <ol style="margin:.6rem 0 0; padding-left:1.3rem; line-height:1.7">
+              <li>Generate a key in App Store Connect → <strong>Users and Access → Integrations →
+                Team Keys</strong>. Give it the <strong>App Manager</strong> role — enough to read
+                and edit listings, short of full Admin access.</li>
+              <li>Save the downloaded <code>.p8</code> file somewhere outside any git repository —
+                e.g. <code>~/.appstoreconnect/private_keys/</code> — and run <code>chmod 600</code>
+                on it.</li>
+              <li>Copy <code>.env.example</code> to <code>.env</code> in the CLI's folder and fill in
+                the Key ID, Issuer ID and the path to that file.</li>
+              <li>Run <code>appmates asc pull &lt;bundle id&gt; --out listing.json</code>, then paste
+                the file's contents into the box on the right.</li>
+            </ol>
+            <p class="note" style="margin:.85rem 0 .35rem">
+              Not sure how to do this yourself? Copy this into your coding assistant (Claude Code,
+              Cursor, ...) — it has everything it needs to walk you through it:
+            </p>
+            <div class="prompt-copy-row">
+              <code id="ascPromptText">Help me connect my AppMates dashboard to my real App Store Connect data: walk me through generating an API key in App Store Connect (Users and Access → Integrations → Team Keys, App Manager role), saving the .p8 file securely outside my repo, filling in the appmates CLI's .env file with the key id, issuer id and private key path, then running &quot;appmates asc pull &lt;my bundle id&gt; --out listing.json&quot; so I can paste the result into the dashboard.</code>
+              <button type="button" id="ascPromptCopy" class="copy-btn" title="Copy prompt for your AI assistant" aria-label="Copy prompt for your AI assistant">⧉</button>
+            </div>
           </div>
-          <button id="lnAscImport" class="primary">Import</button>
+
+          <div class="asc-connect-form">
+            <div class="form-grid" style="grid-template-columns:1fr">
+              <label for="lnAscInput">Output of <code>appmates asc pull</code> (JSON)</label>
+              <textarea id="lnAscInput" rows="7" placeholder='{"locales": [...], "current_prices": [...]}'></textarea>
+            </div>
+            <div class="toolbar">
+              <div class="field" style="flex:1;min-width:12rem">
+                <label for="lnAscLocale">Locale to import</label>
+                <select id="lnAscLocale"><option value="" disabled selected>Paste JSON above first</option></select>
+              </div>
+              <button id="lnAscImport" class="primary">Import</button>
+            </div>
+            <div id="lnAscStatus" class="status"></div>
+            <p class="note">
+              <strong>Your private key never leaves your machine.</strong> It signs a short-lived
+              request token locally; only that token goes to Apple, straight from your computer.
+              This dashboard never talks to Apple and never sees the key — it only reads whatever
+              you paste into the box above, the same as any other text typed into this page. Full
+              detail: the CLI's <code>README.md</code>, section "<code>asc</code> — App Store
+              Connect, optional".
+            </p>
+          </div>
         </div>
-        <div id="lnAscStatus" class="status"></div>
 
         <div class="tabs" role="tablist" style="margin-top:2rem">
           <button class="tab active" role="tab" aria-selected="true" data-tab="screenshots">Screenshots</button>
