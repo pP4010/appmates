@@ -23,8 +23,8 @@ let activeFilter = 'main';
 // see below); adding them for a single browser's convenience isn't worth a
 // migration. The tradeoff is the same one already made for "seen": none of
 // this follows you to a second device.
-const SEEN_PREFIX = 'launchpilot:inbox:seen:';
-const STATE_PREFIX = 'launchpilot:inbox:state:';
+const SEEN_PREFIX = 'appmates:inbox:seen:';
+const STATE_PREFIX = 'appmates:inbox:state:';
 
 function seenId(sessionId) {
   try {

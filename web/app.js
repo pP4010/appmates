@@ -25,6 +25,7 @@ import { initMarkets } from './views/markets.js';
 import { initCompetitors } from './views/competitors.js';
 import { initRank } from './views/rank.js';
 import { initTesters } from './views/testers.js';
+import { initLaunch } from './views/launch.js';
 import { initSpecs } from './views/specs.js';
 import { initOverview, selectedApp, loadApp } from './views/overview.js';
 import { initFavoritesTray } from './views/favorites-tray.js';
@@ -39,16 +40,7 @@ import { CommunityClient, itunesRelayOptions } from './lib/community.js';
  * to overview. */
 const VIEWS = {
   overview: ['Overview', 'Your app, and what is left to fix'],
-  screenshots: ['Screenshots', 'Validate and repair store assets'],
-  keywords: ['Keyword field', 'Audit the 100 characters nobody sees'],
-  metadata: ['Listing text', 'Field limits for both stores'],
-  readiness: ['Readiness', 'One go/no-go answer, composed from what you have entered'],
-  pricing: ['Pricing', 'Suggested prices per storefront, from one base price'],
-  niche: ['Niche', 'Is this market worth entering?'],
-  markets: ['Markets', 'Which storefront is it winnable in?'],
-  competitors: ['Competitors', 'Who holds the term, and how they present'],
-  rank: ['Rank', 'Your position per keyword, tracked locally'],
-  testers: ['Play testers', 'The 12-for-14-days production gate'],
+  launch: ['Ready for launch', 'Prepare, research and track — one page, real App Store Connect data'],
   inbox: ['Inbox', 'Every conversation, in one place'],
   community: ['Get testers', 'Real closed testers, and real users at launch'],
   specs: ['Specs', 'The bundled catalogue and its provenance'],
@@ -142,6 +134,7 @@ async function boot() {
   initCompetitors(client);
   initRank(client);
   initTesters();
+  initLaunch();
   initSpecs(specs);
   initOverview(client, { onAppChange: refreshAppCard });
   refreshAppCard();

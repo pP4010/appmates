@@ -38,7 +38,7 @@ export const SCREENSHOT_RELAY_URL = 'https://launchpilot-screenshot-relay.kaizen
 export const MIN_REQUEST_INTERVAL_MS = 1200;
 
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
-const CACHE_PREFIX = 'launchpilot:itunes:';
+const CACHE_PREFIX = 'appmates:itunes:';
 
 /** Page sizes to fall back through when the full response cannot be fetched. */
 const FALLBACK_LIMITS = [150, 100, 50];

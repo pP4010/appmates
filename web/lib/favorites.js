@@ -7,7 +7,7 @@
  * `loadApp` without translation.
  */
 
-const STORAGE_KEY = 'launchpilot:favorites';
+const STORAGE_KEY = 'appmates:favorites';
 
 const listeners = new Set();
 
