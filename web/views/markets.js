@@ -1,7 +1,7 @@
 /** Which storefront a term is actually winnable in. */
 
 import { scanMarkets, defaultStorefronts } from '../lib/market.js';
-import { el, empty, escapeHtml, pill, ring, tablePanel, withStatus } from './shared.js';
+import { el, empty, escapeHtml, flagEmoji, pill, ring, tablePanel, withStatus } from './shared.js';
 
 const TONE = { open: 'ok', contested: 'warn', locked: 'bad' };
 
@@ -42,7 +42,7 @@ function render(report) {
   const rows = report.ranked.map((result) => {
     if (!result.report) {
       return [
-        { html: `<span class="muted">${escapeHtml(result.countryName)}</span>` },
+        { html: `<span class="muted">${flagEmoji(result.country)} ${escapeHtml(result.countryName)}</span>` },
         { html: `<span class="muted">${result.country.toUpperCase()}</span>` },
         { html: '<span class="muted">—</span>', num: true },
         { html: pill('no data', 'neutral') },
@@ -51,7 +51,7 @@ function render(report) {
     }
     const depth = result.report.signals.find((s) => s.code === 'COMPETITIVE_DEPTH')?.observed ?? 0;
     return [
-      { html: `<strong>${escapeHtml(result.countryName)}</strong>` },
+      { html: `<strong>${flagEmoji(result.country)} ${escapeHtml(result.countryName)}</strong>` },
       { html: `<span class="muted mono">${result.country.toUpperCase()}</span>` },
       { html: ring(result.report.winnability, { size: 34, stroke: 3.5, thresholds: [60, 35] }), tight: true },
       { html: pill(result.report.verdict, TONE[result.report.verdict]) },
