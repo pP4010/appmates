@@ -25,7 +25,7 @@ import { initMarkets } from './views/markets.js';
 import { initCompetitors } from './views/competitors.js';
 import { initRank } from './views/rank.js';
 import { initTesters } from './views/testers.js';
-import { initLaunch } from './views/launch.js';
+import { initPrepare, initResearch, initTrack } from './views/launch.js';
 import { initSpecs } from './views/specs.js';
 import { initOverview, selectedApp, loadApp } from './views/overview.js';
 import { initFavoritesTray } from './views/favorites-tray.js';
@@ -40,7 +40,9 @@ import { CommunityClient, itunesRelayOptions } from './lib/community.js';
  * to overview. */
 const VIEWS = {
   overview: ['Overview', 'Your app, and what is left to fix'],
-  launch: ['Ready for launch', 'Prepare, research and track — one page, real App Store Connect data'],
+  prepare: ['Prepare', 'Fix what a store would reject — with real App Store Connect data'],
+  research: ['Research', 'Is this market worth entering, and where'],
+  track: ['Track', 'Your rank over time, and the Play testers gate'],
   inbox: ['Inbox', 'Every conversation, in one place'],
   community: ['Get testers', 'Real closed testers, and real users at launch'],
   specs: ['Specs', 'The bundled catalogue and its provenance'],
@@ -134,7 +136,9 @@ async function boot() {
   initCompetitors(client);
   initRank(client);
   initTesters();
-  initLaunch();
+  initPrepare();
+  initResearch();
+  initTrack();
   initSpecs(specs);
   initOverview(client, { onAppChange: refreshAppCard });
   refreshAppCard();

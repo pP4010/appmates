@@ -1083,13 +1083,6 @@ body:has(#view-inbox.active) .content {
 }
 .tab.active .tab-count { color: var(--accent); }
 
-/* #view-launch's own two-level tabs (see app.html and views/launch.js):
-   the group row (Prepare/Research/Track) reuses .tabs/.tab as-is; each
-   group's own sub-tab row is one of three, only one shown at a time. */
-#launchGroupTabs .tab { font-size: .95rem; }
-.launch-subtabs { display: none; }
-.launch-subtabs.active { display: block; }
-
 /* A listing card carries the same shape of headline metrics a marketplace
    puts on a for-sale card — except every number here is recomputed from the
    public catalogue when you look at it, never typed in by the person who

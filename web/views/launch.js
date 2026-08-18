@@ -1,112 +1,83 @@
 /**
- * "Ready for launch" — Prepare, Research and Track, together on one page.
+ * Prepare / Research / Track — each its own page, own sidebar link, own set
+ * of tool tabs inside.
  *
- * Used to be three always-visible sidebar sections spelling out ten tools by
- * name; that made the sidebar the least scannable part of the app. Every
- * tool still exists, unchanged — this file only switches which one is
- * visible. Each tool's own `init*()` (initScreenshots, initKeywords, ...)
- * is still called once at boot in app.js exactly as before: they only ever
- * read elements by id, so nesting those ids one level deeper here changes
- * nothing for them.
+ * Each used to spell out its own tools as separate always-visible sidebar
+ * links (five for Prepare alone). Every tool still exists, completely
+ * unchanged — none of its own logic moved. This file only switches which
+ * tab is visible within a page. Each tool's own `init*()` (initScreenshots,
+ * initKeywords, ...) is still called once at boot in app.js exactly as
+ * before: they only ever read elements by id, so nesting those ids one
+ * level deeper here changes nothing for them.
  *
- * Also owns "Import from App Store Connect" — the paste box that fills
- * Listing text, the Keyword field, and Pricing's current-price column from
- * `appmates asc pull`'s output in one action. Nothing here talks to Apple:
- * it only ever reads what was already pasted in, the same trust boundary as
- * any other text typed into this page.
+ * Also owns "Import from App Store Connect" — the paste box on Prepare that
+ * fills Listing text, the Keyword field, and Pricing's current-price column
+ * from `appmates asc pull`'s output in one action. Nothing here talks to
+ * Apple: it only ever reads what was already pasted in, the same trust
+ * boundary as any other text typed into this page.
  */
 
 import { setCurrentPrices } from '../lib/pricing.js';
 import { el, escapeHtml } from './shared.js';
 
-/** Which tool belongs to which top-level group, and the order sub-tabs
- * render in — the single source of truth `selectGroup` and the HTML's own
- * `data-tab` attributes both have to agree with. */
-const GROUPS = {
-  prepare: ['screenshots', 'keywords', 'metadata', 'readiness', 'pricing'],
-  research: ['niche', 'markets', 'competitors'],
-  track: ['rank', 'testers'],
-};
+/**
+ * Wires one page's `.tabs` bar to show/hide its tools, remembering the
+ * last-picked tab in localStorage so a reload (or coming back later)
+ * doesn't reset to the first one.
+ */
+function initTabBar(sectionId, tabs, storageKey) {
+  const section = document.getElementById(sectionId);
+  const buttons = [...section.querySelectorAll(':scope > .tabs .tab')];
 
-const STORAGE_KEY = 'appmates:launch-tab';
+  const select = (tab) => {
+    for (const b of buttons) {
+      const active = b.dataset.tab === tab;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-selected', String(active));
+    }
+    for (const t of tabs) {
+      document.getElementById(`view-${t}`)?.classList.toggle('active', t === tab);
+    }
+    try {
+      localStorage.setItem(storageKey, tab);
+    } catch {
+      /* the tab still switches; it just won't be remembered next visit */
+    }
+  };
 
-export function initLaunch() {
-  document.querySelectorAll('#launchGroupTabs .tab').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const group = btn.dataset.group;
-      selectGroup(group);
-      // Switching group alone picks no tool to show — go to whichever
-      // sub-tab is already marked active within that group's own bar (it
-      // stays marked even while hidden), defaulting to the first.
-      const current =
-        document.querySelector(`.launch-subtabs[data-group="${group}"] .tab.active`)?.dataset.tab ??
-        GROUPS[group][0];
-      selectTab(group, current);
-      remember(group, current);
-    });
-  });
-  document.querySelectorAll('.launch-subtabs .tab').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const group = btn.closest('.launch-subtabs').dataset.group;
-      selectTab(group, btn.dataset.tab);
-      remember(group, btn.dataset.tab);
-    });
-  });
+  for (const b of buttons) b.addEventListener('click', () => select(b.dataset.tab));
 
-  const saved = restoreSaved();
-  selectGroup(saved.group);
-  selectTab(saved.group, saved.tab);
-
-  initAscImport();
-}
-
-function restoreSaved() {
+  let saved = null;
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
-    if (saved?.group in GROUPS && GROUPS[saved.group].includes(saved.tab)) return saved;
+    saved = localStorage.getItem(storageKey);
   } catch {
-    /* fall through to the default below */
+    /* falls through to the default below */
   }
-  return { group: 'prepare', tab: 'screenshots' };
+  select(tabs.includes(saved) ? saved : tabs[0]);
+
+  return select;
 }
 
-function remember(group, tab) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ group, tab }));
-  } catch {
-    /* the tab still switches; it just won't be remembered next visit */
-  }
+export function initPrepare() {
+  const select = initTabBar(
+    'view-prepare',
+    ['screenshots', 'keywords', 'metadata', 'readiness', 'pricing'],
+    'appmates:prepare-tab',
+  );
+  initAscImport(select);
 }
 
-function selectGroup(group) {
-  document
-    .querySelectorAll('#launchGroupTabs .tab')
-    .forEach((b) => setActive(b, b.dataset.group === group));
-  document
-    .querySelectorAll('.launch-subtabs')
-    .forEach((el) => el.classList.toggle('active', el.dataset.group === group));
+export function initResearch() {
+  initTabBar('view-research', ['niche', 'markets', 'competitors'], 'appmates:research-tab');
 }
 
-function selectTab(group, tab) {
-  document
-    .querySelectorAll(`.launch-subtabs[data-group="${group}"] .tab`)
-    .forEach((b) => setActive(b, b.dataset.tab === tab));
-  // Tab ids are unique across every group, so activating the chosen one and
-  // deactivating every other tool's panel is enough regardless of which
-  // group each belongs to.
-  for (const t of Object.values(GROUPS).flat()) {
-    document.getElementById(`view-${t}`)?.classList.toggle('active', t === tab);
-  }
-}
-
-function setActive(button, active) {
-  button.classList.toggle('active', active);
-  button.setAttribute('aria-selected', String(active));
+export function initTrack() {
+  initTabBar('view-track', ['rank', 'testers'], 'appmates:track-tab');
 }
 
 /* ============================ ASC import ============================ */
 
-function initAscImport() {
+function initAscImport(selectPrepareTab) {
   el('lnAscInput').addEventListener('input', () => {
     const doc = parseAscPaste(el('lnAscInput').value);
     populateAscLocaleSelect(doc?.locales ?? []);
@@ -164,11 +135,8 @@ function initAscImport() {
       locale.locale ?? '',
     )}" into Listing text and the Keyword field${priceNote}.${liveNote}</div>`;
 
-    // The import is worth seeing land, not just the status line: jump to
-    // the tab it just filled.
-    selectGroup('prepare');
-    selectTab('prepare', 'metadata');
-    remember('prepare', 'metadata');
+    // The import is worth seeing land, not just the status line.
+    selectPrepareTab('metadata');
   });
 }
 
