@@ -110,6 +110,26 @@
 
         <div id="ovStatus" class="status"></div>
         <div id="ovResults"></div>
+
+        <h3 style="margin-top:2rem">Import from App Store Connect</h3>
+        <p class="lead">
+          Subtitle, promotional text and the keyword field are never public — the catalogue
+          above cannot show them. Run <code>appmates asc pull &lt;bundle id&gt;</code> locally
+          (your key never leaves your machine — see the CLI's README) and paste its output here
+          to fill Listing text, the Keyword field, and current prices in Pricing, all at once.
+        </p>
+        <div class="form-grid" style="grid-template-columns:1fr">
+          <label for="ovAscInput">Output of <code>appmates asc pull</code> (JSON)</label>
+          <textarea id="ovAscInput" rows="4" placeholder='{"locales": [...], "current_prices": [...]}'></textarea>
+        </div>
+        <div class="toolbar">
+          <div class="field" style="flex:1;min-width:12rem">
+            <label for="ovAscLocale">Locale to import</label>
+            <select id="ovAscLocale"></select>
+          </div>
+          <button id="ovAscImport" class="primary">Import</button>
+        </div>
+        <div id="ovAscStatus" class="status"></div>
       </section>
 
       <!-- ==================== screenshots ==================== -->
