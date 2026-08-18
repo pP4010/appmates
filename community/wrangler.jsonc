@@ -25,6 +25,19 @@
       "database_id": "04e0ab03-b954-40a5-8418-4d5d01a94568",
     },
   ],
+  // Durable, globally-replicated cache for the App Store catalogue relay
+  // (routes/itunes.js) — the Workers Cache API (`caches.default`) it used
+  // before is edge-local per-datacenter and best-effort, so an identical
+  // lookup from two visitors in different regions could each still hit
+  // Apple, and an entry could vanish with no eviction guarantee at all.
+  // KV replicates globally, so the first successful lookup anywhere serves
+  // every subsequent caller everywhere, for the entry's full TTL.
+  "kv_namespaces": [
+    {
+      "binding": "ITUNES_CACHE",
+      "id": "c1c265a398fe4a6d99288c2fb6ef43ba",
+    },
+  ],
   // Per-client-IP quotas on the two Apple catalogue relay routes
   // (routes/itunes.js) — the only routes anyone can hit unauthenticated at
   // volume. `period` is Cloudflare's own ceiling: only 10 or 60 (seconds)

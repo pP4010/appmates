@@ -44,9 +44,9 @@ const SEARCH_HARD_TTL_SECONDS = 24 * 60 * 60;
  * sign-in), so nothing stops a script that isn't our frontend from calling
  * them directly at volume — unlike a browser, it isn't held back by CORS
  * either. A per-IP `ratelimits` binding (wrangler.jsonc) caps that, and a
- * Cache API read-through in front of the Apple fetch means many callers
- * asking about the same app or term within the TTL cost Apple nothing
- * beyond the first.
+ * KV read-through in front of the Apple fetch means many callers asking
+ * about the same app or term within the TTL — from anywhere in the world,
+ * not just one Cloudflare datacenter — cost Apple nothing beyond the first.
  */
 
 /** Thrown by `fetchApple` so callers can turn a failure into a clean,
@@ -95,35 +95,41 @@ function tooManyRequests(request) {
 }
 
 /**
- * Cache-API read-through, keyed by a synthetic same-origin URL so identical
- * query params always hit the same cache entry regardless of the caller's
- * actual request headers.
+ * KV read-through, keyed by the same synthetic cache-key string every caller
+ * with identical query params produces.
+ *
+ * KV, not the Workers Cache API this used before: the Cache API is
+ * edge-local per-datacenter and best-effort (an entry can be evicted with
+ * no guarantee at all), so identical lookups from two visitors in different
+ * regions could each still hit Apple, independently, and either could come
+ * up empty right when Apple is having a bad moment. KV replicates globally,
+ * so the first successful lookup anywhere serves every caller everywhere
+ * for the rest of the entry's life — genuinely fewer calls to Apple, not
+ * just fewer from any one datacenter.
  *
  * `softTtlSeconds` is when a cached answer is refreshed; `hardTtlSeconds` is
- * how long it is still served if that refresh fails. The stored entry's own
- * age is tracked separately from `Cache-Control`, which is set to the *hard*
- * TTL — otherwise the Cache API would evict the entry at the soft TTL and
- * there would be nothing left to fall back to right when a fallback is
- * needed most. Only a successful `fetchOrigin()` ever updates the entry, so
- * a transient 403 or 5xx from Apple never overwrites a good cached payload
- * with nothing — it just leaves the existing one to keep serving.
+ * how long it is still served if that refresh fails. The KV entry itself is
+ * written with `expirationTtl: hardTtlSeconds` (so it is actually gone, not
+ * just soft-stale, once nobody could use it anyway); the soft/hard split is
+ * evaluated from `storedAt` inside the value. Only a successful
+ * `fetchOrigin()` ever overwrites the entry, so a transient 403 or 5xx from
+ * Apple never replaces a good cached payload with nothing — it just leaves
+ * the existing one to keep serving.
  */
-async function cachedFetch(ctx, cacheKeyUrl, softTtlSeconds, hardTtlSeconds, fetchOrigin) {
-  const cache = caches.default;
-  const cacheKey = new Request(cacheKeyUrl, { method: 'GET' });
-
-  const hit = await cache.match(cacheKey);
-  const entry = hit ? await hit.json() : null;
+async function cachedFetch(env, ctx, cacheKey, softTtlSeconds, hardTtlSeconds, fetchOrigin) {
+  const kv = env.ITUNES_CACHE;
+  const raw = kv ? await kv.get(cacheKey) : null;
+  const entry = raw ? JSON.parse(raw) : null;
   const ageSeconds = entry ? (Date.now() - entry.storedAt) / 1000 : Infinity;
 
   if (entry && ageSeconds < softTtlSeconds) return entry.payload;
 
   try {
     const payload = await fetchOrigin();
-    const toCache = new Response(JSON.stringify({ storedAt: Date.now(), payload }), {
-      headers: { 'content-type': 'application/json', 'cache-control': `max-age=${hardTtlSeconds}` },
-    });
-    ctx.waitUntil(cache.put(cacheKey, toCache));
+    if (kv) {
+      const value = JSON.stringify({ storedAt: Date.now(), payload });
+      ctx.waitUntil(kv.put(cacheKey, value, { expirationTtl: hardTtlSeconds }));
+    }
     return payload;
   } catch (err) {
     // Apple is unreachable or erroring right now. An entry that has aged
@@ -158,10 +164,10 @@ export async function lookup(request, env, ctx) {
 
   if (!(await withinLimit(env, 'ITUNES_LOOKUP_LIMITER', request))) return tooManyRequests(request);
 
-  const cacheKeyUrl = `https://itunes-relay-cache.internal/lookup?${appleQuery}&country=${country.toLowerCase()}`;
+  const cacheKey = `lookup:${appleQuery}&country=${country.toLowerCase()}`;
 
   try {
-    const payload = await cachedFetch(ctx, cacheKeyUrl, LOOKUP_SOFT_TTL_SECONDS, LOOKUP_HARD_TTL_SECONDS, () =>
+    const payload = await cachedFetch(env, ctx, cacheKey, LOOKUP_SOFT_TTL_SECONDS, LOOKUP_HARD_TTL_SECONDS, () =>
       fetchApple(`${LOOKUP_URL}?${appleQuery}&country=${country.toLowerCase()}`, subject),
     );
     return json(request, payload);
@@ -188,10 +194,10 @@ export async function search(request, env, ctx) {
     entity: 'software',
     limit: String(limit),
   });
-  const cacheKeyUrl = `https://itunes-relay-cache.internal/search?${query}`;
+  const cacheKey = `search:${query}`;
 
   try {
-    const payload = await cachedFetch(ctx, cacheKeyUrl, SEARCH_SOFT_TTL_SECONDS, SEARCH_HARD_TTL_SECONDS, () =>
+    const payload = await cachedFetch(env, ctx, cacheKey, SEARCH_SOFT_TTL_SECONDS, SEARCH_HARD_TTL_SECONDS, () =>
       fetchApple(`${SEARCH_URL}?${query}`, term),
     );
     return json(request, payload);
