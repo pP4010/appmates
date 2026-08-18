@@ -25,16 +25,15 @@
 
     <!-- Grouped by when in the workflow you reach for them, not alphabetically:
          the ordering is the argument that this is a pre-launch tool.
-         Community sits right after Your app, ahead of Ready for launch —
-         it's the one section that needs an account and carries ongoing
+         Community sits right after Your app, ahead of Prepare/Research/Track
+         — it's the one section that needs an account and carries ongoing
          conversations, closer to daily-use than reference material.
 
-         Ready for launch used to be three sidebar sections (Prepare,
-         Research, Track) spelling out all ten tools by name. Collapsed
-         into one link on purpose: ten always-visible items made the
-         sidebar the least scannable part of the app, and every one of
-         those tools still exists — see #view-launch's own group/sub tabs
-         — just organised inside the page instead of in the nav. -->
+         Prepare/Research/Track each used to spell out its own tools as
+         separate always-visible links (five for Prepare alone). Each
+         section is now one nav link to that group's own page, with its
+         tools as tabs inside (views/launch.js) — three distinct pages, not
+         one merged page, but ten fewer things to scan in the sidebar. -->
     <div class="nav-section">Your app</div>
     <a class="nav-item" href="#overview"><span class="nav-icon">◈</span> Overview</a>
 
@@ -42,8 +41,14 @@
     <a class="nav-item" href="#inbox"><span class="nav-icon">✉</span> Inbox</a>
     <a class="nav-item" href="#community"><span class="nav-icon">◍</span> Get testers</a>
 
-    <div class="nav-section">Ready for launch</div>
-    <a class="nav-item" href="#launch"><span class="nav-icon">▲</span> Prepare, research, track</a>
+    <div class="nav-section">Prepare</div>
+    <a class="nav-item" href="#prepare"><span class="nav-icon">▢</span> Screenshots, listing, pricing</a>
+
+    <div class="nav-section">Research</div>
+    <a class="nav-item" href="#research"><span class="nav-icon">◎</span> Niche, markets, competitors</a>
+
+    <div class="nav-section">Track</div>
+    <a class="nav-item" href="#track"><span class="nav-icon">↗</span> Rank, Play testers</a>
 
     <div class="nav-section">Reference</div>
     <a class="nav-item" href="#specs"><span class="nav-icon">☰</span> Specs</a>
@@ -107,34 +112,54 @@
         <p class="note" style="margin-top:2rem">
           Ready to fix what's found? Subtitle, promotional text, the keyword field and real
           prices need your own App Store Connect data — public data can't show them.
-          <a href="#launch">Ready for launch →</a>
+          <a href="#prepare">Prepare →</a>
         </p>
       </section>
 
-      <!-- ==================== launch (prepare + research + track) ====================
-           Used to be three always-visible sidebar sections spelling out all ten
-           tools by name. Collapsed into one nav entry — every tool below still
-           exists exactly as it did, just organised by group/sub tabs (wired in
-           views/launch.js) instead of the sidebar. See views/launch.js for the
+      <!-- ==================== prepare / research / track ====================
+           Each of these three used to spell out its own tools as separate
+           always-visible sidebar links (five for Prepare alone). Every tool
+           below is unchanged — none of its own logic moved — organised as
+           tabs inside its group's page instead. See views/launch.js for the
            tab-switching logic; every tool's own init function (initScreenshots,
            initKeywords, ...) is unchanged and still called once at boot in
            app.js, same as before — they only ever read elements by id, so
            nesting those ids one level deeper here changes nothing for them. -->
-      <section class="view" id="view-launch">
+      <section class="view" id="view-prepare">
         <p class="lead">
-          Everything between "the public catalogue looks fine" and "actually ready to ship" —
-          screenshots, listing text, pricing, market research, rank tracking. <strong>Prepare</strong>
-          fixes what's wrong before you submit; <strong>Research</strong> answers whether the
-          market is worth entering; <strong>Track</strong> watches what happens after.
+          Fixes what's wrong before you submit: screenshots that violate a store rule, listing
+          text over a limit, a keyword field wasting characters, a price that was never set
+          deliberately per territory.
         </p>
 
-        <h3 style="margin-top:0">Use real data from App Store Connect</h3>
+        <div class="callout">
+          <strong>Connect your real App Store Connect data, in four steps:</strong>
+          <ol style="margin:.6rem 0 0; padding-left:1.3rem; line-height:1.7">
+            <li>Generate a key in App Store Connect → <strong>Users and Access → Integrations →
+              Team Keys</strong>. Give it the <strong>App Manager</strong> role — enough to read
+              and edit listings, short of full Admin access.</li>
+            <li>Save the downloaded <code>.p8</code> file somewhere outside any git repository —
+              e.g. <code>~/.appstoreconnect/private_keys/</code> — and run <code>chmod 600</code>
+              on it.</li>
+            <li>Copy <code>.env.example</code> to <code>.env</code> in the CLI's folder and fill in
+              the Key ID, Issuer ID and the path to that file.</li>
+            <li>Run <code>appmates asc pull &lt;bundle id&gt; --out listing.json</code>, then paste
+              the file's contents into the box below.</li>
+          </ol>
+        </div>
         <p class="lead">
           Subtitle, promotional text, the keyword field and real per-territory prices are
-          <strong>never public</strong> — no catalogue lookup can show them. Run
-          <code>appmates asc pull &lt;bundle id&gt;</code> locally (your private key never
-          leaves your machine — see the CLI's own README) and paste its output below to fill
-          every Prepare field and Pricing's current-price column at once.
+          <strong>never public</strong> — no catalogue lookup can show them, which is why this
+          step exists at all. Importing fills every field below and Pricing's current-price
+          column, all at once.
+        </p>
+        <p class="note">
+          <strong>Your private key never leaves your machine.</strong> It signs a short-lived
+          request token locally; only that token goes to Apple, straight from your computer. This
+          dashboard never talks to Apple and never sees the key — it only reads whatever you
+          paste into the box below, the same as any other text typed into this page. Full detail:
+          the CLI's <code>README.md</code>, section "<code>asc</code> — App Store Connect,
+          optional".
         </p>
         <div class="form-grid" style="grid-template-columns:1fr">
           <label for="lnAscInput">Output of <code>appmates asc pull</code> (JSON)</label>
@@ -149,37 +174,15 @@
         </div>
         <div id="lnAscStatus" class="status"></div>
 
-        <div class="tabs" role="tablist" id="launchGroupTabs" style="margin-top:2rem">
-          <button class="tab active" role="tab" aria-selected="true" data-group="prepare">Prepare</button>
-          <button class="tab" role="tab" aria-selected="false" data-group="research">Research</button>
-          <button class="tab" role="tab" aria-selected="false" data-group="track">Track</button>
+        <div class="tabs" role="tablist" style="margin-top:2rem">
+          <button class="tab active" role="tab" aria-selected="true" data-tab="screenshots">Screenshots</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="keywords">Keyword field</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="metadata">Listing text</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="readiness">Readiness</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="pricing">Pricing</button>
         </div>
 
-        <div class="launch-subtabs active" data-group="prepare">
-          <div class="tabs" role="tablist">
-            <button class="tab active" role="tab" aria-selected="true" data-tab="screenshots">Screenshots</button>
-            <button class="tab" role="tab" aria-selected="false" data-tab="keywords">Keyword field</button>
-            <button class="tab" role="tab" aria-selected="false" data-tab="metadata">Listing text</button>
-            <button class="tab" role="tab" aria-selected="false" data-tab="readiness">Readiness</button>
-            <button class="tab" role="tab" aria-selected="false" data-tab="pricing">Pricing</button>
-          </div>
-        </div>
-        <div class="launch-subtabs" data-group="research">
-          <div class="tabs" role="tablist">
-            <button class="tab active" role="tab" aria-selected="true" data-tab="niche">Niche</button>
-            <button class="tab" role="tab" aria-selected="false" data-tab="markets">Markets</button>
-            <button class="tab" role="tab" aria-selected="false" data-tab="competitors">Competitors</button>
-          </div>
-        </div>
-        <div class="launch-subtabs" data-group="track">
-          <div class="tabs" role="tablist">
-            <button class="tab active" role="tab" aria-selected="true" data-tab="rank">Rank</button>
-            <button class="tab" role="tab" aria-selected="false" data-tab="testers">Play testers</button>
-          </div>
-        </div>
-
-        <!-- ---- prepare ---- -->
-        <div class="view active" id="view-screenshots" data-group="prepare">
+        <div class="view active" id="view-screenshots">
           <p class="lead">
             Every rule here reads the file's <strong>header</strong>, not its pixels, so a few
             hundred bytes answer locally what a multi-megabyte upload would have answered.
@@ -227,7 +230,7 @@
           </p>
         </div>
 
-        <div class="view" id="view-keywords" data-group="prepare">
+        <div class="view" id="view-keywords">
           <p class="lead">
             Apple indexes your app name, subtitle and the 100-character keyword field as one
             pool of <strong>words</strong>, then combines them. A phrase is reachable when each
@@ -253,7 +256,7 @@
           <div id="kwSuggestion"></div>
         </div>
 
-        <div class="view" id="view-metadata" data-group="prepare">
+        <div class="view" id="view-metadata">
           <p class="lead">
             Text overruns are the second most common cause of a blocked submission after
             malformed screenshots, and the limits <strong>differ per store</strong> — the same
@@ -295,7 +298,7 @@
           <div id="mdLocalesResults"></div>
         </div>
 
-        <div class="view" id="view-readiness" data-group="prepare">
+        <div class="view" id="view-readiness">
           <p class="lead">
             Composed from whatever you've already entered on <strong>Screenshots</strong>,
             <strong>Keyword field</strong> and <strong>Listing text</strong> — nothing is re-typed
@@ -308,7 +311,7 @@
           <div id="rdFindings"></div>
         </div>
 
-        <div class="view" id="view-pricing" data-group="prepare">
+        <div class="view" id="view-pricing">
           <p class="lead">
             Apple and Google let you set a different price per storefront but give no guidance on
             what to set it to. This turns one price into a starting point per territory — a
@@ -336,9 +339,23 @@
 
           <div id="prResults"></div>
         </div>
+      </section>
 
-        <!-- ---- research ---- -->
-        <div class="view" id="view-niche" data-group="research">
+      <!-- ==================== research ==================== -->
+      <section class="view" id="view-research">
+        <p class="lead">
+          Answers whether the market is worth entering, before you write any code: leader
+          entrenchment, storefront-by-storefront difficulty, who holds the term and how they
+          present it.
+        </p>
+
+        <div class="tabs" role="tablist">
+          <button class="tab active" role="tab" aria-selected="true" data-tab="niche">Niche</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="markets">Markets</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="competitors">Competitors</button>
+        </div>
+
+        <div class="view active" id="view-niche">
           <p class="lead">
             Answers what rank trackers structurally cannot: <strong>should I build this at
             all?</strong> They assume a live app — you cannot track the ranking of something
@@ -368,7 +385,7 @@
           <div id="nicheResults"></div>
         </div>
 
-        <div class="view" id="view-markets" data-group="research">
+        <div class="view" id="view-markets">
           <p class="lead">
             Every ASO tool asks <em>how hard is this keyword?</em> as though there were one
             answer. There are 175 storefronts and the answer differs in each — difficulty
@@ -397,7 +414,7 @@
           <div id="marketsResults"></div>
         </div>
 
-        <div class="view" id="view-competitors" data-group="research">
+        <div class="view" id="view-competitors">
           <p class="lead">
             Who holds a term, what the field does with its screenshots, and the vocabulary
             everyone agrees on. Dimensions are read from the screenshot URLs themselves — the
@@ -436,9 +453,21 @@
           <div id="compStatus" class="status"></div>
           <div id="compResults"></div>
         </div>
+      </section>
 
-        <!-- ---- track ---- -->
-        <div class="view" id="view-rank" data-group="track">
+      <!-- ==================== track ==================== -->
+      <section class="view" id="view-track">
+        <p class="lead">
+          Watches what happens after you ship: your position per keyword over time, and Google
+          Play's 12-testers-for-14-days production gate.
+        </p>
+
+        <div class="tabs" role="tablist">
+          <button class="tab active" role="tab" aria-selected="true" data-tab="rank">Rank</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="testers">Play testers</button>
+        </div>
+
+        <div class="view active" id="view-rank">
           <div class="callout">
             <strong>This is not the App Store's ranking.</strong> The public endpoint returns
             results in its own relevance order, and that is what this reports — a real,
@@ -467,7 +496,7 @@
           <div id="rankResults"></div>
         </div>
 
-        <div class="view" id="view-testers" data-group="track">
+        <div class="view" id="view-testers">
           <p class="lead">
             Personal Play developer accounts created after 13 November 2023 need 12 testers
             opted in <strong>continuously</strong> for 14 days before applying for production
