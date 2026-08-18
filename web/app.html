@@ -129,71 +129,76 @@
           deliberately per territory.
         </p>
 
-        <p class="lead">
-          Subtitle, promotional text, the keyword field and real per-territory prices are
-          <strong>never public</strong> — no catalogue lookup can show them, which is why the
-          step below exists at all. Importing fills every field on this page and Pricing's
-          current-price column, all at once.
-        </p>
-
-        <div class="asc-connect">
-          <div class="callout">
-            <strong>Connect your real App Store Connect data, in four steps:</strong>
-            <ol style="margin:.6rem 0 0; padding-left:1.3rem; line-height:1.7">
-              <li>Generate a key in App Store Connect → <strong>Users and Access → Integrations →
-                Team Keys</strong>. Give it the <strong>App Manager</strong> role — enough to read
-                and edit listings, short of full Admin access.</li>
-              <li>Save the downloaded <code>.p8</code> file somewhere outside any git repository —
-                e.g. <code>~/.appstoreconnect/private_keys/</code> — and run <code>chmod 600</code>
-                on it.</li>
-              <li>Copy <code>.env.example</code> to <code>.env</code> in the CLI's folder and fill in
-                the Key ID, Issuer ID and the path to that file.</li>
-              <li>Run <code>appmates asc pull &lt;bundle id&gt; --out listing.json</code>, then paste
-                the file's contents into the box on the right.</li>
-            </ol>
-            <p class="note" style="margin:.85rem 0 .35rem">
-              Not sure how to do this yourself? Copy this into your coding assistant (Claude Code,
-              Cursor, ...) — it has everything it needs to walk you through it:
-            </p>
-            <div class="prompt-copy-row">
-              <code id="ascPromptText">Help me connect my AppMates dashboard to my real App Store Connect data: walk me through generating an API key in App Store Connect (Users and Access → Integrations → Team Keys, App Manager role), saving the .p8 file securely outside my repo, filling in the appmates CLI's .env file with the key id, issuer id and private key path, then running &quot;appmates asc pull &lt;my bundle id&gt; --out listing.json&quot; so I can paste the result into the dashboard.</code>
-              <button type="button" id="ascPromptCopy" class="copy-btn" title="Copy prompt for your AI assistant" aria-label="Copy prompt for your AI assistant">⧉</button>
-            </div>
-          </div>
-
-          <div class="asc-connect-form">
-            <div class="form-grid" style="grid-template-columns:1fr">
-              <label for="lnAscInput">Output of <code>appmates asc pull</code> (JSON)</label>
-              <textarea id="lnAscInput" rows="7" placeholder='{"locales": [...], "current_prices": [...]}'></textarea>
-            </div>
-            <div class="toolbar">
-              <div class="field" style="flex:1;min-width:12rem">
-                <label for="lnAscLocale">Locale to import</label>
-                <select id="lnAscLocale"><option value="" disabled selected>Paste JSON above first</option></select>
-              </div>
-              <button id="lnAscImport" class="primary">Import</button>
-            </div>
-            <div id="lnAscStatus" class="status"></div>
-            <p class="note">
-              <strong>Your private key never leaves your machine.</strong> It signs a short-lived
-              request token locally; only that token goes to Apple, straight from your computer.
-              This dashboard never talks to Apple and never sees the key — it only reads whatever
-              you paste into the box above, the same as any other text typed into this page. Full
-              detail: the CLI's <code>README.md</code>, section "<code>asc</code> — App Store
-              Connect, optional".
-            </p>
-          </div>
-        </div>
-
-        <div class="tabs" role="tablist" style="margin-top:2rem">
-          <button class="tab active" role="tab" aria-selected="true" data-tab="screenshots">Screenshots</button>
+        <div class="tabs" role="tablist">
+          <button class="tab active" role="tab" aria-selected="true" data-tab="asc-connect">Connect App Store Connect</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="screenshots">Screenshots</button>
           <button class="tab" role="tab" aria-selected="false" data-tab="keywords">Keyword field</button>
           <button class="tab" role="tab" aria-selected="false" data-tab="metadata">Listing text</button>
           <button class="tab" role="tab" aria-selected="false" data-tab="readiness">Readiness</button>
           <button class="tab" role="tab" aria-selected="false" data-tab="pricing">Pricing</button>
         </div>
 
-        <div class="view active" id="view-screenshots">
+        <div class="view active" id="view-asc-connect">
+          <p class="lead">
+            Subtitle, promotional text, the keyword field and real per-territory prices are
+            <strong>never public</strong> — no catalogue lookup can show them, which is why this
+            step exists at all. Importing fills every field on the tabs above and Pricing's
+            current-price column, all at once.
+          </p>
+
+          <div class="asc-connect">
+            <div class="callout">
+              <strong>Connect your real App Store Connect data, in four steps:</strong>
+              <ol style="margin:.6rem 0 0; padding-left:1.3rem; line-height:1.7">
+                <li>Generate a key in App Store Connect → <strong>Users and Access → Integrations →
+                  Team Keys</strong>. Give it the <strong>App Manager</strong> role — enough to read
+                  and edit listings, short of full Admin access.</li>
+                <li>Save the downloaded <code>.p8</code> file somewhere outside any git repository —
+                  e.g. <code>~/.appstoreconnect/private_keys/</code> — and run <code>chmod 600</code>
+                  on it.</li>
+                <li>Copy <code>.env.example</code> to <code>.env</code> in the CLI's folder and fill in
+                  the Key ID, Issuer ID and the path to that file.</li>
+                <li>Run <code>appmates asc pull &lt;bundle id&gt; --out listing.json</code>, then paste
+                  the file's contents into the box on the right.</li>
+              </ol>
+              <p class="note" style="margin:.85rem 0 .35rem">
+                Not sure how to do this yourself? Copy this into your coding assistant (Claude Code,
+                Cursor, ...) — it has everything it needs to walk you through it:
+              </p>
+              <div class="prompt-copy-row">
+                <code id="ascPromptText">Help me connect my AppMates dashboard to my real App Store Connect data: walk me through generating an API key in App Store Connect (Users and Access → Integrations → Team Keys, App Manager role), saving the .p8 file securely outside my repo, filling in the appmates CLI's .env file with the key id, issuer id and private key path, then running &quot;appmates asc pull &lt;my bundle id&gt; --out listing.json&quot; so I can paste the result into the dashboard.</code>
+                <button type="button" id="ascPromptCopy" class="copy-btn" title="Copy prompt for your AI assistant" aria-label="Copy prompt for your AI assistant">⧉</button>
+              </div>
+            </div>
+
+            <div class="callout">
+              <strong>Paste the result here:</strong>
+              <div class="form-grid" style="grid-template-columns:1fr; margin:.6rem 0 0; padding:0; border:none; background:none">
+                <label for="lnAscInput">Output of <code>appmates asc pull</code> (JSON)</label>
+                <textarea id="lnAscInput" rows="6" placeholder='{"locales": [...], "current_prices": [...]}'></textarea>
+              </div>
+              <div class="toolbar">
+                <div class="field" style="flex:1;min-width:12rem">
+                  <label for="lnAscLocale">Locale to import</label>
+                  <select id="lnAscLocale"><option value="" disabled selected>Paste JSON above first</option></select>
+                </div>
+                <button id="lnAscImport" class="primary">Import</button>
+              </div>
+              <div id="lnAscStatus" class="status"></div>
+            </div>
+          </div>
+
+          <p class="note">
+            <strong>Your private key never leaves your machine.</strong> It signs a short-lived
+            request token locally; only that token goes to Apple, straight from your computer.
+            This dashboard never talks to Apple and never sees the key — it only reads whatever
+            you paste into the box above, the same as any other text typed into this page. Full
+            detail: the CLI's <code>README.md</code>, section "<code>asc</code> — App Store
+            Connect, optional".
+          </p>
+        </div>
+
+        <div class="view" id="view-screenshots">
           <p class="lead">
             Every rule here reads the file's <strong>header</strong>, not its pixels, so a few
             hundred bytes answer locally what a multi-megabyte upload would have answered.
@@ -273,6 +278,21 @@
             malformed screenshots, and the limits <strong>differ per store</strong> — the same
             listing can pass Apple and fail Play. Fields above 90% of their ceiling are flagged
             too: translations commonly run 15–30% longer than English.
+          </p>
+
+          <div class="toolbar" style="margin-bottom:1.1rem">
+            <div class="field">
+              <label>Your app is on</label>
+              <div class="platform-toggle">
+                <label><input type="checkbox" id="mdPlatformApple" checked> App Store</label>
+                <label><input type="checkbox" id="mdPlatformGoogle" checked> Google Play</label>
+              </div>
+            </div>
+          </div>
+          <p class="note">
+            Only checks the store(s) above — uncheck one your app isn't on (Google Play for an
+            iOS-only app, say) so a field that store requires but yours doesn't need stops being
+            flagged. Remembered for next time.
           </p>
 
           <div class="form-grid">
