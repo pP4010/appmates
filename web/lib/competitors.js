@@ -248,7 +248,7 @@ export function analyseCompetitors(
 
 // --- rank ----------------------------------------------------------------
 
-const RANK_HISTORY_KEY = 'launchpilot:ranks';
+const RANK_HISTORY_KEY = 'appmates:ranks';
 
 /**
  * Position history kept in the browser.

@@ -9,12 +9,11 @@
 
 import { checkAppHealth, profileFromEntry } from '../lib/app-profile.js';
 import { favorites, onFavoritesChange } from '../lib/favorites.js';
-import { setCurrentPrices } from '../lib/pricing.js';
 import {
   el, empty, escapeHtml, findingsPanel, pill, ring, tablePanel, withStatus,
 } from './shared.js';
 
-const STORAGE_KEY = 'launchpilot:app';
+const STORAGE_KEY = 'appmates:app';
 
 let client = null;
 let onChange = null;
@@ -93,92 +92,6 @@ export function initOverview(itunesClient, { onAppChange } = {}) {
   } else {
     renderEmpty();
   }
-
-  initAscImport();
-}
-
-/**
- * "Import from App Store Connect" — the paste box that fills Listing text,
- * the Keyword field, and Pricing's current-price column from `appmates asc
- * pull`'s output in one action, instead of the multi-locale JSON box (which
- * still exists for checking every locale at once) or copying fields by
- * hand. Nothing here talks to Apple: it only ever reads what was already
- * pasted in, the same trust boundary as any other text typed into this page.
- */
-function initAscImport() {
-  el('ovAscInput').addEventListener('input', () => {
-    const doc = parseAscPaste(el('ovAscInput').value);
-    populateAscLocaleSelect(doc?.locales ?? []);
-  });
-
-  el('ovAscImport').addEventListener('click', () => {
-    const doc = parseAscPaste(el('ovAscInput').value);
-    if (doc === null) {
-      el('ovAscStatus').innerHTML = '<div class="status error">Could not parse JSON.</div>';
-      return;
-    }
-    const locales = Array.isArray(doc.locales) ? doc.locales : [];
-    if (!locales.length) {
-      el('ovAscStatus').innerHTML =
-        '<div class="status error">No "locales" array found in the pasted JSON.</div>';
-      return;
-    }
-    const index = Number(el('ovAscLocale').value || 0);
-    const locale = locales[index] ?? locales[0];
-
-    const setField = (id, value) => {
-      if (value === undefined || value === null) return;
-      const field = el(id);
-      if (!field) return;
-      field.value = value;
-      field.dispatchEvent(new Event('input'));
-    };
-
-    // Metadata and Keywords each listen for `input` on their own fields
-    // already (see views/metadata.js, views/keywords.js) — Readiness
-    // listens on the same ones too, so importing here updates all three
-    // live, the same "select once, prefill everywhere" idea app.js's own
-    // refreshAppCard uses for the app name.
-    setField('mdTitle', locale.title);
-    setField('mdSubtitle', locale.subtitle);
-    setField('mdPromo', locale.promotional_text);
-    setField('mdKeywords', locale.keywords);
-    setField('mdDescription', locale.description);
-    setField('kwTitle', locale.title);
-    setField('kwSubtitle', locale.subtitle);
-    setField('kwField', locale.keywords);
-
-    let priceNote = '';
-    if (Array.isArray(doc.current_prices) && doc.current_prices.length) {
-      setCurrentPrices(doc.current_prices);
-      window.dispatchEvent(new CustomEvent('appmates:asc-prices'));
-      priceNote = ` and ${doc.current_prices.length} current price(s) into Pricing`;
-    }
-
-    const liveNote = doc.is_live
-      ? ' This is the live, published listing — pushing edits needs a new version created in App Store Connect first.'
-      : '';
-
-    el('ovAscStatus').innerHTML = `<div class="status">Imported locale "${escapeHtml(
-      locale.locale ?? '',
-    )}" into Listing text and the Keyword field${priceNote}.${liveNote}</div>`;
-  });
-}
-
-function parseAscPaste(raw) {
-  if (!raw.trim()) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function populateAscLocaleSelect(locales) {
-  const select = el('ovAscLocale');
-  select.innerHTML = locales
-    .map((l, i) => `<option value="${i}">${escapeHtml(l.locale ?? `locale ${i + 1}`)}</option>`)
-    .join('');
 }
 
 function renderEmpty() {
