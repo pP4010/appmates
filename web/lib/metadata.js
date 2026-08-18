@@ -114,3 +114,33 @@ export function validateListing(values, { stores = listStores() } = {}) {
     status: errors ? 'fail' : warnings ? 'warn' : 'pass',
   };
 }
+
+/**
+ * The same check as `validateListing`, run over every locale in one listing.
+ *
+ * Mirrors `MetadataValidator.validate_listing`/`LocaleReport` on the Python
+ * side, which has always taken a whole `AppListing` — the six-input web form
+ * only ever checked one locale at a time. `entries` is `[{locale, title,
+ * subtitle, ...}]`, the same shape the CLI's `validate-metadata` reads from a
+ * listing file, so a document written for one works unchanged for the other.
+ */
+export function validateLocales(entries, { stores = listStores() } = {}) {
+  const locales = entries.map((entry) => {
+    const { locale = 'en-US', ...values } = entry;
+    const report = validateListing(values, { stores });
+    return { locale, ...report };
+  });
+
+  const allFindings = locales.flatMap((l) => l.findings);
+  const errorCount = allFindings.filter((f) => f.severity === 'error').length;
+  const warningCount = allFindings.filter((f) => f.severity === 'warning').length;
+
+  return {
+    stores,
+    locales,
+    allFindings,
+    errorCount,
+    warningCount,
+    status: errorCount ? 'fail' : warningCount ? 'warn' : 'pass',
+  };
+}

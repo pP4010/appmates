@@ -24,6 +24,7 @@ from launchpilot.core.specs.registry import (
     load_app_health_spec,
     load_aso_spec,
     load_market_spec,
+    load_pricing_spec,
     load_spec,
 )
 
@@ -64,6 +65,7 @@ def build() -> dict[str, object]:
         "aso": aso,
         "market": load_market_spec().model_dump(mode="json"),
         "app_health": load_app_health_spec().model_dump(mode="json"),
+        "pricing": load_pricing_spec().model_dump(mode="json"),
         "listing_limits": {
             store.value: {key: limit.model_dump(mode="json") for key, limit in limits.items()}
             for store, limits in LIMITS.items()

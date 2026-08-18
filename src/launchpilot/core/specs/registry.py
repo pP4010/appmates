@@ -241,3 +241,34 @@ def load_app_health_spec() -> AppHealthSpec:
 def load_aso_spec() -> AsoSpec:
     """Load and cache the keyword-field rules."""
     return AsoSpec(**_load_yaml("aso.yaml"))
+
+
+class PricingTier(BaseModel):
+    id: str
+    label: str
+    multiplier: float
+    countries: list[str] = Field(default_factory=list)
+
+
+class PricingModelInfo(BaseModel):
+    label: str
+    description: str
+
+
+class PricingSpec(BaseModel):
+    """Suggested per-territory price multipliers, by coarse income band."""
+
+    source_url: str
+    last_verified: dt.date
+    models: dict[str, PricingModelInfo]
+    tiers: list[PricingTier] = Field(default_factory=list)
+
+    def tier_for(self, country: str) -> PricingTier | None:
+        code = country.lower()
+        return next((t for t in self.tiers if code in t.countries), None)
+
+
+@functools.cache
+def load_pricing_spec() -> PricingSpec:
+    """Load and cache the per-territory pricing bands."""
+    return PricingSpec(**_load_yaml("pricing.yaml"))

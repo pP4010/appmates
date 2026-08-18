@@ -12,11 +12,14 @@ import { loadMarketSpec, defaultStorefronts, countryName } from './lib/market.js
 import { loadTestingSpec } from './lib/testers.js';
 import { loadListingLimits } from './lib/metadata.js';
 import { loadAppHealthSpec } from './lib/app-profile.js';
+import { loadPricingSpec } from './lib/pricing.js';
 import { ITunesClient } from './lib/itunes.js';
 
 import { initScreenshots } from './views/screenshots.js';
 import { initKeywords } from './views/keywords.js';
 import { initMetadata } from './views/metadata.js';
+import { initReadiness } from './views/readiness.js';
+import { initPricing } from './views/pricing.js';
 import { initNiche } from './views/niche.js';
 import { initMarkets } from './views/markets.js';
 import { initCompetitors } from './views/competitors.js';
@@ -39,6 +42,8 @@ const VIEWS = {
   screenshots: ['Screenshots', 'Validate and repair store assets'],
   keywords: ['Keyword field', 'Audit the 100 characters nobody sees'],
   metadata: ['Listing text', 'Field limits for both stores'],
+  readiness: ['Readiness', 'One go/no-go answer, composed from what you have entered'],
+  pricing: ['Pricing', 'Suggested prices per storefront, from one base price'],
   niche: ['Niche', 'Is this market worth entering?'],
   markets: ['Markets', 'Which storefront is it winnable in?'],
   competitors: ['Competitors', 'Who holds the term, and how they present'],
@@ -89,6 +94,7 @@ async function boot() {
   loadTestingSpec(specs);
   loadListingLimits(specs);
   loadAppHealthSpec(specs);
+  loadPricingSpec(specs);
 
   fillCountrySelects();
 
@@ -129,6 +135,8 @@ async function boot() {
   initScreenshots({ getSpec });
   initKeywords();
   initMetadata();
+  initReadiness();
+  initPricing();
   initNiche(client);
   initMarkets(client);
   initCompetitors(client);
