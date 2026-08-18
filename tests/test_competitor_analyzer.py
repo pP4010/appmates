@@ -15,8 +15,8 @@ from typing import Any
 
 import pytest
 
-from launchpilot.core.models.competitors import Device
-from launchpilot.core.services.competitor_analyzer import (
+from appmates.core.models.competitors import Device
+from appmates.core.services.competitor_analyzer import (
     CompetitorAnalyzer,
     RankHistory,
     analyse_competitors,
@@ -527,7 +527,7 @@ def test_your_plural_counts_as_having_the_term() -> None:
 
 
 def test_missing_terms_are_the_ones_you_lack() -> None:
-    from launchpilot.core.models.competitors import CompetitorReport
+    from appmates.core.models.competitors import CompetitorReport
 
     apps = [app_with(f"Habit Tracker {i}", "", i) for i in range(3)]
     report = CompetitorReport(keyword="x", country="US", result_count=3)

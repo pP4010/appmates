@@ -13,12 +13,13 @@ import re
 from pathlib import Path
 from typing import Any
 
+import httpx
 import pytest
 from typer.testing import CliRunner
 
-from launchpilot import __version__
-from launchpilot.cli.console import ExitCode
-from launchpilot.cli.main import app
+from appmates import __version__
+from appmates.cli.console import ExitCode
+from appmates.cli.main import app
 from tests.conftest import APPLE_6_9, APPLE_LEGACY_6_5, PLAY_FHD, MakeImage
 
 runner = CliRunner()
@@ -60,7 +61,7 @@ def test_version_flag() -> None:
 def test_version_output_is_greppable() -> None:
     """Regression: rich's number highlighter used to split "0.1.0" mid-string."""
     result = run("--version")
-    assert f"launchpilot {__version__}" in plain(result)
+    assert f"appmates {__version__}" in plain(result)
 
 
 # --- validate-screenshots ------------------------------------------------
@@ -425,7 +426,7 @@ def offline_catalogue(monkeypatch: pytest.MonkeyPatch) -> None:
     Patched where it is looked up, not where it is defined, so the command's
     own import is the one replaced.
     """
-    import launchpilot.cli.commands.niche as niche_module
+    import appmates.cli.commands.niche as niche_module
 
     monkeypatch.setattr(
         niche_module,
@@ -484,8 +485,8 @@ def test_niche_records_the_storefront(offline_catalogue: None) -> None:
 def test_niche_surfaces_a_catalogue_failure_as_a_usage_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import launchpilot.cli.commands.niche as niche_module
-    from launchpilot.core.clients.itunes import MarketDataError
+    import appmates.cli.commands.niche as niche_module
+    from appmates.core.clients.itunes import MarketDataError
 
     class Failing:
         def search(self, term: str, *, country: str, limit: int) -> Any:
@@ -619,7 +620,7 @@ class _FakeCompetitorSource:
 
 @pytest.fixture
 def offline_competitors(monkeypatch: pytest.MonkeyPatch) -> None:
-    import launchpilot.cli.commands.competitors as module
+    import appmates.cli.commands.competitors as module
 
     monkeypatch.setattr(
         module,
@@ -659,7 +660,7 @@ def test_competitors_screenshots_flag_lists_urls(offline_competitors: None) -> N
 
 
 def test_competitors_marks_withheld_screenshots(monkeypatch: pytest.MonkeyPatch) -> None:
-    import launchpilot.cli.commands.competitors as module
+    import appmates.cli.commands.competitors as module
 
     monkeypatch.setattr(
         module,
@@ -672,8 +673,8 @@ def test_competitors_marks_withheld_screenshots(monkeypatch: pytest.MonkeyPatch)
 
 
 def test_competitors_surfaces_a_catalogue_failure(monkeypatch: pytest.MonkeyPatch) -> None:
-    import launchpilot.cli.commands.competitors as module
-    from launchpilot.core.clients.itunes import MarketDataError
+    import appmates.cli.commands.competitors as module
+    from appmates.core.clients.itunes import MarketDataError
 
     class Failing:
         def search(self, term: str, *, country: str, limit: int) -> Any:
@@ -695,7 +696,7 @@ def test_rank_requires_a_keyword(offline_competitors: None) -> None:
 
 
 def test_rank_rejects_an_unknown_app(monkeypatch: pytest.MonkeyPatch) -> None:
-    import launchpilot.cli.commands.competitors as module
+    import appmates.cli.commands.competitors as module
 
     monkeypatch.setattr(
         module, "ITunesSearchClient", lambda **kwargs: _FakeCompetitorSource([], app=None)
@@ -719,7 +720,7 @@ def test_rank_writes_and_reads_its_history(offline_competitors: None, tmp_path: 
 
 @pytest.fixture
 def offline_markets(monkeypatch: pytest.MonkeyPatch) -> None:
-    import launchpilot.cli.commands.markets as module
+    import appmates.cli.commands.markets as module
 
     class ByCountry:
         def search(self, term: str, *, country: str, limit: int) -> tuple[int, list[Any]]:
@@ -767,7 +768,7 @@ def test_markets_renders_a_table(offline_markets: None) -> None:
 
 
 def test_markets_defaults_to_the_curated_set(offline_markets: None) -> None:
-    from launchpilot.core.services.market_scanner import DEFAULT_STOREFRONTS
+    from appmates.core.services.market_scanner import DEFAULT_STOREFRONTS
 
     data = payload(run("markets", "x", "--json"))
     assert len(data["results"]) == len(DEFAULT_STOREFRONTS)
@@ -836,7 +837,7 @@ class _FakeAppSource:
 
 
 def _offline_app(monkeypatch: pytest.MonkeyPatch, entry: dict[str, Any], page_shots: Any) -> None:
-    import launchpilot.cli.commands.app as module
+    import appmates.cli.commands.app as module
 
     monkeypatch.setattr(
         module, "ITunesSearchClient", lambda **kwargs: _FakeAppSource(entry, page_shots)
@@ -908,7 +909,7 @@ def test_app_does_not_call_the_fallback_when_the_catalogue_has_screenshots(
             calls += 1
             return super().fetch_page_screenshots(track_id, country=country)
 
-    import launchpilot.cli.commands.app as module
+    import appmates.cli.commands.app as module
 
     monkeypatch.setattr(
         module,
@@ -977,3 +978,257 @@ def test_submission_check_screenshots(screenshot_dir: Path) -> None:
     result = run("submission-check", "--screenshots", str(screenshot_dir), "--json")
     assert result.exit_code == int(ExitCode.OK)
     assert payload(result)["screenshots"] is not None
+
+
+# --- asc ---------------------------------------------------------------
+#
+# The client is never allowed to touch the network here: `_patch_asc_client`
+# swaps `AppStoreConnectClient` for a factory that wires in an
+# `httpx.MockTransport`, the same isolation `test_appstore_connect_client.py`
+# and `test_asc_sync.py` use directly. `asc_key_path` (tests/conftest.py) is
+# a throwaway keypair — never anything resembling a real Apple key.
+
+_ASC_ROUTES = {
+    "/apps": {"data": [{"id": "42", "type": "apps"}]},
+    "/appInfos": {
+        "data": [{"id": "info1", "attributes": {"appStoreState": "PREPARE_FOR_SUBMISSION"}}]
+    },
+    "/appInfoLocalizations": {
+        "data": [
+            {
+                "id": "iloc-en",
+                "attributes": {"locale": "en-US", "name": "Kaizen", "subtitle": "Build habits"},
+            }
+        ]
+    },
+    "/appStoreVersions": {
+        "data": [{"id": "v1", "attributes": {"appStoreState": "PREPARE_FOR_SUBMISSION"}}]
+    },
+    "/appStoreVersionLocalizations": {
+        "data": [
+            {
+                "id": "vloc-en",
+                "attributes": {
+                    "locale": "en-US",
+                    "description": "Kaizen helps you build habits.",
+                    "promotionalText": "Start today.",
+                    "keywords": "habit,streak",
+                },
+            }
+        ]
+    },
+    "/appPriceSchedule": {"data": None},
+}
+
+
+def _set_asc_env(monkeypatch: pytest.MonkeyPatch, asc_key_path: Path) -> None:
+    monkeypatch.setenv("LAUNCHPILOT_APP_STORE_KEY_ID", "TEST123")
+    monkeypatch.setenv("LAUNCHPILOT_APP_STORE_ISSUER_ID", "issuer-id")
+    monkeypatch.setenv("LAUNCHPILOT_APP_STORE_PRIVATE_KEY_PATH", str(asc_key_path))
+
+
+def _patch_asc_client(
+    monkeypatch: pytest.MonkeyPatch, routes: dict[str, Any], *, record: list[Any] | None = None
+) -> None:
+    import appmates.cli.commands.appstore_connect as module
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if request.method == "PATCH":
+            if record is not None:
+                record.append((path, json.loads(request.read())))
+            return httpx.Response(200, json={"data": {}})
+        for suffix, body in routes.items():
+            if path.endswith(suffix):
+                return httpx.Response(200, json=body)
+        raise AssertionError(f"unrouted request: {request.method} {path}")
+
+    real_client = module.AppStoreConnectClient
+
+    def factory(**kwargs: Any) -> Any:
+        kwargs["client"] = httpx.Client(transport=httpx.MockTransport(handler))
+        kwargs["min_interval"] = 0.0
+        return real_client(**kwargs)
+
+    monkeypatch.setattr(module, "AppStoreConnectClient", factory)
+
+
+def test_asc_status_without_credentials_exits_two(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)  # avoid picking up a developer's own .env
+    assert run("asc", "status").exit_code == int(ExitCode.USAGE)
+
+
+def test_asc_status_valid_credentials_exits_zero(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, asc_key_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _set_asc_env(monkeypatch, asc_key_path)
+    _patch_asc_client(monkeypatch, {"/apps": {"data": []}})
+
+    result = run("asc", "status", "--json")
+    assert result.exit_code == int(ExitCode.OK)
+    assert payload(result) == {"configured": True, "valid": True, "error": None}
+
+
+def test_asc_status_rejected_credentials_exits_findings(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, asc_key_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _set_asc_env(monkeypatch, asc_key_path)
+
+    import appmates.cli.commands.appstore_connect as module
+
+    real_client = module.AppStoreConnectClient
+
+    def factory(**kwargs: Any) -> Any:
+        kwargs["client"] = httpx.Client(
+            transport=httpx.MockTransport(lambda r: httpx.Response(401, json={"errors": []}))
+        )
+        kwargs["min_interval"] = 0.0
+        return real_client(**kwargs)
+
+    monkeypatch.setattr(module, "AppStoreConnectClient", factory)
+
+    result = run("asc", "status", "--json")
+    assert result.exit_code == int(ExitCode.FINDINGS)
+    assert payload(result)["valid"] is False
+
+
+def test_asc_pull_writes_the_same_shape_validate_metadata_reads(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, asc_key_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _set_asc_env(monkeypatch, asc_key_path)
+    _patch_asc_client(monkeypatch, _ASC_ROUTES)
+
+    out = tmp_path / "pulled.json"
+    result = run("asc", "pull", "com.example.app", "--out", str(out))
+    assert result.exit_code == int(ExitCode.OK)
+
+    pulled = json.loads(out.read_text(encoding="utf-8"))
+    assert pulled["locales"][0]["locale"] == "en-US"
+    assert pulled["locales"][0]["title"] == "Kaizen"
+    assert "current_prices" in pulled
+
+    # The exact contract: validate-metadata reads what asc pull wrote, unchanged.
+    # Apple-only: a listing pulled from App Store Connect has no Google-specific
+    # fields (short_description) to begin with, so checking Google here would
+    # fail for a reason that has nothing to do with what was pulled.
+    assert run("validate-metadata", str(out), "-s", "apple").exit_code == int(ExitCode.OK)
+
+
+def test_asc_pull_app_not_found_exits_two(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, asc_key_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _set_asc_env(monkeypatch, asc_key_path)
+    _patch_asc_client(monkeypatch, {**_ASC_ROUTES, "/apps": {"data": []}})
+
+    result = run("asc", "pull", "com.missing.app")
+    assert result.exit_code == int(ExitCode.USAGE)
+
+
+def test_asc_push_metadata_dry_run_sends_nothing(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, asc_key_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _set_asc_env(monkeypatch, asc_key_path)
+    sent: list[Any] = []
+    _patch_asc_client(monkeypatch, _ASC_ROUTES, record=sent)
+
+    listing_path = _write_listing(
+        tmp_path,
+        locales=[
+            {
+                "locale": "en-US",
+                "title": "Kaizen: Habits",  # changed from "Kaizen"
+                "subtitle": "Build habits",
+                "description": "Kaizen helps you build habits.",
+                "promotional_text": "Start today.",
+                "keywords": "habit,streak",
+            }
+        ],
+    )
+
+    result = run("asc", "push-metadata", "com.example.app", str(listing_path), "--json")
+    assert result.exit_code == int(ExitCode.OK)
+    data = payload(result)
+    assert data["would_push"] is True
+    assert data["changes"][0]["field"] == "title"
+    assert sent == []  # dry run: nothing was actually sent
+
+
+def test_asc_push_metadata_blocked_on_error_findings(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, asc_key_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _set_asc_env(monkeypatch, asc_key_path)
+    sent: list[Any] = []
+    _patch_asc_client(monkeypatch, _ASC_ROUTES, record=sent)
+
+    listing_path = _write_listing(
+        tmp_path,
+        locales=[{"locale": "en-US", "title": "K" * 40}],  # over the 30-char limit
+    )
+
+    result = run("asc", "push-metadata", "com.example.app", str(listing_path), "--yes")
+    assert result.exit_code == int(ExitCode.FINDINGS)
+    assert sent == []  # blocked: nothing was actually sent
+
+
+def test_asc_push_metadata_yes_sends_the_diff(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, asc_key_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _set_asc_env(monkeypatch, asc_key_path)
+    sent: list[Any] = []
+    _patch_asc_client(monkeypatch, _ASC_ROUTES, record=sent)
+
+    listing_path = _write_listing(
+        tmp_path,
+        locales=[
+            {
+                "locale": "en-US",
+                "title": "Kaizen: Habits",
+                "subtitle": "Build habits",
+                "description": "Kaizen helps you build habits.",
+                "promotional_text": "Start today.",
+                "keywords": "habit,streak",
+            }
+        ],
+    )
+
+    result = run("asc", "push-metadata", "com.example.app", str(listing_path), "--yes", "--json")
+    assert result.exit_code == int(ExitCode.OK)
+    assert payload(result) == {"pushed": True, "fields_sent": 1}
+    assert len(sent) == 1
+    path, body = sent[0]
+    assert "appInfoLocalizations" in path
+    assert body["data"]["attributes"] == {"name": "Kaizen: Habits"}
+
+
+def test_asc_push_metadata_nothing_changed(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, asc_key_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _set_asc_env(monkeypatch, asc_key_path)
+    _patch_asc_client(monkeypatch, _ASC_ROUTES)
+
+    listing_path = _write_listing(
+        tmp_path,
+        locales=[
+            {
+                "locale": "en-US",
+                "title": "Kaizen",
+                "subtitle": "Build habits",
+                "description": "Kaizen helps you build habits.",
+                "promotional_text": "Start today.",
+                "keywords": "habit,streak",
+            }
+        ],
+    )
+
+    result = run("asc", "push-metadata", "com.example.app", str(listing_path), "--yes")
+    assert result.exit_code == int(ExitCode.OK)

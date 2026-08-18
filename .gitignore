@@ -21,10 +21,18 @@ htmlcov/
 .env
 .env.*
 !.env.example
-launchpilot.local.toml
+appmates.local.toml
+
+# Real listing text pulled from App Store Connect via `appmates asc pull`
+# — not secret, but real business data with no reason to sit in git.
+pulled*.json
 
 # Local scratch for browser-driven checks
 web/.fixtures/
+
+# Cloudflare Pages deploy state (created by `wrangler pages deploy` from
+# the repo root, e.g. for web/)
+/.wrangler/
 
 # Worker: installed deps and local dev state, neither of which is source
 worker/node_modules/

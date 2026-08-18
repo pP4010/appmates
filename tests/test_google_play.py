@@ -12,12 +12,12 @@ from collections.abc import Callable
 
 import pytest
 
-from launchpilot.core.models.testing import (
+from appmates.core.models.testing import (
     REQUIRED_DAYS,
     REQUIRED_TESTERS,
     DailyTesterCount,
 )
-from launchpilot.core.services.google_play import (
+from appmates.core.services.google_play import (
     ClosedTestingTracker,
     MockPlayDataSource,
     evaluate,
@@ -26,7 +26,7 @@ from launchpilot.core.services.google_play import (
 
 # Aliased on import: pytest tries to collect any module-level name starting
 # with "Test", and `TesterDataSource` trips that heuristic.
-from launchpilot.core.services.google_play import (  # isort: skip
+from appmates.core.services.google_play import (  # isort: skip
     TesterDataSource as DataSourceProtocol,
 )
 

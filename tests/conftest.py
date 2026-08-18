@@ -13,9 +13,11 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec
 from PIL import Image
 
-from launchpilot.core.models.testing import DailyTesterCount
+from appmates.core.models.testing import DailyTesterCount
 
 # Convenience aliases for sizes used across the suite.
 APPLE_6_5 = (1284, 2778)
@@ -71,6 +73,20 @@ def screenshot_dir(tmp_path: Path, make_image: MakeImage) -> Path:
     for i in range(1, 4):
         make_image(name=f"shot{i}.png", size=APPLE_6_5, directory=directory)
     return directory
+
+
+@pytest.fixture
+def asc_key_path(tmp_path: Path) -> Path:
+    """A throwaway ES256 (`.p8`-shaped) keypair, generated fresh per test —
+    never a value that resembles a real Apple App Store Connect key."""
+    private_key = ec.generate_private_key(ec.SECP256R1())
+    pem = private_key.private_bytes(
+        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()
+    )
+    path = tmp_path / "AuthKey_TEST.p8"
+    path.write_bytes(pem)
+    path.chmod(0o600)
+    return path
 
 
 @pytest.fixture

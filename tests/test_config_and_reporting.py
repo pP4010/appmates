@@ -14,22 +14,28 @@ from pathlib import Path
 import pytest
 from rich.console import Console
 
-from launchpilot.core.config import Settings, get_settings
-from launchpilot.core.models.app_metadata import AppListing, AppMetadata
-from launchpilot.core.models.report import Severity, Store
-from launchpilot.core.services.google_play import evaluate, flat_history
-from launchpilot.core.services.image_fixer import ScreenshotFixer
-from launchpilot.core.services.image_validator import ScreenshotValidator
-from launchpilot.core.services.metadata_validator import MetadataValidator
-from launchpilot.core.services.reporting import (
+from appmates.core.config import Settings, get_settings
+from appmates.core.models.app_metadata import AppListing, AppMetadata
+from appmates.core.models.report import Severity, Store
+from appmates.core.services.asc_sync import FieldChange, PulledListing, PushPlan
+from appmates.core.services.google_play import evaluate, flat_history
+from appmates.core.services.image_fixer import ScreenshotFixer
+from appmates.core.services.image_validator import ScreenshotValidator
+from appmates.core.services.keyword_builder import KeywordBuilder
+from appmates.core.services.metadata_validator import MetadataValidator
+from appmates.core.services.reporting import (
+    render_asc_pull,
+    render_asc_push_plan,
     render_fix_result,
     render_metadata,
     render_specs,
+    render_submission,
     render_testing_status,
     render_validation,
     severity_text,
 )
-from launchpilot.core.specs.registry import all_specs
+from appmates.core.services.submission_checker import SubmissionReadinessReport
+from appmates.core.specs.registry import all_specs
 from tests.conftest import APPLE_6_5, APPLE_LEGACY_6_5, MakeImage
 
 
@@ -205,3 +211,79 @@ def test_render_specs_includes_provenance() -> None:
     assert "legacy" in out
     assert "developer.apple.com" in out
     assert "forbidden" in out  # alpha rule summary
+
+
+def test_render_submission_combines_ran_checks() -> None:
+    metadata = MetadataValidator([Store.APPLE]).validate_listing(
+        AppListing(locales=[AppMetadata(locale="en-US", title="K" * 40, description="d" * 20)])
+    )
+    keywords = KeywordBuilder().audit("habit,habit", title="Kaizen")
+    report = SubmissionReadinessReport(screenshots=None, metadata=metadata, keywords=keywords)
+
+    out = draw(render_submission(report))
+
+    assert "2 of 3 checks run" in out
+    assert "not checked: screenshots" in out
+    assert "APPLE_TITLE_TOO_LONG" in out
+    assert "Keyword field" in out
+
+
+def test_render_submission_all_clean() -> None:
+    keywords = KeywordBuilder().audit("habit,streak", title="Kaizen")
+    report = SubmissionReadinessReport(keywords=keywords)
+    assert "nothing wasted" in draw(render_submission(report))
+
+
+def test_render_asc_pull_shows_locales_and_prices() -> None:
+    pulled = PulledListing(
+        listing=AppListing(
+            bundle_id="com.example.app",
+            locales=[AppMetadata(locale="en-US", title="Kaizen", keywords="habit,streak")],
+        ),
+        current_prices=[{"territory": "USA", "price": "4.99"}],
+    )
+    out = draw(render_asc_pull(pulled))
+
+    assert "en-US" in out
+    assert "Kaizen" in out
+    assert "habit,streak" in out
+    assert "USA" in out
+    assert "4.99" in out
+
+
+def test_render_asc_pull_notes_missing_price_schedule() -> None:
+    pulled = PulledListing(
+        listing=AppListing(bundle_id="com.example.app", locales=[AppMetadata(locale="en-US")]),
+        current_prices=[],
+    )
+    assert "No price schedule found" in draw(render_asc_pull(pulled))
+
+
+def test_render_asc_pull_notes_when_reading_the_live_version() -> None:
+    pulled = PulledListing(
+        listing=AppListing(bundle_id="com.example.app", locales=[AppMetadata(locale="en-US")]),
+        is_live=True,
+    )
+    out = draw(render_asc_pull(pulled))
+    assert "live, published version" in out
+    assert "read-only" in out
+
+
+def test_render_asc_push_plan_shows_old_and_new_values() -> None:
+    plan = PushPlan(
+        app_id="42",
+        version_id="v1",
+        changes=[FieldChange(locale="en-US", field="title", old="Kaizen", new="Kaizen: Habits")],
+        validation=MetadataValidator([Store.APPLE]).validate_listing(
+            AppListing(
+                locales=[AppMetadata(locale="en-US", title="Kaizen: Habits", description="d" * 20)]
+            )
+        ),
+        blocked=False,
+    )
+    out = draw(render_asc_push_plan(plan))
+
+    assert "en-US" in out
+    assert "title" in out
+    assert "Kaizen" in out
+    assert "Kaizen: Habits" in out

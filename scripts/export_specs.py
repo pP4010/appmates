@@ -16,11 +16,11 @@ import json
 import sys
 from pathlib import Path
 
-from launchpilot.core.models.app_metadata import LIMITS
-from launchpilot.core.models.report import Store
-from launchpilot.core.models.testing import REQUIRED_DAYS, REQUIRED_TESTERS
-from launchpilot.core.services.market_scanner import COUNTRY_NAMES, DEFAULT_STOREFRONTS
-from launchpilot.core.specs.registry import (
+from appmates.core.models.app_metadata import LIMITS
+from appmates.core.models.report import Store
+from appmates.core.models.testing import REQUIRED_DAYS, REQUIRED_TESTERS
+from appmates.core.services.market_scanner import COUNTRY_NAMES, DEFAULT_STOREFRONTS
+from appmates.core.specs.registry import (
     load_app_health_spec,
     load_aso_spec,
     load_market_spec,

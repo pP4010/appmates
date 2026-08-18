@@ -10,10 +10,10 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from launchpilot.core.errors import OutputExistsError, SourceIsDestinationError
-from launchpilot.core.models.report import Store
-from launchpilot.core.services.image_fixer import ScreenshotFixer, targets_for
-from launchpilot.core.services.image_validator import ScreenshotValidator
+from appmates.core.errors import OutputExistsError, SourceIsDestinationError
+from appmates.core.models.report import Store
+from appmates.core.services.image_fixer import ScreenshotFixer, targets_for
+from appmates.core.services.image_validator import ScreenshotValidator
 from tests.conftest import APPLE_6_5, APPLE_6_9, APPLE_LEGACY_6_5, PLAY_FHD, MakeImage
 
 

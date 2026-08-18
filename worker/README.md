@@ -8,7 +8,7 @@ the same images. That page sends no CORS headers, so a browser cannot fetch it
 no accounts, no storage beyond a 12h edge cache of already-public URLs, no data
 from the caller kept or logged.
 
-It mirrors `src/launchpilot/core/clients/itunes.py::fetch_page_screenshots` —
+It mirrors `src/appmates/core/clients/itunes.py::fetch_page_screenshots` —
 same extraction, same graceful fallback to "found nothing" on any shape
 mismatch, because a Cloudflare Worker can't share code with the Python
 package.

@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from launchpilot.core.errors import DirectoryNotFoundError
-from launchpilot.core.models.report import Severity, Status, Store
-from launchpilot.core.services.image_validator import (
+from appmates.core.errors import DirectoryNotFoundError
+from appmates.core.models.report import Severity, Status, Store
+from appmates.core.services.image_validator import (
     ScreenshotValidator,
     detect_target_store,
     discover_images,
@@ -47,7 +47,7 @@ def test_aspect_ratio_is_orientation_independent(make_image: MakeImage) -> None:
 
 
 def test_zero_dimension_aspect_ratio_is_safe() -> None:
-    from launchpilot.core.models.report import ImageFacts
+    from appmates.core.models.report import ImageFacts
 
     assert ImageFacts(width=0, height=0).aspect_ratio == 0.0
 
