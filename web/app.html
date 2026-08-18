@@ -25,15 +25,16 @@
 
     <!-- Grouped by when in the workflow you reach for them, not alphabetically:
          the ordering is the argument that this is a pre-launch tool.
-         Community sits right after Your app, ahead of Prepare/Research/Track
-         — it's the one section that needs an account and carries ongoing
+         Community sits right after Your app, ahead of Ready for launch —
+         it's the one section that needs an account and carries ongoing
          conversations, closer to daily-use than reference material.
 
-         Prepare/Research/Track each used to spell out its own tools as
-         separate always-visible links (five for Prepare alone). Each
-         section is now one nav link to that group's own page, with its
-         tools as tabs inside (views/launch.js) — three distinct pages, not
-         one merged page, but ten fewer things to scan in the sidebar. -->
+         Ready for launch groups Prepare/Research/Track under one section
+         heading with three links, not three separate section headings —
+         they're one part of the workflow, not three. Each still opens its
+         own page (#prepare/#research/#track) with only its own tools as
+         tabs inside (views/launch.js), five/three/two instead of one page
+         listing all ten. -->
     <div class="nav-section">Your app</div>
     <a class="nav-item" href="#overview"><span class="nav-icon">◈</span> Overview</a>
 
@@ -41,14 +42,10 @@
     <a class="nav-item" href="#inbox"><span class="nav-icon">✉</span> Inbox</a>
     <a class="nav-item" href="#community"><span class="nav-icon">◍</span> Get testers</a>
 
-    <div class="nav-section">Prepare</div>
-    <a class="nav-item" href="#prepare"><span class="nav-icon">▢</span> Screenshots, listing, pricing</a>
-
-    <div class="nav-section">Research</div>
-    <a class="nav-item" href="#research"><span class="nav-icon">◎</span> Niche, markets, competitors</a>
-
-    <div class="nav-section">Track</div>
-    <a class="nav-item" href="#track"><span class="nav-icon">↗</span> Rank, Play testers</a>
+    <div class="nav-section">Ready for launch</div>
+    <a class="nav-item" href="#prepare"><span class="nav-icon">▢</span> Prepare</a>
+    <a class="nav-item" href="#research"><span class="nav-icon">◎</span> Research</a>
+    <a class="nav-item" href="#track"><span class="nav-icon">↗</span> Track</a>
 
     <div class="nav-section">Reference</div>
     <a class="nav-item" href="#specs"><span class="nav-icon">☰</span> Specs</a>
