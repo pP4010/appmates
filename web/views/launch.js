@@ -77,6 +77,8 @@ export function initTrack() {
 
 /* ============================ ASC import ============================ */
 
+const ASC_JSON_KEY = 'appmates:asc-json';
+
 function initAscImport(selectPrepareTab) {
   // A starter prompt for whichever coding assistant the developer already
   // has open — not a replacement for the four steps above, a shortcut past
@@ -98,9 +100,25 @@ function initAscImport(selectPrepareTab) {
   });
 
   el('lnAscInput').addEventListener('input', () => {
-    const doc = parseAscPaste(el('lnAscInput').value);
+    const raw = el('lnAscInput').value;
+    const doc = parseAscPaste(raw);
     populateAscLocaleSelect(doc?.locales ?? []);
+    try {
+      localStorage.setItem(ASC_JSON_KEY, raw);
+    } catch {
+      /* the paste still works this session; it just won't be there on reload */
+    }
   });
+
+  try {
+    const saved = localStorage.getItem(ASC_JSON_KEY);
+    if (saved) {
+      el('lnAscInput').value = saved;
+      populateAscLocaleSelect(parseAscPaste(saved)?.locales ?? []);
+    }
+  } catch {
+    /* starts empty, same as a first visit */
+  }
 
   el('lnAscImport').addEventListener('click', () => {
     const doc = parseAscPaste(el('lnAscInput').value);
