@@ -208,21 +208,39 @@ const STATUS_TONE = { pass: 'ok', warn: 'warn', fail: 'bad' };
  */
 function renderWall(assets) {
   const wall = el('shotWall');
-  const before = new Map([...wall.children].map((c) => [c.dataset.id, c.getBoundingClientRect()]));
+  const before = snapshotRects(wall);
 
+  wall.style.setProperty('--shot-count', assets.length);
   wall.innerHTML = assets
     .map(
       (a, i) => `
       <div class="shot-thumb" draggable="true" data-id="${a.id}">
         <span class="shot-index">${i + 1}</span>
-        <span class="shot-status ${STATUS_TONE[a.status] ?? ''}" title="${escapeHtml(a.status)}"></span>
-        <button type="button" class="shot-remove" data-id="${a.id}" title="Remove" aria-label="Remove ${escapeHtml(a.file.name)}">×</button>
+        <button type="button" class="shot-remove" data-id="${a.id}" title="Remove" aria-label="Remove ${escapeHtml(a.file.name)}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10.5" width="16" height="3" rx="1.5" fill="currentColor"/></svg>
+        </button>
         <img src="${a.thumbUrl}" alt="">
-        <span class="shot-name">${escapeHtml(a.file.name)}</span>
+        <span class="shot-name">
+          <span class="shot-name-text">${escapeHtml(a.file.name)}</span>
+          <span class="shot-status ${STATUS_TONE[a.status] ?? ''}" title="${escapeHtml(a.status)}"></span>
+        </span>
       </div>`,
     )
     .join('');
 
+  flip(wall, before);
+
+  wall.querySelectorAll('.shot-thumb').forEach((thumb) => bindThumb(thumb, wall));
+}
+
+function snapshotRects(wall) {
+  return new Map([...wall.children].map((c) => [c.dataset.id, c.getBoundingClientRect()]));
+}
+
+/** FLIP: positions were captured in `before` prior to a DOM change; this
+ * measures the new positions and animates from old to new so a reordered
+ * thumbnail's neighbours slide into place instead of just jumping. */
+function flip(wall, before) {
   for (const thumb of wall.children) {
     const prev = before.get(thumb.dataset.id);
     if (!prev) continue;
@@ -237,44 +255,56 @@ function renderWall(assets) {
       thumb.style.transform = '';
     });
   }
+}
 
-  wall.querySelectorAll('.shot-thumb').forEach((thumb) => {
-    const id = Number(thumb.dataset.id);
+function renumber(wall) {
+  [...wall.children].forEach((thumb, i) => {
+    thumb.querySelector('.shot-index').textContent = i + 1;
+  });
+}
 
-    thumb.addEventListener('dragstart', (e) => {
-      draggingId = id;
-      e.dataTransfer.effectAllowed = 'move';
-      // Firefox refuses to start a drag without data set on it.
-      e.dataTransfer.setData('text/plain', String(id));
-      requestAnimationFrame(() => thumb.classList.add('dragging'));
-    });
-    thumb.addEventListener('dragend', () => {
-      draggingId = null;
-      thumb.classList.remove('dragging');
-      wall.querySelectorAll('.drag-over').forEach((n) => n.classList.remove('drag-over'));
-    });
-    thumb.addEventListener('dragenter', (e) => {
-      e.preventDefault();
-      if (id !== draggingId) thumb.classList.add('drag-over');
-    });
-    thumb.addEventListener('dragleave', () => thumb.classList.remove('drag-over'));
-    thumb.addEventListener('dragover', (e) => e.preventDefault());
-    thumb.addEventListener('drop', (e) => {
-      e.preventDefault();
-      thumb.classList.remove('drag-over');
-      if (draggingId === null || draggingId === id) return;
-      const from = entries.findIndex((entry) => entry.id === draggingId);
-      const to = entries.findIndex((entry) => entry.id === id);
-      if (from === -1 || to === -1) return;
-      const [moved] = entries.splice(from, 1);
-      entries.splice(to, 0, moved);
-      render();
-    });
+/** Reordering moves the dragged element itself (not a full re-render), so
+ * the browser's native drag session — anchored to that DOM node — survives
+ * every step and neighbours can FLIP-slide live as the pointer crosses them,
+ * instead of only snapping into place on drop. */
+function bindThumb(thumb, wall) {
+  const id = Number(thumb.dataset.id);
 
-    thumb.querySelector('.shot-remove').addEventListener('click', (e) => {
-      e.stopPropagation();
-      removeEntry(id);
-    });
+  thumb.addEventListener('dragstart', (e) => {
+    draggingId = id;
+    e.dataTransfer.effectAllowed = 'move';
+    // Firefox refuses to start a drag without data set on it.
+    e.dataTransfer.setData('text/plain', String(id));
+    requestAnimationFrame(() => thumb.classList.add('dragging'));
+  });
+  thumb.addEventListener('dragend', () => {
+    draggingId = null;
+    thumb.classList.remove('dragging');
+    render(); // reorder is live already; this just refreshes order-dependent findings
+  });
+  thumb.addEventListener('dragover', (e) => e.preventDefault());
+  thumb.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    if (draggingId === null || draggingId === id) return;
+    const dragged = wall.querySelector(`.shot-thumb[data-id="${draggingId}"]`);
+    if (!dragged) return;
+
+    const before = snapshotRects(wall);
+    const rect = thumb.getBoundingClientRect();
+    if (e.clientX < rect.left + rect.width / 2) wall.insertBefore(dragged, thumb);
+    else wall.insertBefore(dragged, thumb.nextSibling);
+
+    const order = [...wall.children].map((c) => Number(c.dataset.id));
+    entries.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+
+    renumber(wall);
+    flip(wall, before);
+  });
+  thumb.addEventListener('drop', (e) => e.preventDefault());
+
+  thumb.querySelector('.shot-remove').addEventListener('click', (e) => {
+    e.stopPropagation();
+    removeEntry(id);
   });
 }
 
