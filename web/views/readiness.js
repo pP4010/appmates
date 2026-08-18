@@ -11,6 +11,7 @@
 
 import { validateListing } from '../lib/metadata.js';
 import { auditField } from '../lib/keywords.js';
+import { getSelectedStores } from './metadata.js';
 import { screenshotSummary } from './screenshots.js';
 import { el, empty, findingsPanel, lines, pill, ring, tablePanel } from './shared.js';
 
@@ -27,14 +28,23 @@ export function initReadiness() {
   // These fields already have their own live-update listeners on the
   // Screenshots/Keywords/Metadata views; adding this render as a second
   // listener keeps Readiness current while it's the visible tab too.
-  for (const id of [...Object.values(METADATA_INPUTS), 'kwField', 'kwTitle', 'kwSubtitle', 'kwTargets']) {
+  for (const id of [
+    ...Object.values(METADATA_INPUTS),
+    'kwField',
+    'kwTitle',
+    'kwSubtitle',
+    'kwTargets',
+    'mdPlatformApple',
+    'mdPlatformGoogle',
+  ]) {
     el(id)?.addEventListener('input', render);
   }
-  // Screenshots has no per-keystroke signal to listen for (files, not text),
-  // so re-read it whenever this tab becomes the active one instead.
-  window.addEventListener('hashchange', () => {
-    if (location.hash === '#readiness') render();
-  });
+  // Screenshots has no per-keystroke signal to listen for (files, not text
+  // inputs), so re-read it whenever Readiness's own tab becomes the active
+  // one instead — Prepare's tabs are plain buttons switched by
+  // views/launch.js, not a route, so this listens for the click directly
+  // rather than a hash change that no longer happens for this tab.
+  document.querySelector('.tab[data-tab="readiness"]')?.addEventListener('click', render);
   render();
 }
 
@@ -47,7 +57,7 @@ function render() {
 
   const metaValues = metadataValues();
   const hasMeta = Object.values(metaValues).some(Boolean);
-  const metadata = hasMeta ? validateListing(metaValues) : null;
+  const metadata = hasMeta ? validateListing(metaValues, { stores: getSelectedStores() }) : null;
 
   // The keyword field and title/subtitle typed on Listing text win, since
   // that's the field a submission actually ships with; the dedicated

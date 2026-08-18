@@ -25,7 +25,10 @@ appmates.local.toml
 
 # Real listing text pulled from App Store Connect via `appmates asc pull`
 # — not secret, but real business data with no reason to sit in git.
+# Both names: `pulled*.json` from earlier docs, `listing.json` from the
+# README/dashboard's own example command.
 pulled*.json
+/listing.json
 
 # Local scratch for browser-driven checks
 web/.fixtures/

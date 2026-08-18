@@ -61,7 +61,7 @@ function initTabBar(sectionId, tabs, storageKey) {
 export function initPrepare() {
   const select = initTabBar(
     'view-prepare',
-    ['screenshots', 'keywords', 'metadata', 'readiness', 'pricing'],
+    ['asc-connect', 'screenshots', 'keywords', 'metadata', 'readiness', 'pricing'],
     'appmates:prepare-tab',
   );
   initAscImport(select);

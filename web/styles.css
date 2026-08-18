@@ -287,6 +287,13 @@ h3 { font-size: .86rem; font-weight: 650; margin: 1.5rem 0 .55rem; color: var(--
 .field { display: flex; flex-direction: column; gap: .28rem; min-width: 0; }
 .field > label { color: var(--muted); font-size: .72rem; font-weight: 600; letter-spacing: .02em; }
 
+.platform-toggle { display: flex; gap: 1.1rem; padding-top: .15rem; }
+.platform-toggle label {
+  display: flex; align-items: center; gap: .4rem;
+  font-size: .87rem; color: var(--text); cursor: pointer;
+}
+.platform-toggle input[type=checkbox] { width: 1rem; height: 1rem; accent-color: var(--accent); cursor: pointer; }
+
 input[type=text], input[type=email], input[type=number], input[type=color], textarea, select {
   font: inherit;
   font-size: .87rem;
@@ -354,8 +361,9 @@ button.ghost:hover:not(:disabled) { background: var(--accent-soft); }
 }
 
 /* Prepare's "Connect your real App Store Connect data" — the four-step
-   callout and the paste-box/import form side by side, so reading the steps
-   and pasting the result don't compete for the same width. */
+   callout and the paste-box/import callout side by side and matched in
+   style (both .callout), so the two read as one paired step rather than
+   two differently-boxed things stacked on top of each other. */
 .asc-connect {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -363,10 +371,7 @@ button.ghost:hover:not(:disabled) { background: var(--accent-soft); }
   align-items: start;
   margin: 1.25rem 0;
 }
-.asc-connect .callout,
-.asc-connect .form-grid,
-.asc-connect .note { max-width: none; }
-.asc-connect .form-grid { margin-bottom: 0; }
+.asc-connect .callout { max-width: none; margin: 0; }
 @media (max-width: 860px) {
   .asc-connect { grid-template-columns: 1fr; }
 }

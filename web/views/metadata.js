@@ -12,8 +12,56 @@ const INPUTS = {
   description: 'mdDescription',
 };
 
+const PLATFORM_STORAGE_KEY = 'appmates:metadata-platforms';
+
+/**
+ * Which store(s) to check against — an app that's iOS-only has no
+ * `short_description` to fill in, and Play's required field was showing up
+ * as an error for exactly that reason before this existed. Read by
+ * views/readiness.js too, so its own combined report agrees with this page
+ * rather than always checking both regardless of what's ticked here.
+ */
+export function getSelectedStores() {
+  const stores = [];
+  if (el('mdPlatformApple')?.checked) stores.push('apple');
+  if (el('mdPlatformGoogle')?.checked) stores.push('google');
+  return stores;
+}
+
+function restorePlatforms() {
+  let saved = null;
+  try {
+    saved = JSON.parse(localStorage.getItem(PLATFORM_STORAGE_KEY) ?? 'null');
+  } catch {
+    /* falls through to the defaults already checked in the HTML */
+  }
+  if (saved && typeof saved === 'object') {
+    if ('apple' in saved) el('mdPlatformApple').checked = Boolean(saved.apple);
+    if ('google' in saved) el('mdPlatformGoogle').checked = Boolean(saved.google);
+  }
+}
+
+function savePlatforms() {
+  try {
+    localStorage.setItem(
+      PLATFORM_STORAGE_KEY,
+      JSON.stringify({ apple: el('mdPlatformApple').checked, google: el('mdPlatformGoogle').checked }),
+    );
+  } catch {
+    /* the choice still applies this session; it just won't be remembered */
+  }
+}
+
 export function initMetadata() {
+  restorePlatforms();
   for (const id of Object.values(INPUTS)) el(id).addEventListener('input', render);
+  for (const id of ['mdPlatformApple', 'mdPlatformGoogle']) {
+    el(id).addEventListener('change', () => {
+      savePlatforms();
+      render();
+      renderLocales();
+    });
+  }
   el('mdLocalesInput').addEventListener('input', renderLocales);
   render();
   renderLocales();
@@ -21,19 +69,33 @@ export function initMetadata() {
 
 function render() {
   const values = Object.fromEntries(Object.entries(INPUTS).map(([k, id]) => [k, el(id).value]));
+  const stores = getSelectedStores();
+
+  if (!stores.length) {
+    el('mdSummary').innerHTML = '';
+    el('mdFields').innerHTML = empty(
+      '¶',
+      'No store selected',
+      'Check at least one of App Store / Google Play above to see field limits.',
+    );
+    el('mdFindings').innerHTML = '';
+    return;
+  }
 
   if (!Object.values(values).some(Boolean)) {
     el('mdSummary').innerHTML = '';
     el('mdFields').innerHTML = empty(
       '¶',
       'Nothing to check yet',
-      'Fill in any field above — both stores are checked as you type.',
+      stores.length === 2
+        ? 'Fill in any field above — both stores are checked as you type.'
+        : `Fill in any field above — ${stores[0] === 'apple' ? 'the App Store' : 'Google Play'} is checked as you type.`,
     );
     el('mdFindings').innerHTML = '';
     return;
   }
 
-  const report = validateListing(values);
+  const report = validateListing(values, { stores });
   const verdict =
     report.status === 'pass'
       ? 'Within every limit'
@@ -109,8 +171,16 @@ function renderLocales() {
     return;
   }
 
+  const stores = getSelectedStores();
+  if (!stores.length) {
+    el('mdLocalesStatus').innerHTML =
+      '<div class="status error">Check at least one of App Store / Google Play above to see field limits.</div>';
+    el('mdLocalesResults').innerHTML = '';
+    return;
+  }
+
   el('mdLocalesStatus').innerHTML = '';
-  const report = validateLocales(entries);
+  const report = validateLocales(entries, { stores });
 
   const verdict =
     report.status === 'pass' ? 'Every locale is clean' : report.status === 'warn' ? 'Clean, but tight' : 'Over a limit somewhere';
