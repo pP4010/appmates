@@ -4,6 +4,7 @@ import { readFacts, UnreadableImageError } from '../lib/image-facts.js';
 import { detectTargetStore, statusOf, validateFacts, validateSet } from '../lib/validator.js';
 import { applyFix, planFix } from '../lib/fixer.js';
 import { createZip, safeName, uniqueNames } from '../lib/zip.js';
+import { loadShots, saveShots } from '../lib/shot-store.js';
 import { el, escapeHtml, findingHtml, findingsPanel, pill } from './shared.js';
 
 let entries = [];
@@ -58,10 +59,24 @@ export function initScreenshots({ getSpec }) {
     for (const entry of entries) URL.revokeObjectURL(entry.thumbUrl);
     entries = [];
     render();
+    persist();
   });
   el('fixBtn').addEventListener('click', runFix);
 
   populateTargets('apple');
+
+  loadShots()
+    .then((files) => ingest(files))
+    .catch(() => {
+      /* nothing persisted, or IndexedDB unavailable (private browsing) —
+       * starts empty either way */
+    });
+}
+
+/** Fire-and-forget: persistence is a nice-to-have, so a failure here (quota,
+ * private browsing) shouldn't interrupt anything on screen. */
+function persist() {
+  saveShots(entries.map((e) => e.file)).catch(() => {});
 }
 
 function populateTargets(store) {
@@ -93,6 +108,7 @@ async function ingest(files) {
   );
   entries = [...entries, ...added];
   render();
+  persist();
 }
 
 function removeEntry(id) {
@@ -101,6 +117,7 @@ function removeEntry(id) {
   URL.revokeObjectURL(entry.thumbUrl);
   entries = entries.filter((e) => e.id !== id);
   render();
+  persist();
 }
 
 function render() {
@@ -281,6 +298,7 @@ function bindThumb(thumb, wall) {
     draggingId = null;
     thumb.classList.remove('dragging');
     render(); // reorder is live already; this just refreshes order-dependent findings
+    persist();
   });
   thumb.addEventListener('dragover', (e) => e.preventDefault());
   thumb.addEventListener('dragenter', (e) => {
