@@ -643,6 +643,69 @@ td.tight { padding-top: .35rem; padding-bottom: .35rem; }
 #drop span.hint { color: var(--muted); font-size: .82rem; }
 input[type=file] { display: none; }
 
+/* ============================ shot wall ============================
+   The draggable thumbnail grid Screenshots shows once files are dropped —
+   reordering uses native HTML5 drag-and-drop plus a small FLIP animation
+   (see views/screenshots.js) so a moved thumbnail's neighbours slide into
+   place instead of just jumping. */
+.shot-wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: .8rem;
+  margin: 1.1rem 0;
+}
+.shot-thumb {
+  position: relative;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  cursor: grab;
+  user-select: none;
+  transition: box-shadow .15s, border-color .15s, opacity .15s;
+}
+.shot-thumb:active { cursor: grabbing; }
+.shot-thumb:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
+.shot-thumb.dragging { opacity: .35; }
+.shot-thumb.drag-over { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.shot-thumb img {
+  display: block; width: 100%; aspect-ratio: 9/16; object-fit: cover;
+  pointer-events: none; /* clicks/drags land on the thumbnail, not the image */
+}
+.shot-thumb .shot-index {
+  position: absolute; top: .35rem; left: .35rem;
+  min-width: 1.3rem; height: 1.3rem; padding: 0 .3rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .7rem; font-weight: 700; color: #fff;
+  background: rgba(0,0,0,.55); border-radius: 999px;
+  pointer-events: none;
+}
+.shot-thumb .shot-status {
+  position: absolute; top: .35rem; right: .35rem;
+  width: .55rem; height: .55rem; border-radius: 50%;
+  pointer-events: none;
+}
+.shot-thumb .shot-status.ok { background: var(--ok); }
+.shot-thumb .shot-status.warn { background: var(--warn); }
+.shot-thumb .shot-status.fail { background: var(--bad); }
+.shot-thumb .shot-remove {
+  position: absolute; bottom: .35rem; right: .35rem;
+  width: 1.5rem; height: 1.5rem; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem; line-height: 1; color: #fff;
+  background: rgba(0,0,0,.55); border: none; cursor: pointer;
+  opacity: 0; transition: opacity .12s, background .12s;
+}
+.shot-thumb:hover .shot-remove { opacity: 1; }
+.shot-thumb .shot-remove:hover { background: var(--bad); }
+.shot-thumb .shot-name {
+  display: block; padding: .3rem .5rem;
+  font-size: .68rem; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
 /* ============================ states ============================ */
 
 .empty {

@@ -223,11 +223,16 @@ trademark_words:
 
 # Severity assigned to each detectable problem. Codes are stable and shared with
 # the browser implementation.
+#
+# The two duplicate codes are warnings, not errors: a repeated word wastes
+# keyword-field budget, but Apple does not reject a listing over it — it is
+# an optimisation left on the table, the same category as ASO_NOISE_WORD,
+# not a submission blocker like an over-length field.
 findings:
   ASO_KEYWORD_FIELD_TOO_LONG: error
   ASO_KEYWORD_SPACES: error
-  ASO_DUPLICATE_IN_FIELD: error
-  ASO_DUPLICATE_OF_TITLE: error
+  ASO_DUPLICATE_IN_FIELD: warning
+  ASO_DUPLICATE_OF_TITLE: warning
   ASO_NOISE_WORD: warning
   ASO_CATEGORY_WORD: warning
   ASO_TRADEMARK_RISK: warning

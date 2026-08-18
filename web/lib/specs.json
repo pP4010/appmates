@@ -83,8 +83,8 @@
     },
     "findings": {
       "ASO_CATEGORY_WORD": "warning",
-      "ASO_DUPLICATE_IN_FIELD": "error",
-      "ASO_DUPLICATE_OF_TITLE": "error",
+      "ASO_DUPLICATE_IN_FIELD": "warning",
+      "ASO_DUPLICATE_OF_TITLE": "warning",
       "ASO_KEYWORD_FIELD_TOO_LONG": "error",
       "ASO_KEYWORD_SPACES": "error",
       "ASO_NOISE_WORD": "warning",

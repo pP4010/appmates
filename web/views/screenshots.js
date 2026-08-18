@@ -4,12 +4,17 @@ import { readFacts, UnreadableImageError } from '../lib/image-facts.js';
 import { detectTargetStore, statusOf, validateFacts, validateSet } from '../lib/validator.js';
 import { applyFix, planFix } from '../lib/fixer.js';
 import { createZip, safeName, uniqueNames } from '../lib/zip.js';
-import { appIcon, el, empty, escapeHtml, findingHtml, findingsPanel, pill } from './shared.js';
+import { el, escapeHtml, findingHtml, findingsPanel, pill } from './shared.js';
 
 let entries = [];
 let activeStore = 'apple';
 let lastTargetStore = null;
 let specLookup = null;
+let nextId = 1;
+/** Set while a thumbnail drag is in progress — `entries` reorders live as
+ * the pointer crosses other thumbnails, so this is the id being carried,
+ * not a position (positions shift under it as it moves). */
+let draggingId = null;
 
 export function initScreenshots({ getSpec }) {
   specLookup = getSpec;
@@ -24,7 +29,10 @@ export function initScreenshots({ getSpec }) {
       fileInput.click();
     }
   });
-  fileInput.addEventListener('change', (e) => ingest([...e.target.files]));
+  fileInput.addEventListener('change', (e) => {
+    ingest([...e.target.files]);
+    fileInput.value = ''; // so picking the same file again still fires 'change'
+  });
 
   for (const type of ['dragenter', 'dragover']) {
     drop.addEventListener(type, (e) => {
@@ -42,10 +50,12 @@ export function initScreenshots({ getSpec }) {
     ingest([...(e.dataTransfer?.files ?? [])].filter((f) => /\.(png|jpe?g)$/i.test(f.name))),
   );
 
+  el('addShotsBtn').addEventListener('click', () => fileInput.click());
   el('storeSelect').addEventListener('change', render);
   el('targetSelect').addEventListener('change', render);
   el('bgInput').addEventListener('change', render);
   el('clearBtn').addEventListener('click', () => {
+    for (const entry of entries) URL.revokeObjectURL(entry.thumbUrl);
     entries = [];
     render();
   });
@@ -66,11 +76,15 @@ async function ingest(files) {
   if (!files.length) return;
   const added = await Promise.all(
     files.map(async (file) => {
+      const id = nextId++;
+      const thumbUrl = URL.createObjectURL(file);
       try {
-        return { file, facts: await readFacts(file), error: null };
+        return { id, file, thumbUrl, facts: await readFacts(file), error: null };
       } catch (err) {
         return {
+          id,
           file,
+          thumbUrl,
           facts: null,
           error: err instanceof UnreadableImageError ? err.message : String(err),
         };
@@ -81,14 +95,25 @@ async function ingest(files) {
   render();
 }
 
+function removeEntry(id) {
+  const entry = entries.find((e) => e.id === id);
+  if (!entry) return;
+  URL.revokeObjectURL(entry.thumbUrl);
+  entries = entries.filter((e) => e.id !== id);
+  render();
+}
+
 function render() {
-  el('clearBtn').classList.toggle('hidden', entries.length === 0);
+  el('drop').classList.toggle('hidden', entries.length > 0);
+  el('shotWall').classList.toggle('hidden', entries.length === 0);
+  el('shotActions').classList.toggle('hidden', entries.length === 0);
 
   if (!entries.length) {
+    el('shotWall').innerHTML = '';
     el('summary').innerHTML = '';
     el('setFindings').innerHTML = '';
     el('results').innerHTML = '';
-    el('fixBtn').classList.add('hidden');
+    setFixButton(false, 'Drop screenshots with a fixable issue first');
     el('fixNote').classList.add('hidden');
     return;
   }
@@ -103,9 +128,11 @@ function render() {
 
   const assets = entries.map((entry) =>
     entry.facts
-      ? { file: entry.file, ...validateFacts(entry.facts, [activeStore]) }
+      ? { id: entry.id, file: entry.file, thumbUrl: entry.thumbUrl, ...validateFacts(entry.facts, [activeStore]) }
       : {
+          id: entry.id,
           file: entry.file,
+          thumbUrl: entry.thumbUrl,
           facts: null,
           status: 'fail',
           deviceClass: null,
@@ -127,11 +154,21 @@ function render() {
 
   renderSummary(assets, setFindings, choice === 'auto');
   el('setFindings').innerHTML = findingsPanel(setFindings, 'Across the whole set');
+  renderWall(assets);
   renderAssets(assets);
 
   const fixable = assets.some((a) => a.facts && a.findings.some((f) => f.fixable));
-  el('fixBtn').classList.toggle('hidden', !fixable);
+  setFixButton(fixable, fixable ? '' : 'Nothing here needs fixing');
   el('fixNote').classList.toggle('hidden', !fixable);
+}
+
+/** Always visible, greyed out rather than hidden when there is nothing to
+ * click it for — a button that vanishes the moment it would do something
+ * reads as broken; a disabled one reads as "not yet". */
+function setFixButton(enabled, title) {
+  const button = el('fixBtn');
+  button.disabled = !enabled;
+  button.title = title;
 }
 
 function renderSummary(assets, setFindings, wasAuto) {
@@ -161,6 +198,85 @@ function renderSummary(assets, setFindings, wasAuto) {
 }
 
 const STATUS_TONE = { pass: 'ok', warn: 'warn', fail: 'bad' };
+
+/**
+ * The draggable thumbnail grid. Reordering uses native HTML5 drag-and-drop
+ * to track *which* two thumbnails swapped, but the sliding itself is a
+ * small FLIP animation (capture positions before the DOM changes, let the
+ * browser lay out the new order, then animate from old position to new) —
+ * native drag-and-drop alone only gives you a static drop, not a slide.
+ */
+function renderWall(assets) {
+  const wall = el('shotWall');
+  const before = new Map([...wall.children].map((c) => [c.dataset.id, c.getBoundingClientRect()]));
+
+  wall.innerHTML = assets
+    .map(
+      (a, i) => `
+      <div class="shot-thumb" draggable="true" data-id="${a.id}">
+        <span class="shot-index">${i + 1}</span>
+        <span class="shot-status ${STATUS_TONE[a.status] ?? ''}" title="${escapeHtml(a.status)}"></span>
+        <button type="button" class="shot-remove" data-id="${a.id}" title="Remove" aria-label="Remove ${escapeHtml(a.file.name)}">×</button>
+        <img src="${a.thumbUrl}" alt="">
+        <span class="shot-name">${escapeHtml(a.file.name)}</span>
+      </div>`,
+    )
+    .join('');
+
+  for (const thumb of wall.children) {
+    const prev = before.get(thumb.dataset.id);
+    if (!prev) continue;
+    const now = thumb.getBoundingClientRect();
+    const dx = prev.left - now.left;
+    const dy = prev.top - now.top;
+    if (!dx && !dy) continue;
+    thumb.style.transition = 'none';
+    thumb.style.transform = `translate(${dx}px, ${dy}px)`;
+    requestAnimationFrame(() => {
+      thumb.style.transition = 'transform .2s ease';
+      thumb.style.transform = '';
+    });
+  }
+
+  wall.querySelectorAll('.shot-thumb').forEach((thumb) => {
+    const id = Number(thumb.dataset.id);
+
+    thumb.addEventListener('dragstart', (e) => {
+      draggingId = id;
+      e.dataTransfer.effectAllowed = 'move';
+      // Firefox refuses to start a drag without data set on it.
+      e.dataTransfer.setData('text/plain', String(id));
+      requestAnimationFrame(() => thumb.classList.add('dragging'));
+    });
+    thumb.addEventListener('dragend', () => {
+      draggingId = null;
+      thumb.classList.remove('dragging');
+      wall.querySelectorAll('.drag-over').forEach((n) => n.classList.remove('drag-over'));
+    });
+    thumb.addEventListener('dragenter', (e) => {
+      e.preventDefault();
+      if (id !== draggingId) thumb.classList.add('drag-over');
+    });
+    thumb.addEventListener('dragleave', () => thumb.classList.remove('drag-over'));
+    thumb.addEventListener('dragover', (e) => e.preventDefault());
+    thumb.addEventListener('drop', (e) => {
+      e.preventDefault();
+      thumb.classList.remove('drag-over');
+      if (draggingId === null || draggingId === id) return;
+      const from = entries.findIndex((entry) => entry.id === draggingId);
+      const to = entries.findIndex((entry) => entry.id === id);
+      if (from === -1 || to === -1) return;
+      const [moved] = entries.splice(from, 1);
+      entries.splice(to, 0, moved);
+      render();
+    });
+
+    thumb.querySelector('.shot-remove').addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeEntry(id);
+    });
+  });
+}
 
 function renderAssets(assets) {
   el('results').innerHTML = assets
