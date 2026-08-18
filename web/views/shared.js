@@ -76,6 +76,20 @@ export function pill(text, tone = 'neutral') {
   return `<span class="pill ${tone}">${escapeHtml(text)}</span>`;
 }
 
+/**
+ * A two-letter storefront code as its flag emoji — the well-known trick of
+ * mapping each ASCII letter to its Unicode regional-indicator symbol, so
+ * "us" becomes 🇺🇸 with no image asset or lookup table to keep current as
+ * storefronts get added. Renders as plain letters on the rare platform
+ * with no flag glyphs, which degrades to exactly what was shown before
+ * this existed rather than to nothing.
+ */
+export function flagEmoji(countryCode) {
+  const code = (countryCode || '').toUpperCase();
+  if (!/^[A-Z]{2}$/.test(code)) return '';
+  return [...code].map((c) => String.fromCodePoint(127397 + c.charCodeAt(0))).join('');
+}
+
 /** Movement between two positions. Positive is upward, which is fewer places. */
 export function delta(value) {
   if (value === null || value === undefined) return '<span class="delta flat">—</span>';

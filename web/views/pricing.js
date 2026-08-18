@@ -1,7 +1,13 @@
 /** Suggested per-territory prices from one base price. */
 
 import { currentPriceFor, getPricingSpec, hasCurrentPrices, suggestPrices } from '../lib/pricing.js';
-import { el, empty, escapeHtml, pill, tablePanel } from './shared.js';
+import { el, empty, escapeHtml, flagEmoji, pill, tablePanel } from './shared.js';
+
+/** One colour per tier, so the eye can group rows without reading every
+ * label — not a value judgement, just how far a multiplier sits from the
+ * uniform baseline. Keyed by id rather than position: a spec that adds or
+ * reorders tiers should not silently shift what a colour means. */
+const TIER_TONE = { tier_1: 'neutral', tier_2: 'info', tier_3: 'warn' };
 
 export function initPricing() {
   populateModelSelect();
@@ -53,8 +59,12 @@ function render() {
     rows: prices.map((p) => {
       const current = showCurrent ? currentPriceFor(p.country) : null;
       const row = [
-        `${p.countryName} (${p.country.toUpperCase()})`,
-        { html: p.tierLabel ? pill(p.tierLabel, 'neutral') : pill('unclassified — full rate', 'neutral') },
+        { html: `${flagEmoji(p.country)} ${escapeHtml(p.countryName)} (${p.country.toUpperCase()})` },
+        {
+          html: p.tierLabel
+            ? pill(p.tierLabel, TIER_TONE[p.tierId] ?? 'neutral')
+            : pill('unclassified — full rate', 'neutral'),
+        },
         { html: `${p.multiplier.toFixed(2)}×`, num: true },
       ];
       if (showCurrent) {
