@@ -7,10 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from launchpilot.core.errors import MetadataParseError
-from launchpilot.core.models.app_metadata import AppListing, AppMetadata
-from launchpilot.core.models.report import Severity, Status, Store
-from launchpilot.core.services.metadata_validator import MetadataValidator, load_listing
+from appmates.core.errors import MetadataParseError
+from appmates.core.models.app_metadata import AppListing, AppMetadata
+from appmates.core.models.report import Severity, Status, Store
+from appmates.core.services.metadata_validator import MetadataValidator, load_listing
 
 
 def codes(report: object) -> set[str]:

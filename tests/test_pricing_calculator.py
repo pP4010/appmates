@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from launchpilot.core.services.pricing_calculator import suggest_prices
+from appmates.core.services.pricing_calculator import suggest_prices
 
 
 def test_uniform_model_charges_the_same_everywhere() -> None:

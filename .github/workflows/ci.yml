@@ -141,11 +141,11 @@ jobs:
       # The commands must actually run end to end, not merely import.
       - name: Exercise the CLI
         run: |
-          uv run launchpilot --version
-          uv run launchpilot specs --json > /dev/null
-          uv run launchpilot check-testers -d 14 -t 12
+          uv run appmates --version
+          uv run appmates specs --json > /dev/null
+          uv run appmates check-testers -d 14 -t 12
           # Exit code 1 is the documented "findings" contract; assert it holds.
-          if uv run launchpilot check-testers -d 3 -t 12; then
+          if uv run appmates check-testers -d 3 -t 12; then
             echo "::error::expected exit code 1 for an incomplete test period"
             exit 1
           fi

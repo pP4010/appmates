@@ -10,14 +10,14 @@ from __future__ import annotations
 
 import pytest
 
-from launchpilot.core.models.report import Severity
-from launchpilot.core.services.keyword_builder import (
+from appmates.core.models.report import Severity
+from appmates.core.services.keyword_builder import (
     KeywordBuilder,
     looks_plural,
     split_field,
     tokenize,
 )
-from launchpilot.core.specs.registry import load_aso_spec
+from appmates.core.specs.registry import load_aso_spec
 
 
 @pytest.fixture

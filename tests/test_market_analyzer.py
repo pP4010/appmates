@@ -14,8 +14,8 @@ from typing import Any
 
 import pytest
 
-from launchpilot.core.models.market import Band, Verdict
-from launchpilot.core.services.market_analyzer import (
+from appmates.core.models.market import Band, Verdict
+from appmates.core.services.market_analyzer import (
     LEADER_SAMPLE,
     Aggregates,
     NicheAnalyzer,
@@ -24,7 +24,7 @@ from launchpilot.core.services.market_analyzer import (
     keyword_in_name,
     snapshot_from_entry,
 )
-from launchpilot.core.specs.registry import load_market_spec
+from appmates.core.specs.registry import load_market_spec
 
 FIXTURE = Path(__file__).parent / "fixtures" / "itunes_habit_tracker.json"
 TODAY = dt.date(2026, 7, 26)

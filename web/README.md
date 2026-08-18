@@ -69,7 +69,7 @@ The browser reimplements logic that already exists in Python. Two
 implementations of the same rules drift, so the drift is made to fail loudly.
 
 **Specification data is generated, never retyped.** `lib/specs.json` is projected
-from `src/launchpilot/core/specs/*.yaml` by `scripts/export_specs.py` — store
+from `src/appmates/core/specs/*.yaml` by `scripts/export_specs.py` — store
 sizes, scoring curves and weights, field limits, word lists, storefront names.
 The numbers that change when a store updates a rule exist in exactly one place.
 

@@ -24,14 +24,14 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from launchpilot.core.models.report import ImageFacts, Store
-from launchpilot.core.models.testing import DailyTesterCount
-from launchpilot.core.services.app_profile import AppHealthChecker, profile_from_entry
-from launchpilot.core.services.competitor_analyzer import analyse_competitors, extract_terms
-from launchpilot.core.services.google_play import evaluate
-from launchpilot.core.services.image_validator import ScreenshotValidator
-from launchpilot.core.services.keyword_builder import KeywordBuilder
-from launchpilot.core.services.market_analyzer import analyse_keyword
+from appmates.core.models.report import ImageFacts, Store
+from appmates.core.models.testing import DailyTesterCount
+from appmates.core.services.app_profile import AppHealthChecker, profile_from_entry
+from appmates.core.services.competitor_analyzer import analyse_competitors, extract_terms
+from appmates.core.services.google_play import evaluate
+from appmates.core.services.image_validator import ScreenshotValidator
+from appmates.core.services.keyword_builder import KeywordBuilder
+from appmates.core.services.market_analyzer import analyse_keyword
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = REPO_ROOT / "web" / "test" / "conformance-cases.json"

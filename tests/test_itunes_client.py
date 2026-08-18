@@ -17,7 +17,7 @@ from typing import Any
 import httpx
 import pytest
 
-from launchpilot.core.clients.itunes import (
+from appmates.core.clients.itunes import (
     SEARCH_URL,
     ITunesSearchClient,
     MarketDataError,
@@ -223,7 +223,7 @@ def test_the_first_request_is_not_delayed() -> None:
 def test_default_cache_dir_is_under_the_user_cache_home() -> None:
     path = default_cache_dir()
     assert path.is_absolute()
-    assert "launchpilot" in path.parts
+    assert "appmates" in path.parts
 
 
 def test_a_response_without_the_expected_keys_yields_empty_results() -> None:

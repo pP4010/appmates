@@ -10,8 +10,8 @@ import datetime as dt
 
 import pytest
 
-from launchpilot.core.models.report import Store
-from launchpilot.core.specs.registry import all_specs, load_spec
+from appmates.core.models.report import Store
+from appmates.core.specs.registry import all_specs, load_spec
 
 
 def test_both_catalogues_load() -> None:

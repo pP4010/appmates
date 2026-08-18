@@ -11,14 +11,14 @@ from typing import Any
 
 import pytest
 
-from launchpilot.core.models.report import Severity
-from launchpilot.core.services.app_profile import (
+from appmates.core.models.report import Severity
+from appmates.core.services.app_profile import (
     AppHealthChecker,
     infer_device,
     profile_from_entry,
     screenshot_ratio,
 )
-from launchpilot.core.specs.registry import load_app_health_spec
+from appmates.core.specs.registry import load_app_health_spec
 
 TODAY = dt.date(2026, 7, 27)
 

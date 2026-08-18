@@ -20,7 +20,7 @@ from pathlib import Path
 
 from PIL import Image, PngImagePlugin
 
-from launchpilot.core.services.image_validator import read_facts
+from appmates.core.services.image_validator import read_facts
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FIXTURE_DIR = REPO_ROOT / "web" / "test" / "fixtures"

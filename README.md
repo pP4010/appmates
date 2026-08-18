@@ -17,7 +17,7 @@ milliseconds, tells you exactly which rule you broke, and can repair the files
 for you.
 
 ```console
-$ launchpilot validate-screenshots ./store/ios/en-US
+$ appmates validate-screenshots ./store/ios/en-US
 Auto-detected target store: apple (override with --store)
 
   File                Size        Device            Findings
@@ -33,8 +33,8 @@ Auto-detected target store: apple (override with --store)
 ```
 
 ```console
-$ launchpilot fix-screenshots ./store/ios/en-US --out ./store/ios/en-US-fixed
-$ launchpilot validate-screenshots ./store/ios/en-US-fixed --strict
+$ appmates fix-screenshots ./store/ios/en-US --out ./store/ios/en-US-fixed
+$ appmates validate-screenshots ./store/ios/en-US-fixed --strict
   PASS  10 file(s) checked against apple · 0 error(s) · 0 warning(s)
 ```
 
@@ -70,7 +70,7 @@ uv sync --extra dev
 Try it without installing anything:
 
 ```bash
-uvx --from . launchpilot specs
+uvx --from . appmates specs
 ```
 
 ## Commands
@@ -78,10 +78,10 @@ uvx --from . launchpilot specs
 ### `validate-screenshots`
 
 ```bash
-launchpilot validate-screenshots ./screenshots
-launchpilot validate-screenshots ./screenshots --store google --strict
-launchpilot validate-screenshots ./screenshots --json | jq '.assets[].findings[].code'
-launchpilot validate-screenshots ./screenshots --ignore APPLE_LEGACY_SIZE
+appmates validate-screenshots ./screenshots
+appmates validate-screenshots ./screenshots --store google --strict
+appmates validate-screenshots ./screenshots --json | jq '.assets[].findings[].code'
+appmates validate-screenshots ./screenshots --ignore APPLE_LEGACY_SIZE
 ```
 
 `--store` defaults to `auto`. App Store and Play screenshots are genuinely
@@ -93,9 +93,9 @@ tells you which it chose. Use `--store both` when you want the cross-check anywa
 ### `fix-screenshots`
 
 ```bash
-launchpilot fix-screenshots ./screenshots                      # dry run: prints the plan
-launchpilot fix-screenshots ./screenshots --out ./fixed        # writes repaired copies
-launchpilot fix-screenshots ./screenshots --out ./fixed \
+appmates fix-screenshots ./screenshots                      # dry run: prints the plan
+appmates fix-screenshots ./screenshots --out ./fixed        # writes repaired copies
+appmates fix-screenshots ./screenshots --out ./fixed \
     --target apple-iphone-6.9 --background "#0B0B0F"
 ```
 
@@ -110,9 +110,9 @@ broken to reviewers.
 ### `check-testers`
 
 ```bash
-launchpilot check-testers --days-passed 9 --active-testers 12
-launchpilot check-testers --from-file tester-history.json
-launchpilot check-testers -d 20 -t 12 --release-pending
+appmates check-testers --days-passed 9 --active-testers 12
+appmates check-testers --from-file tester-history.json
+appmates check-testers -d 20 -t 12 --release-pending
 ```
 
 ```
@@ -144,9 +144,9 @@ says so rather than quietly implying you are fine.
 ### `niche`
 
 ```bash
-launchpilot niche "habit tracker" "morning routine" --country fr
-launchpilot niche "sourdough starter log" --leaders
-launchpilot niche "budget app" --json | jq '.keywords[0].verdict'
+appmates niche "habit tracker" "morning routine" --country fr
+appmates niche "sourdough starter log" --leaders
+appmates niche "budget app" --json | jq '.keywords[0].verdict'
 ```
 
 ```
@@ -185,7 +185,7 @@ weighting and still trust the facts:
 | **Publisher concentration** | share of slots held by repeat publishers | One studio holding several slots is cross-promotion you cannot outspend |
 
 The weights, curves and thresholds all live in
-[`core/specs/market.yaml`](src/launchpilot/core/specs/market.yaml) with the
+[`core/specs/market.yaml`](src/appmates/core/specs/market.yaml) with the
 reasoning written next to each number. Edit them and re-run.
 
 > **On the raw result count.** An earlier revision scored saturation from the
@@ -199,9 +199,9 @@ reasoning written next to each number. Edit them and re-run.
 ### `markets`
 
 ```bash
-launchpilot markets "habit tracker"
-launchpilot markets "budget app" --countries us,fr,de,jp,br
-launchpilot markets "gratitude journal" --json | jq '.best_country'
+appmates markets "habit tracker"
+appmates markets "budget app" --countries us,fr,de,jp,br
+appmates markets "gratitude journal" --json | jq '.best_country'
 ```
 
 ```
@@ -242,8 +242,8 @@ skipped rather than aborting the sweep.
 ### `app`
 
 ```bash
-launchpilot app 1438388363
-launchpilot app com.example.myapp --country fr --json
+appmates app 1438388363
+appmates app com.example.myapp --country fr --json
 ```
 
 ```
@@ -293,10 +293,10 @@ prefills the competitor comparison and the keyword builder.
 ### `competitors`
 
 ```bash
-launchpilot competitors "habit tracker" --top 10
-launchpilot competitors "gratitude journal" --screenshots
-launchpilot competitors "gratitude journal" --download ./rivals --width 300
-launchpilot competitors "budget app" --country fr --json
+appmates competitors "habit tracker" --top 10
+appmates competitors "gratitude journal" --screenshots
+appmates competitors "gratitude journal" --download ./rivals --width 300
+appmates competitors "budget app" --country fr --json
 ```
 
 ```
@@ -337,7 +337,7 @@ offline reference.
 #### `--terms`: what the field agrees on
 
 ```bash
-launchpilot competitors "gratitude journal" --terms --mine "Kaizen: Gratitude"
+appmates competitors "gratitude journal" --terms --mine "Kaizen: Gratitude"
 ```
 
 ```
@@ -348,7 +348,7 @@ launchpilot competitors "gratitude journal" --terms --mine "Kaizen: Gratitude"
   routine            18            1/10              5/10       —
 
   Not in your listing: goal, routine, daily, streak
-  launchpilot keywords --title '…' -t 'goal' -t 'routine' -t 'daily'
+  appmates keywords --title '…' -t 'goal' -t 'routine' -t 'daily'
 ```
 
 Closes the loop: find the vocabulary your rivals share, then feed what you lack
@@ -368,9 +368,9 @@ each at half strength and neither would rank.
 ### `rank`
 
 ```bash
-launchpilot rank 1438388363 "habit tracker" "daily habits"
-launchpilot rank com.example.myapp "budget" --country fr
-launchpilot rank 1438388363 "habit tracker" --history ./ranks.jsonl
+appmates rank 1438388363 "habit tracker" "daily habits"
+appmates rank com.example.myapp "budget" --country fr
+appmates rank 1438388363 "habit tracker" --history ./ranks.jsonl
 ```
 
 ```
@@ -399,12 +399,12 @@ rewrites earlier lines, and one malformed line cannot discard the rest.
 ### `keywords`
 
 ```bash
-launchpilot keywords --title "Kaizen: Habit Tracker" --subtitle "Build daily routines" \
+appmates keywords --title "Kaizen: Habit Tracker" --subtitle "Build daily routines" \
     --field "habit, habits, habit tracker, daily, app, free, productivity, streak" \
     -t "habit tracker" -t "gratitude journal"
 
-launchpilot keywords listing.toml --json
-launchpilot keywords --title "Kaizen" -t "habit tracker" -t "morning streak" --build
+appmates keywords listing.toml --json
+appmates keywords --title "Kaizen" -t "habit tracker" -t "morning streak" --build
 ```
 
 ```
@@ -450,13 +450,13 @@ survive truncation.
 > exactly the double-counting this tool exists to call out.
 
 The word lists and severities live in
-[`core/specs/aso.yaml`](src/launchpilot/core/specs/aso.yaml).
+[`core/specs/aso.yaml`](src/appmates/core/specs/aso.yaml).
 
 ### `validate-metadata`
 
 ```bash
-launchpilot validate-metadata listing.toml
-launchpilot validate-metadata listing.json --store apple --strict
+appmates validate-metadata listing.toml
+appmates validate-metadata listing.json --store apple --strict
 ```
 
 ```toml
@@ -479,8 +479,8 @@ than one file per language.
 ### `submission-check`
 
 ```bash
-launchpilot submission-check --screenshots ./store/ios --metadata listing.toml
-launchpilot submission-check --keywords "habit,streak,focus"
+appmates submission-check --screenshots ./store/ios --metadata listing.toml
+appmates submission-check --keywords "habit,streak,focus"
 ```
 
 One go/no-go answer, composed from whichever of `validate-screenshots`,
@@ -494,8 +494,8 @@ rather than a second copy typed in separately.
 ### `pricing`
 
 ```bash
-launchpilot pricing 4.99
-launchpilot pricing 4.99 --model uniform --countries us,gb,in
+appmates pricing 4.99
+appmates pricing 4.99 --model uniform --countries us,gb,in
 ```
 
 Suggests a starting price per storefront from one base price — a **read-only
@@ -506,13 +506,57 @@ are deliberately coarse: exact purchasing-power or Big Mac Index data drifts
 throughout the year and nothing here is positioned to keep it current, so a
 three-band approximation that's honest about being one beats a
 precise-looking number that quietly goes stale. Tiers live in
-[`core/specs/pricing.yaml`](src/launchpilot/core/specs/pricing.yaml).
+[`core/specs/pricing.yaml`](src/appmates/core/specs/pricing.yaml).
+
+### `asc` — App Store Connect, optional
+
+```bash
+appmates asc status                                          # is a key configured and accepted?
+appmates asc pull com.example.app --out listing.json         # real listing text + current prices
+appmates asc push-metadata com.example.app listing.json      # dry run: prints the diff, sends nothing
+appmates asc push-metadata com.example.app listing.json --yes # sends it
+```
+
+Everything else in AppMates works with zero account and zero credentials —
+this is the one command family that doesn't, because reading or writing your
+real App Store Connect listing needs your real API key. Three things make
+that safe to opt into:
+
+> **Your private key never leaves your machine.** It is read from disk once,
+> used to sign a short-lived (15-minute) request token, and that's it —
+> never logged, never cached, never sent anywhere but straight to
+> `api.appstoreconnect.apple.com`. AppMates' web dashboard and Cloudflare
+> backend are never in this path, ever; there is nothing to trust beyond
+> Apple itself. See
+> [`core/clients/appstore_connect.py`](src/appmates/core/clients/appstore_connect.py)
+> for exactly what that covers.
+
+- **Credentials live in `.env`, never a flag.** Copy [`.env.example`](.env.example),
+  fill in `LAUNCHPILOT_APP_STORE_KEY_ID` / `_ISSUER_ID` / `_PRIVATE_KEY_PATH`
+  from a key generated at
+  [Users and Access → Integrations](https://appstoreconnect.apple.com/access/integrations/api).
+  A CLI flag would sit in shell history and `ps` output; an env var doesn't.
+- **`pull` is read-only.** It writes the exact `{"locales": [...]}` shape
+  `validate-metadata` and `submission-check` already read — paste it
+  straight into the web dashboard's multi-locale checker, no conversion.
+- **`push-metadata` is a dry run by default.** It always prints the
+  field-by-field diff first; nothing is sent until you pass `--yes`. It also
+  runs the same checks `validate-metadata` does before sending anything, and
+  refuses to push a listing with an error-level finding unless you also pass
+  `--force`.
+- **Pricing is pull-only, on purpose.** `asc pull` shows what's live per
+  territory next to what `appmates pricing` suggests, but does not push a
+  price schedule — that API references specific price-point ids per
+  territory rather than a plain number, and a mistake there is a real,
+  live price in front of real customers. Set it by hand in App Store
+  Connect until this path has been proven against more accounts than the
+  one it was built against.
 
 ### `specs`
 
 ```bash
-launchpilot specs --store apple
-launchpilot specs --json
+appmates specs --store apple
+appmates specs --json
 ```
 
 Prints the bundled specification catalogue with a `last_verified` date and the
@@ -525,8 +569,8 @@ Every command exits `0` clean, `1` on findings, `2` on a usage error.
 ```yaml
 - name: Validate store assets
   run: |
-    launchpilot validate-screenshots ./store/ios --store apple --strict
-    launchpilot validate-metadata ./store/listing.toml
+    appmates validate-screenshots ./store/ios --store apple --strict
+    appmates validate-metadata ./store/listing.toml
 ```
 
 `--json` emits the same Pydantic models the planned HTTP API will return, so
@@ -560,7 +604,7 @@ CI fails if any generated file is stale. See [web/README.md](web/README.md).
 ## Architecture
 
 ```
-src/launchpilot/
+src/appmates/
 ├── cli/            # Typer commands: argument parsing and rendering only
 └── core/
     ├── specs/      # ← versioned YAML spec catalogue + registry
@@ -619,7 +663,7 @@ binary fixtures cannot be diffed in review, and they hide the very properties
 - [x] `markets` — which storefront a term is actually winnable in
 - [x] `app` — one listing's health, and an Overview page that anchors the session
 - [x] `competitors --terms` — the vocabulary a field shares, and what you lack
-- [ ] `launchpilot init` — scaffold a `launchpilot.toml` per project
+- [ ] `appmates init` — scaffold a `appmates.toml` per project
 - [ ] Play graphic assets (icon, feature graphic) as first-class checks
 - [ ] Device-frame screenshot generation
 - [ ] GitHub Action wrapper + SARIF output for inline PR annotations
@@ -640,7 +684,7 @@ history and live store credentials — never a gate on the local checks.
 ## Contributing
 
 Issues and PRs welcome. When a store changes a rule, the fix is usually a
-one-line edit to `src/launchpilot/core/specs/*.yaml` plus a bump of
+one-line edit to `src/appmates/core/specs/*.yaml` plus a bump of
 `last_verified` — please include the source URL.
 
 ## License

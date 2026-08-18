@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from launchpilot.core.services.market_scanner import (
+from appmates.core.services.market_scanner import (
     COUNTRY_NAMES,
     DEFAULT_STOREFRONTS,
     MarketScanner,

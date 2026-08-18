@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from launchpilot.core.models.report import Status
-from launchpilot.core.services.submission_checker import check_submission
+from appmates.core.models.report import Status
+from appmates.core.services.submission_checker import check_submission
 
 
 def _write_listing(tmp_path: Path, **fields: object) -> Path:
