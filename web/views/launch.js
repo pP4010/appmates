@@ -78,6 +78,25 @@ export function initTrack() {
 /* ============================ ASC import ============================ */
 
 function initAscImport(selectPrepareTab) {
+  // A starter prompt for whichever coding assistant the developer already
+  // has open — not a replacement for the four steps above, a shortcut past
+  // them for anyone who'd rather have their own assistant drive it.
+  el('ascPromptCopy').addEventListener('click', async (e) => {
+    const button = e.currentTarget;
+    try {
+      await navigator.clipboard.writeText(el('ascPromptText').textContent);
+      button.classList.add('copied');
+      button.textContent = '✓';
+      setTimeout(() => {
+        button.classList.remove('copied');
+        button.textContent = '⧉';
+      }, 1500);
+    } catch {
+      /* Clipboard access denied (permissions, insecure context) — the
+       * prompt is still selectable text, just not one click away. */
+    }
+  });
+
   el('lnAscInput').addEventListener('input', () => {
     const doc = parseAscPaste(el('lnAscInput').value);
     populateAscLocaleSelect(doc?.locales ?? []);
@@ -151,7 +170,9 @@ function parseAscPaste(raw) {
 
 function populateAscLocaleSelect(locales) {
   const select = el('lnAscLocale');
-  select.innerHTML = locales
-    .map((l, i) => `<option value="${i}">${escapeHtml(l.locale ?? `locale ${i + 1}`)}</option>`)
-    .join('');
+  select.innerHTML = locales.length
+    ? locales
+        .map((l, i) => `<option value="${i}">${escapeHtml(l.locale ?? `locale ${i + 1}`)}</option>`)
+        .join('')
+    : '<option value="" disabled selected>Paste JSON above first</option>';
 }

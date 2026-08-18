@@ -353,6 +353,52 @@ button.ghost:hover:not(:disabled) { background: var(--accent-soft); }
   .form-grid > label { margin-top: .6rem; }
 }
 
+/* Prepare's "Connect your real App Store Connect data" — the four-step
+   callout and the paste-box/import form side by side, so reading the steps
+   and pasting the result don't compete for the same width. */
+.asc-connect {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+  margin: 1.25rem 0;
+}
+.asc-connect .callout,
+.asc-connect .form-grid,
+.asc-connect .note { max-width: none; }
+.asc-connect .form-grid { margin-bottom: 0; }
+@media (max-width: 860px) {
+  .asc-connect { grid-template-columns: 1fr; }
+}
+
+.prompt-copy-row {
+  display: flex; align-items: center; gap: .5rem;
+  margin-top: .4rem; padding: .5rem .6rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.prompt-copy-row code {
+  flex: 1; min-width: 0;
+  font-size: .74rem; color: var(--muted); line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.copy-btn {
+  flex: 0 0 auto;
+  width: 2rem; height: 2rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; line-height: 1;
+  color: var(--text-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: color .12s, border-color .12s;
+}
+.copy-btn:hover { color: var(--text); border-color: var(--border-strong); }
+.copy-btn.copied { color: var(--ok); border-color: var(--ok); }
+
 /* ============================ rings ============================ */
 
 .ring { display: block; flex: 0 0 auto; }
