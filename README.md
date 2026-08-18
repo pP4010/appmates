@@ -472,7 +472,41 @@ keywords = "habit,streak,focus,routine"
 Checks Apple (30/30/170/4000/100) and Play (30/80/4000) limits, flags fields
 above 90% of their limit because translations run longer than English, and
 catches the Apple keyword traps — spaces after commas waste your 100-character
-budget, and repeating title words wastes indexing.
+budget, and repeating title words wastes indexing. Takes every locale in the
+file at once — check a `[[locales]]` block per language in one run rather
+than one file per language.
+
+### `submission-check`
+
+```bash
+launchpilot submission-check --screenshots ./store/ios --metadata listing.toml
+launchpilot submission-check --keywords "habit,streak,focus"
+```
+
+One go/no-go answer, composed from whichever of `validate-screenshots`,
+`validate-metadata` and `keywords` you give inputs for — the same three
+engines, so nothing here is a new rule. Runs only what you point it at: give
+just `--keywords` to audit a field with no listing file yet. When `--metadata`
+supplies a listing and `--keywords` doesn't override it, the keyword audit
+reads the title, subtitle and keyword field straight out of that locale,
+rather than a second copy typed in separately.
+
+### `pricing`
+
+```bash
+launchpilot pricing 4.99
+launchpilot pricing 4.99 --model uniform --countries us,gb,in
+```
+
+Suggests a starting price per storefront from one base price — a **read-only
+sanity check**, never a push to any API. `ppp_tier` (the default) scales the
+price down in lower-income storefronts using coarse World Bank income-group
+bands; `uniform` reprints the same price everywhere for comparison. The bands
+are deliberately coarse: exact purchasing-power or Big Mac Index data drifts
+throughout the year and nothing here is positioned to keep it current, so a
+three-band approximation that's honest about being one beats a
+precise-looking number that quietly goes stale. Tiers live in
+[`core/specs/pricing.yaml`](src/launchpilot/core/specs/pricing.yaml).
 
 ### `specs`
 

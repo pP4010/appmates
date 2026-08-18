@@ -21,6 +21,8 @@ from launchpilot.core.models.report import (
 from launchpilot.core.models.testing import ClosedTestingStatus
 from launchpilot.core.services.image_fixer import FixResult
 from launchpilot.core.services.metadata_validator import MetadataReport
+from launchpilot.core.services.pricing_calculator import PricingPlan
+from launchpilot.core.services.submission_checker import SubmissionReadinessReport
 from launchpilot.core.specs.registry import StoreSpec
 
 SEVERITY_STYLE: dict[Severity, str] = {
@@ -312,4 +314,72 @@ def render_specs(specs: list[StoreSpec]) -> RenderableType:
             rules.append(f"{spec.rules.max_side_ratio:g}× short side")
 
         parts.append(Group(table, Panel(rules, border_style="dim")))
+    return Group(*parts)
+
+
+def render_pricing(plan: PricingPlan) -> RenderableType:
+    title = f"Suggested prices from {plan.base_price:g} ({plan.base_country.upper()}, {plan.model})"
+    table = Table(
+        title=title,
+        title_style="bold",
+        header_style="bold",
+        expand=True,
+    )
+    table.add_column("Storefront")
+    table.add_column("Tier")
+    table.add_column("Multiplier", justify="right", no_wrap=True)
+    table.add_column("Suggested price", justify="right", no_wrap=True)
+
+    for territory in plan.territories:
+        table.add_row(
+            f"{territory.country_name} ({territory.country.upper()})",
+            territory.tier_label or "unclassified — full rate",
+            f"{territory.multiplier:.2f}×",
+            f"{territory.suggested_price:.2f}",
+        )
+
+    note = Text(
+        "A starting point to copy into App Store Connect / Play Console yourself — "
+        "nothing here calls either API.",
+        style="dim italic",
+    )
+    return Group(table, note)
+
+
+def render_submission(report: SubmissionReadinessReport) -> RenderableType:
+    parts: list[RenderableType] = []
+
+    if report.screenshots is not None:
+        parts.append(render_validation(report.screenshots))
+    if report.metadata is not None:
+        parts.append(render_metadata(report.metadata))
+    if report.keywords is not None:
+        kw = report.keywords
+        findings = (
+            _finding_lines(kw.findings) if kw.findings else Text("✓ nothing wasted", style="green")
+        )
+        parts.append(
+            Panel(
+                findings,
+                title=f"Keyword field · {kw.length}/{kw.max_length} characters",
+                border_style="dim",
+                title_align="left",
+            )
+        )
+
+    skipped = [name for name in ("screenshots", "metadata", "keywords") if name not in report.ran]
+    summary = Text()
+    summary.append(f"{len(report.ran)} of 3 checks run", style="dim")
+    if skipped:
+        summary.append(f"  ·  not checked: {', '.join(skipped)}", style="dim italic")
+    summary.append("  ·  ")
+    summary.append(f"{report.error_count} error(s)", style="red" if report.error_count else "dim")
+    summary.append("  ·  ")
+    summary.append(
+        f"{report.warning_count} warning(s)",
+        style="yellow" if report.warning_count else "dim",
+    )
+    parts.append(
+        Panel(summary, border_style=STATUS_STYLE[report.status], title=report.status.value.upper())
+    )
     return Group(*parts)

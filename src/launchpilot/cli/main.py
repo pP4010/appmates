@@ -18,8 +18,10 @@ from launchpilot.cli.commands.keywords import keywords
 from launchpilot.cli.commands.markets import markets
 from launchpilot.cli.commands.metadata import validate_metadata
 from launchpilot.cli.commands.niche import niche
+from launchpilot.cli.commands.pricing import pricing
 from launchpilot.cli.commands.screenshots import fix_screenshots, validate_screenshots
 from launchpilot.cli.commands.specs import specs
+from launchpilot.cli.commands.submission import submission_check
 from launchpilot.cli.commands.tester import check_testers
 from launchpilot.cli.console import console
 
@@ -45,6 +47,8 @@ app.command("keywords")(keywords)
 app.command("competitors")(competitors)
 app.command("rank")(rank)
 app.command("specs")(specs)
+app.command("pricing")(pricing)
+app.command("submission-check")(submission_check)
 
 
 def _version_callback(value: bool) -> None:

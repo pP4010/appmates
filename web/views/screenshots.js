@@ -221,6 +221,43 @@ async function runFix() {
   }
 }
 
+/**
+ * The current upload's verdict, for the Readiness view to fold in — same
+ * counting `render()` does, kept separate rather than shared so a change to
+ * this page's own rendering can't accidentally change what Readiness reads.
+ * Returns `null` when nothing has been dropped yet, never a zero-findings
+ * report standing in for "not checked".
+ */
+export function screenshotSummary() {
+  if (!entries.length) return null;
+
+  const readable = entries.filter((e) => e.facts);
+  const choice = el('storeSelect').value;
+  const store = choice === 'auto' ? detectTargetStore(readable.map((e) => e.facts)) : choice;
+
+  const assets = entries.map((entry) =>
+    entry.facts
+      ? { ...validateFacts(entry.facts, [store]) }
+      : {
+          facts: null,
+          findings: [{ code: 'UNREADABLE_IMAGE', severity: 'error', message: entry.error ?? 'Cannot read image' }],
+        },
+  );
+  const setFindings = validateSet(
+    assets.filter((a) => a.facts),
+    [store],
+  );
+  const allFindings = [...setFindings, ...assets.flatMap((a) => a.findings)];
+
+  return {
+    count: entries.length,
+    store,
+    status: statusOf(allFindings),
+    errorCount: allFindings.filter((f) => f.severity === 'error').length,
+    warningCount: allFindings.filter((f) => f.severity === 'warning').length,
+  };
+}
+
 function download(blob, filename) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');

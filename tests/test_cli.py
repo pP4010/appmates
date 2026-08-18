@@ -919,3 +919,61 @@ def test_app_does_not_call_the_fallback_when_the_catalogue_has_screenshots(
     )
     run("app", "6768688178")
     assert calls == 0
+
+
+# --- pricing ---------------------------------------------------------------
+
+
+def test_pricing_exits_zero() -> None:
+    assert run("pricing", "9.99").exit_code == int(ExitCode.OK)
+
+
+def test_pricing_ppp_tier_scales_lower_income_storefronts() -> None:
+    data = payload(run("pricing", "10", "--countries", "us,in", "--json"))
+    by_country = {t["country"]: t for t in data["territories"]}
+    assert by_country["us"]["suggested_price"] == 10.0
+    assert by_country["in"]["suggested_price"] < 10.0
+
+
+def test_pricing_uniform_model_charges_the_same_everywhere() -> None:
+    data = payload(run("pricing", "10", "--model", "uniform", "--countries", "us,in", "--json"))
+    prices = {t["suggested_price"] for t in data["territories"]}
+    assert prices == {10.0}
+
+
+def test_pricing_unknown_model_exits_two() -> None:
+    assert run("pricing", "10", "--model", "bogus").exit_code == int(ExitCode.USAGE)
+
+
+# --- submission-check --------------------------------------------------
+
+
+def test_submission_check_with_no_input_exits_two() -> None:
+    assert run("submission-check").exit_code == int(ExitCode.USAGE)
+
+
+def test_submission_check_keywords_only(tmp_path: Path) -> None:
+    result = run("submission-check", "--keywords", "habit,streak", "--json")
+    assert result.exit_code == int(ExitCode.OK)
+    data = payload(result)
+    assert data["screenshots"] is None
+    assert data["metadata"] is None
+    assert data["keywords"] is not None
+
+
+def test_submission_check_combines_metadata_and_keywords(tmp_path: Path) -> None:
+    path = _write_listing(tmp_path, title="K" * 40, description="d" * 20, keywords="habit,habit")
+    result = run("submission-check", "--metadata", str(path), "--json")
+    assert result.exit_code == int(ExitCode.FINDINGS)
+
+    data = payload(result)
+    codes = {f["code"] for loc in data["metadata"]["locales"] for f in loc["findings"]}
+    codes |= {f["code"] for f in data["keywords"]["findings"]}
+    assert "APPLE_TITLE_TOO_LONG" in codes
+    assert "ASO_DUPLICATE_IN_FIELD" in codes
+
+
+def test_submission_check_screenshots(screenshot_dir: Path) -> None:
+    result = run("submission-check", "--screenshots", str(screenshot_dir), "--json")
+    assert result.exit_code == int(ExitCode.OK)
+    assert payload(result)["screenshots"] is not None

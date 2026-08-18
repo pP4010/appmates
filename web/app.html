@@ -40,6 +40,8 @@
     <a class="nav-item" href="#screenshots"><span class="nav-icon">▢</span> Screenshots</a>
     <a class="nav-item" href="#keywords"><span class="nav-icon">⌗</span> Keyword field</a>
     <a class="nav-item" href="#metadata"><span class="nav-icon">¶</span> Listing text</a>
+    <a class="nav-item" href="#readiness"><span class="nav-icon">☑</span> Readiness</a>
+    <a class="nav-item" href="#pricing"><span class="nav-icon">$</span> Pricing</a>
 
     <div class="nav-section">Research</div>
     <a class="nav-item" href="#niche"><span class="nav-icon">◎</span> Niche</a>
@@ -213,6 +215,64 @@
         <div id="mdSummary"></div>
         <div id="mdFields"></div>
         <div id="mdFindings"></div>
+
+        <h3 style="margin-top:2rem">Check multiple locales at once</h3>
+        <p class="lead">
+          Paste a <code>{"locales": [...]}</code> document — the same shape
+          <code>launchpilot validate-metadata</code> reads on the command line — to check every
+          localisation of a listing in one pass, instead of one at a time above.
+        </p>
+        <div class="form-grid" style="grid-template-columns:1fr">
+          <label for="mdLocalesInput">Listing document (JSON)</label>
+          <textarea id="mdLocalesInput" rows="6"
+            placeholder='{"locales": [{"locale": "en-US", "title": "Kaizen", "description": "..."}, {"locale": "fr-FR", "title": "Kaizen", "description": "..."}]}'></textarea>
+        </div>
+        <div id="mdLocalesStatus" class="status"></div>
+        <div id="mdLocalesResults"></div>
+      </section>
+
+      <!-- ==================== readiness ==================== -->
+      <section class="view" id="view-readiness">
+        <p class="lead">
+          Composed from whatever you've already entered on <strong>Screenshots</strong>,
+          <strong>Keyword field</strong> and <strong>Listing text</strong> — nothing is re-typed
+          here. Fill in any of those pages and this one updates live, giving one combined
+          go/no-go answer instead of three separate reports to read and reconcile by hand.
+        </p>
+
+        <div id="rdSummary"></div>
+        <div id="rdChecklist"></div>
+        <div id="rdFindings"></div>
+      </section>
+
+      <!-- ==================== pricing ==================== -->
+      <section class="view" id="view-pricing">
+        <p class="lead">
+          Apple and Google let you set a different price per storefront but give no guidance on
+          what to set it to. This turns one price into a starting point per territory — a
+          <strong>read-only sanity check</strong> to copy into App Store Connect or Play Console
+          yourself. Nothing here ever calls either API.
+        </p>
+        <div class="callout">
+          <strong>Purchasing-power tier</strong> scales the price down in lower-income
+          storefronts using coarse World Bank income-group bands — an approximation, not exact
+          purchasing-power data, which drifts throughout the year and which no bundled catalogue
+          can keep current. <strong>Uniform</strong> reprints the same price everywhere, for
+          comparison.
+        </div>
+
+        <div class="toolbar">
+          <div class="field">
+            <label for="prBase">Base price</label>
+            <input id="prBase" type="number" min="0" step="0.01" placeholder="4.99">
+          </div>
+          <div class="field">
+            <label for="prModel">Model</label>
+            <select id="prModel"></select>
+          </div>
+        </div>
+
+        <div id="prResults"></div>
       </section>
 
       <!-- ==================== niche ==================== -->

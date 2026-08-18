@@ -1,6 +1,6 @@
 /** Listing text against both stores' field limits. */
 
-import { validateListing } from '../lib/metadata.js';
+import { validateListing, validateLocales } from '../lib/metadata.js';
 import { bar, el, empty, escapeHtml, findingsPanel, pill, tablePanel } from './shared.js';
 
 const INPUTS = {
@@ -14,7 +14,9 @@ const INPUTS = {
 
 export function initMetadata() {
   for (const id of Object.values(INPUTS)) el(id).addEventListener('input', render);
+  el('mdLocalesInput').addEventListener('input', renderLocales);
   render();
+  renderLocales();
 }
 
 function render() {
@@ -69,4 +71,66 @@ function render() {
   });
 
   el('mdFindings').innerHTML = findingsPanel(report.findings, 'Findings');
+}
+
+/**
+ * Every locale in one listing, checked at once — the same JSON/TOML shape
+ * `validate-metadata` reads on the CLI (`{"locales": [{"locale": "en-US",
+ * "title": ..., ...}, ...]}`), so a file written for one works unchanged
+ * for the other.
+ */
+function renderLocales() {
+  const raw = el('mdLocalesInput').value.trim();
+
+  if (!raw) {
+    el('mdLocalesStatus').innerHTML = '';
+    el('mdLocalesResults').innerHTML = empty(
+      '¶',
+      'No locales pasted yet',
+      'Paste a {"locales": [...]} document — the same shape validate-metadata reads on the CLI.',
+    );
+    return;
+  }
+
+  let doc;
+  try {
+    doc = JSON.parse(raw);
+  } catch (err) {
+    el('mdLocalesStatus').innerHTML = `<div class="status error">Could not parse JSON: ${escapeHtml(err.message)}</div>`;
+    el('mdLocalesResults').innerHTML = '';
+    return;
+  }
+
+  const entries = Array.isArray(doc) ? doc : doc.locales;
+  if (!Array.isArray(entries) || !entries.length) {
+    el('mdLocalesStatus').innerHTML =
+      '<div class="status error">Expected a "locales" array, or a bare array of locale objects.</div>';
+    el('mdLocalesResults').innerHTML = '';
+    return;
+  }
+
+  el('mdLocalesStatus').innerHTML = '';
+  const report = validateLocales(entries);
+
+  const verdict =
+    report.status === 'pass' ? 'Every locale is clean' : report.status === 'warn' ? 'Clean, but tight' : 'Over a limit somewhere';
+
+  const rows = report.locales.map((l) => [
+    { html: `<strong>${escapeHtml(l.locale)}</strong>` },
+    { html: pill(l.status, l.status === 'pass' ? 'ok' : l.status === 'warn' ? 'warn' : 'bad'), num: true },
+    { html: l.errorCount ? String(l.errorCount) : '—', num: true },
+    { html: l.warningCount ? String(l.warningCount) : '—', num: true },
+  ]);
+
+  el('mdLocalesResults').innerHTML = `
+    <div class="summary ${report.status}">
+      <span class="verdict">${verdict}</span>
+      <span class="muted">${report.locales.length} locale(s) · ${report.errorCount} error(s) · ${report.warningCount} warning(s)</span>
+    </div>
+    ${tablePanel({
+      title: 'Per locale',
+      head: ['Locale', { label: 'Status', num: true }, { label: 'Errors', num: true }, { label: 'Warnings', num: true }],
+      rows,
+    })}
+    ${findingsPanel(report.allFindings, 'Findings')}`;
 }
