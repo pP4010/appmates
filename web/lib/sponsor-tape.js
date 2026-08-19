@@ -209,8 +209,10 @@ export function mockSponsorApps(count = 8) {
  * computed from this constant instead, so speed stays constant no matter
  * how wide a half ends up — see the comment below on why that distinction
  * matters. */
-const TAPE_PX_PER_SECOND = 66;
-const TAPE_MIN_DURATION_S = 15;
+// Matches CanIVibecodeIt's own sponsor tape almost exactly: measured live
+// against theirs (.sp-tape-track), 2062.85px half / 70s = 29.47px/s.
+const TAPE_PX_PER_SECOND = 29.5;
+const TAPE_MIN_DURATION_S = 30;
 
 /**
  * `translate(-50%)` slides a `.tape-half` across exactly its *own* width —
