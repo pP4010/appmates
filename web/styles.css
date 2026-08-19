@@ -180,17 +180,13 @@ code, .mono, .num {
 .nav-icon { width: 17px; text-align: center; opacity: .75; flex: 0 0 auto; font-size: .95rem; }
 
 .sidebar-foot { margin-top: auto; padding-top: .9rem; display: grid; gap: .4rem; }
-.privacy-card {
-  display: flex; align-items: flex-start; gap: .55rem;
-  padding: .6rem .7rem;
-  border-radius: var(--r-md);
-  background: var(--ok-soft);
-  border: 1px solid color-mix(in srgb, var(--ok) 22%, transparent);
-  color: var(--ok);
-  font-size: .74rem;
-  font-weight: 600;
-  line-height: 1.35;
-}
+
+/* Same box as the app card up top (.brand) — same background, border and
+   hover state — just a single line with an arrow instead of an icon +
+   two-line name/subtitle, and no bottom margin since the footer's own
+   grid gap already spaces it from the legal links below. */
+.brand.sidebar-back { margin-bottom: 0; font-size: .84rem; font-weight: 600; }
+.sidebar-back-arrow { font-size: 1rem; line-height: 1; }
 
 .sidebar-legal-links {
   display: flex;
