@@ -1,22 +1,50 @@
 /**
- * Apps you're testing for other developers — the tester half of the
- * Community feature, split out from "Get testers" (the owner half) into
- * its own page since the two are different jobs done by different people
- * at different moments, even though the same account does both.
+ * Testing other developers' apps — the tester half of the Community
+ * feature, split out from "Get testers" (the owner half) into its own
+ * page since the two are different jobs done by different people at
+ * different moments, even though the same account does both and the
+ * whole thing only works because both halves exist: someone posts a
+ * listing here on "Get testers", the same person shows up *here* on "Be
+ * a tester" to earn the token that got them tested in return. One
+ * reciprocal exchange, two doors into it depending which side you're on
+ * right now.
  *
- * The one thing this adds beyond what used to live in community.js's
- * dashboard: a daily proof-of-testing check-in. A `submitted`/`completed`
+ * Three tabs: Marketplace (browse listings, request to join — no account
+ * needed, same as it always was) and Leaderboard live here now instead of
+ * on the owner page, since both are fundamentally "go test something",
+ * not "manage my own listing". My testing is what used to be
+ * community.js's "Apps you're testing" list, plus the one thing it didn't
+ * have: a daily proof-of-testing check-in. A `submitted`/`completed`
  * session already carries a feedback write-up, but nothing between
- * accepting and submitting says whether the tester actually opened the
- * app more than once. A check-in — a photo of the app open, one per day,
- * `UNIQUE(session_id, checkin_date)` server-side — is a cheap, real signal
+ * accepting and submitting said whether the tester actually opened the
+ * app more than once — a check-in (a photo, once a day,
+ * `UNIQUE(session_id, checkin_date)` server-side) is a cheap, real signal
  * the listing owner can see building up, the same habit-tracker shape as
  * Play's own 12-testers-14-days streak (lib/testers.js), just from the
- * tester's side this time.
+ * tester's side.
  */
 
-import { el, empty, escapeHtml, appIcon, MESSAGEABLE_STATUSES } from './shared.js';
+import {
+  el, escapeHtml, empty, withStatus, appIcon, bar, toneFor, MESSAGEABLE_STATUSES,
+} from './shared.js';
+import { checkAppHealth, profileFromEntry } from '../lib/app-profile.js';
 import { messageThreadHtml, wireMessageThreads } from './community.js';
+
+// Mirrors MIN_REQUEST_MESSAGE_LENGTH in community/src/lib/config.js — the
+// server is the real limit, this just keeps the on-page counter honest.
+const MIN_MESSAGE_LENGTH = 20;
+
+/** Catalogue lookups are throttled to protect Apple's endpoint, so a page of
+ * cards enriches over a noticeable stretch of time. Capping keeps that from
+ * running for minutes on a long list — the rows below the fold simply keep
+ * their community-only numbers, which are still true. */
+const MAX_ENRICHED_CARDS = 12;
+
+const TABS = {
+  browse: 'Marketplace',
+  leaderboard: 'Leaderboard',
+  mine: 'My testing',
+};
 
 const STATUS_LABEL = {
   requested: 'Waiting for review',
@@ -46,10 +74,20 @@ const PHOTO_QUALITY = 0.6;
 const MAX_SOURCE_FILE_BYTES = 25 * 1024 * 1024;
 
 let client = null;
+let itunes = null;
+let getCurrentApp = null;
 let user = null;
+let activeTab = 'browse';
 
-export function initBeTester(communityClient) {
+/** Bumped on every tab switch or re-render. The progressive enrichment loop
+ * carries the value it started with and stops the moment it no longer
+ * matches, so a stale pass can never write into a page it no longer owns. */
+let renderGeneration = 0;
+
+export function initBeTester(communityClient, { getCurrentApp: getApp, itunes: itunesClient } = {}) {
   client = communityClient;
+  getCurrentApp = getApp || (() => null);
+  itunes = itunesClient ?? null;
   const navItem = document.querySelector('.nav-item[href="#be-tester"]');
 
   if (!client.configured) {
@@ -65,25 +103,711 @@ export function initBeTester(communityClient) {
   refresh();
 }
 
+/** Browsing, requesting to test, and the leaderboard need no account — only
+ * `client.me()` failing outright (not just "not signed in", which resolves
+ * to `null`) is worth showing an error for. */
 async function refresh() {
   try {
     user = await client.me();
-    render();
+    renderShell();
   } catch (err) {
     el('testerBody').innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
   }
 }
 
-function render() {
+/* ============================ tabs ============================ */
+
+function renderShell() {
+  el('testerBody').innerHTML = `
+    <div class="tabs" role="tablist">
+      ${Object.entries(TABS)
+        .map(
+          ([key, label]) => `
+        <button class="tab ${key === activeTab ? 'active' : ''}" role="tab"
+          aria-selected="${key === activeTab}" data-tab="${key}">${escapeHtml(label)}</button>`,
+        )
+        .join('')}
+    </div>
+    <div id="testerTabPanel" role="tabpanel"></div>`;
+
+  el('testerBody')
+    .querySelectorAll('.tab')
+    .forEach((btn) =>
+      btn.addEventListener('click', () => {
+        if (btn.dataset.tab === activeTab) return;
+        activeTab = btn.dataset.tab;
+        renderShell();
+      }),
+    );
+
+  renderActiveTab();
+}
+
+function renderActiveTab() {
+  renderGeneration += 1;
+  if (activeTab === 'browse') renderBrowseTab();
+  else if (activeTab === 'leaderboard') renderLeaderboardTab();
+  else renderMineTab();
+}
+
+/* ============================ browse tab ============================ */
+
+/**
+ * The marketplace's home: a couple of curated grids and a leaderboard
+ * teaser first — the same rhythm as a marketplace's own front page — then
+ * the full filterable list underneath. The curated grids are a fixed
+ * snapshot from the moment the tab opened; only the list below reacts to
+ * the toolbar, the same way a homepage's highlights don't re-shuffle when
+ * you filter the full directory below them.
+ */
+function renderBrowseTab() {
+  el('testerTabPanel').innerHTML = `
+    <div id="testerMarketplaceHighlights"></div>
+
+    <h3>All listings</h3>
+    <div class="toolbar">
+      <div class="field">
+        <label for="testerBrowseKind">Show</label>
+        <select id="testerBrowseKind">
+          <option value="">Everything</option>
+          <option value="testing">Looking for testers</option>
+          <option value="launch">Just launched / updated</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="testerBrowseSort">Sort by</label>
+        <select id="testerBrowseSort">
+          <option value="newest">Newest</option>
+          <option value="contributors">Top contributors</option>
+          <option value="emptiest">Needs testers most</option>
+        </select>
+      </div>
+      <button id="testerBrowseRefresh">Refresh</button>
+    </div>
+    <p class="verified-note">
+      <span>◈</span>
+      <span>Listing health, rating and last-shipped are recomputed from the public
+      catalogue as you read — never entered by the developer who posted the listing.</span>
+    </p>
+    <div id="testerBrowseResults"></div>`;
+
+  // Each of these starts a new independent pass over #testerBrowseResults,
+  // so each bumps the shared generation itself — unlike the initial paint
+  // below, where both halves are meant to share the tab switch's generation.
+  const refreshList = () => {
+    renderGeneration += 1;
+    renderBrowse();
+  };
+  el('testerBrowseRefresh').addEventListener('click', refreshList);
+  el('testerBrowseKind').addEventListener('change', refreshList);
+  el('testerBrowseSort').addEventListener('change', refreshList);
+
+  renderMarketplaceHighlights();
+  renderBrowse();
+}
+
+/** Fixed curation, computed once per tab visit: what's newest looking for
+ * testers, what's newest just launched, and who's leading the leaderboard —
+ * mirroring a marketplace home's "Recently listed" / "Best deals" rhythm
+ * without literally scrolling carousels, and without re-fetching every time
+ * the filterable list below changes. */
+async function renderMarketplaceHighlights() {
+  const generation = renderGeneration;
+  const host = el('testerMarketplaceHighlights');
+  host.innerHTML = '<div class="status"><span class="spinner"></span> Loading</div>';
+
+  try {
+    const [allListings, mine, board] = await Promise.all([
+      client.browseListings(undefined, 'newest'),
+      user ? client.mySessions() : Promise.resolve([]),
+      client.leaderboard(),
+    ]);
+    if (generation !== renderGeneration) return;
+
+    const requestedIds = new Set(mine.map((s) => s.listing.id));
+    const testing = allListings.filter((l) => l.kind === 'testing').slice(0, 6);
+    const launch = allListings.filter((l) => l.kind === 'launch').slice(0, 6);
+    const topTesters = board.testers.slice(0, 5);
+
+    host.innerHTML = [
+      marketplaceSection('Looking for testers', testing, (l) => ({
+        canRequest: true,
+        alreadyRequested: requestedIds.has(l.id),
+      })),
+      marketplaceSection('Just launched / updated', launch, () => ({ canRequest: false })),
+      leaderboardTeaser(topTesters, board.windowDays),
+    ].join('');
+
+    wireRequestButtons(host, [...testing, ...launch]);
+    host.querySelector('.comm-view-leaderboard')?.addEventListener('click', () => {
+      activeTab = 'leaderboard';
+      renderShell();
+    });
+    enrichListings([...testing, ...launch], generation);
+  } catch {
+    // Decoration, not the point of the tab — the full list below still
+    // works even if this curated pass fails, so it fails quietly.
+    if (generation === renderGeneration) host.innerHTML = '';
+  }
+}
+
+function marketplaceSection(title, listings, optsFor) {
+  if (!listings.length) return '';
+  return `
+    <div class="marketplace-section">
+      <h3>${escapeHtml(title)}</h3>
+      <div class="marketplace-grid">
+        ${listings.map((l) => marketplaceGridCard(l, optsFor(l))).join('')}
+      </div>
+    </div>`;
+}
+
+const MEDALS = ['🥇', '🥈', '🥉'];
+
+/** The compact table a marketplace's own homepage teases its leaderboard
+ * with — distinct from the full ranked `.board` on the Leaderboard tab,
+ * which has room for a proportion bar per row. */
+function leaderboardTeaser(entries, windowDays) {
+  if (!entries.length) return '';
+  return `
+    <div class="marketplace-section">
+      <div class="teaser-head">
+        <h3>Top testers <span class="muted" style="font-weight:400;font-size:.78rem">last ${windowDays} days</span></h3>
+        <button class="ghost comm-view-leaderboard" type="button">View full leaderboard →</button>
+      </div>
+      <div class="panel leaderboard-teaser">
+        ${entries
+          .map(
+            (e) => `
+          <div class="teaser-row">
+            <span class="teaser-rank">${e.rank <= 3 ? MEDALS[e.rank - 1] : e.rank}</span>
+            <span class="teaser-name">${escapeHtml(e.displayName)}</span>
+            <span class="teaser-metric">${e.tokensEarned} <span class="unit">tokens</span></span>
+          </div>`,
+          )
+          .join('')}
+      </div>
+    </div>`;
+}
+
+async function renderBrowse() {
+  // Captured, never bumped, here — `renderGeneration` is incremented exactly
+  // where a new independent pass begins (a tab switch, or one of the toolbar
+  // handlers above), so this and `renderMarketplaceHighlights` started by
+  // the same tab switch share one generation instead of invalidating each
+  // other.
+  const generation = renderGeneration;
+  const results = el('testerBrowseResults');
+  results.innerHTML = '<div class="status"><span class="spinner"></span> Loading</div>';
+
+  try {
+    const [listings, mine] = await Promise.all([
+      client.browseListings(el('testerBrowseKind').value || undefined, el('testerBrowseSort').value),
+      user ? client.mySessions() : Promise.resolve([]),
+    ]);
+    if (generation !== renderGeneration) return;
+
+    const requestedIds = new Set(mine.map((s) => s.listing.id));
+    results.innerHTML = listings.length
+      ? listings
+          .map((l) =>
+            listingCard(l, {
+              canRequest: l.kind === 'testing',
+              alreadyRequested: requestedIds.has(l.id),
+            }),
+          )
+          .join('')
+      : empty('◍', 'Nothing here yet', 'Be the first to post a listing.');
+
+    wireRequestButtons(results, listings);
+    enrichListings(listings, generation);
+  } catch (err) {
+    if (generation === renderGeneration) {
+      results.innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
+    }
+  }
+}
+
+function reliabilityBadge(rep) {
+  if (!rep || rep.isNew) return '<span class="pill neutral">New builder</span>';
+  const tone = rep.completionRate >= 70 ? 'ok' : rep.completionRate >= 40 ? 'warn' : 'bad';
+  const resp =
+    rep.avgResponseHours == null
+      ? ''
+      : rep.avgResponseHours < 24
+        ? ` · replies in ~${Math.max(1, Math.round(rep.avgResponseHours))}h`
+        : ` · replies in ~${Math.round(rep.avgResponseHours / 24)}d`;
+  return `<span class="pill ${tone}">${rep.completionRate}% completion${resp}</span>`;
+}
+
+function contributionBadge(count) {
+  if (!count) return '';
+  return `<span class="pill info" title="Tests this developer completed for other people's apps">
+    ${count} test${count === 1 ? '' : 's'} given back</span>`;
+}
+
+/** Placeholder cells the enrichment pass fills in. Rendering them up front
+ * rather than appending later keeps the card from reflowing under the
+ * reader once the catalogue answers. */
+function metricCell(label, id, value = '…', cls = 'pending', sub = '') {
+  return `
+    <div class="card-metric">
+      <span class="metric-label">${escapeHtml(label)}</span>
+      <span class="metric-value ${cls}" ${id ? `data-metric="${id}"` : ''}>${value}</span>
+      ${sub ? `<span class="metric-sub">${escapeHtml(sub)}</span>` : ''}
+    </div>`;
+}
+
+function listingCard(l, { canRequest = false, alreadyRequested = false } = {}) {
+  const kindLabel = l.kind === 'testing' ? 'Looking for testers' : 'Launch / update';
+  const featured = l.featuredUntil && new Date(l.featuredUntil) > new Date();
+  const action = !canRequest
+    ? ''
+    : alreadyRequested
+      ? '<span class="pill neutral">Already requested</span>'
+      : `<button class="primary comm-request" data-listing="${l.id}">Request to test</button>`;
+
+  const slots =
+    l.kind === 'testing'
+      ? metricCell('Testers', null, `${l.slotsFilled}/${l.slotsWanted || '∞'}`, '')
+      : '';
+
+  return `
+    <div class="panel listing-card" data-card="${l.id}">
+      <div class="listing-head">
+        ${appIcon(l.app.artworkUrl, l.app.name)}
+        <div style="flex:1;min-width:0">
+          <div class="listing-title">
+            <strong>${escapeHtml(l.app.name)}</strong>
+            <span class="pill ${l.kind === 'testing' ? 'info' : 'ok'}">${kindLabel}</span>
+            ${featured ? '<span class="pill warn">Featured</span>' : ''}
+          </div>
+          <div style="margin-top:.35rem;display:flex;gap:.3rem;flex-wrap:wrap">
+            ${reliabilityBadge(l.ownerReliability)}
+            ${contributionBadge(l.ownerContribution)}
+          </div>
+          ${l.description ? `<div class="listing-desc">${escapeHtml(l.description)}</div>` : ''}
+        </div>
+        ${action}
+      </div>
+      <div class="card-metrics">
+        ${slots}
+        ${metricCell('Listing health', `health-${l.id}`)}
+        ${metricCell('Rating', `rating-${l.id}`)}
+        ${metricCell('Last shipped', `shipped-${l.id}`)}
+        <div class="card-metric">
+          <span class="metric-label">Link</span>
+          <span class="metric-value" style="font-size:.85rem;font-weight:500">
+            <a href="${escapeHtml(l.link)}" target="_blank" rel="noopener">Open ↗</a>
+          </span>
+        </div>
+      </div>
+    </div>`;
+}
+
+/**
+ * The compact vertical shape a marketplace's own front-page card uses —
+ * icon, name, a fixed 3-column metric row — as opposed to `listingCard`'s
+ * wide single-row layout built for a long filterable list. Reused for every
+ * curated grid the marketplace home shows (looking-for-testers, launches,
+ * a contributor's own apps), so those sections read as one visual family.
+ */
+function marketplaceGridCard(l, { canRequest = false, alreadyRequested = false } = {}) {
+  const kindLabel = l.kind === 'testing' ? 'Looking for testers' : 'Launch / update';
+  const thirdMetric =
+    l.kind === 'testing'
+      ? { label: 'Testers', value: `${l.slotsFilled}/${l.slotsWanted || '∞'}` }
+      : { label: 'Shipped', id: `shipped-${l.id}` };
+
+  const action = !canRequest
+    ? `<a class="ghost-link" href="${escapeHtml(l.link)}" target="_blank" rel="noopener">Open ↗</a>`
+    : alreadyRequested
+      ? '<span class="pill neutral">Already requested</span>'
+      : `<button class="primary comm-request" data-listing="${l.id}" style="width:100%">Request to test</button>`;
+
+  return `
+    <div class="panel marketplace-card" data-card="${l.id}">
+      <div class="marketplace-card-head">
+        ${appIcon(l.app.artworkUrl, l.app.name)}
+        <div style="min-width:0;flex:1">
+          <strong class="marketplace-card-name">${escapeHtml(l.app.name)}</strong>
+          <div class="marketplace-card-badges">
+            <span class="pill ${l.kind === 'testing' ? 'info' : 'ok'}">${kindLabel}</span>
+            ${reliabilityBadge(l.ownerReliability)}
+          </div>
+        </div>
+      </div>
+      <div class="marketplace-card-metrics">
+        <div class="mini-metric">
+          <span class="metric-label">Health</span>
+          <span class="metric-value pending" data-metric="health-${l.id}">…</span>
+        </div>
+        <div class="mini-metric">
+          <span class="metric-label">Rating</span>
+          <span class="metric-value pending" data-metric="rating-${l.id}">…</span>
+        </div>
+        <div class="mini-metric">
+          <span class="metric-label">${thirdMetric.label}</span>
+          <span class="metric-value ${thirdMetric.id ? 'pending' : ''}" ${thirdMetric.id ? `data-metric="${thirdMetric.id}"` : ''}>
+            ${thirdMetric.value ?? '…'}
+          </span>
+        </div>
+      </div>
+      ${action}
+    </div>`;
+}
+
+/* ------------------ verified facts, filled in progressively ------------- */
+
+function daysAgo(date) {
+  if (!date) return null;
+  return Math.floor((Date.now() - date.getTime()) / 86_400_000);
+}
+
+/** A listing can now appear twice at once — once in a curated showcase grid,
+ * once in the full filterable list below it — so every match for this id
+ * gets the update, not just the first `querySelector` would find. */
+function setMetric(id, { text, tone = '', sub = '' }) {
+  document.querySelectorAll(`[data-metric="${id}"]`).forEach((node) => {
+    node.className = `metric-value ${tone}`;
+    node.textContent = text;
+
+    // A listing renders twice at once — once in a curated showcase card,
+    // once in the full list below it — so this runs twice for the same id.
+    // Reusing the existing `.metric-sub` rather than always appending a new
+    // one is what keeps the second pass from stacking a duplicate
+    // "144,659 ratings" under the first.
+    let subNode = node.nextElementSibling?.classList.contains('metric-sub')
+      ? node.nextElementSibling
+      : null;
+    if (sub) {
+      if (!subNode) {
+        subNode = document.createElement('span');
+        subNode.className = 'metric-sub';
+        node.after(subNode);
+      }
+      subNode.textContent = sub;
+    } else {
+      subNode?.remove();
+    }
+  });
+}
+
+/**
+ * Walks the rendered cards and replaces each placeholder with a number
+ * derived right here from the public catalogue. Deliberately sequential:
+ * `ITunesClient` throttles anyway, and firing a dozen lookups at once would
+ * only queue them behind each other while making failures harder to isolate.
+ *
+ * Every failure is per-card and silent — a listing whose app the catalogue
+ * will not answer for still shows its community numbers, which are true.
+ */
+async function enrichListings(listings, generation) {
+  if (!itunes) return;
+
+  for (const listing of listings.slice(0, MAX_ENRICHED_CARDS)) {
+    if (generation !== renderGeneration) return;
+    if (!listing.app?.trackId) continue;
+
+    try {
+      const entry = await itunes.lookup(String(listing.app.trackId), {
+        country: listing.app.country || 'us',
+      });
+      if (generation !== renderGeneration) return;
+      if (!entry) {
+        markUnavailable(listing.id);
+        continue;
+      }
+
+      const report = checkAppHealth(profileFromEntry(entry));
+      const { profile } = report;
+
+      setMetric(`health-${listing.id}`, {
+        text: `${Math.round(report.score)}/100`,
+        tone: toneFor(report.score, [80, 50]),
+      });
+
+      setMetric(`rating-${listing.id}`, {
+        text: profile.rating ? `${profile.rating.toFixed(1)}★` : 'No ratings',
+        sub: profile.ratingCount ? `${profile.ratingCount.toLocaleString('en-US')} ratings` : '',
+      });
+
+      const days = daysAgo(profile.updated);
+      setMetric(`shipped-${listing.id}`, {
+        text: days === null ? 'Unknown' : days === 0 ? 'Today' : `${days}d ago`,
+        tone: days === null ? '' : days > 180 ? 'warn' : '',
+      });
+    } catch {
+      markUnavailable(listing.id);
+    }
+  }
+}
+
+function markUnavailable(listingId) {
+  for (const key of ['health', 'rating', 'shipped']) {
+    setMetric(`${key}-${listingId}`, { text: '—' });
+  }
+}
+
+/* ============================ leaderboard tab ============================ */
+
+async function renderLeaderboardTab() {
+  const generation = renderGeneration;
+  const panel = el('testerTabPanel');
+  panel.innerHTML = '<div class="status"><span class="spinner"></span> Loading</div>';
+
+  try {
+    const { windowDays, testers, contributors } = await client.leaderboard();
+    if (generation !== renderGeneration) return;
+
+    panel.innerHTML = `
+      <p class="lead">
+        Ranked by tokens earned over the last ${windowDays} days. A token exists only
+        because a developer confirmed by hand that someone's testing actually helped —
+        so the ranking recomputes itself, but nothing on it was ever self-awarded.
+      </p>
+
+      <h3>Top testers</h3>
+      ${testersBoard(testers)}
+
+      <h3>Apps from top contributors</h3>
+      <p class="note">
+        Developers who test other people's apps while recruiting for their own.
+        Contributing is what surfaces a listing here — it can't be bought.
+      </p>
+      ${contributorsSection(contributors)}`;
+
+    wireRequestButtons(panel, contributors.flatMap((c) => c.listings.map(asRequestable)));
+    enrichListings(contributors.flatMap((c) => c.listings.map(asRequestable)), generation);
+  } catch (err) {
+    if (generation === renderGeneration) {
+      panel.innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
+    }
+  }
+}
+
+/** Contributor listings arrive in a slimmer shape than `browse` returns;
+ * this is the shared subset the request modal and enrichment both need. */
+function asRequestable(listing) {
+  return { ...listing, app: listing.app };
+}
+
+function testersBoard(entries) {
+  if (!entries.length) {
+    return empty(
+      '◍',
+      'No completed tests yet',
+      'The first confirmed test session puts someone on the board.',
+    );
+  }
+
+  const leader = entries[0].tokensEarned || 1;
+  return `<div class="panel board">
+    ${entries
+      .map((e) => {
+        const share = Math.round((e.tokensEarned / leader) * 100);
+        return `
+        <div class="board-row ${e.rank <= 3 ? 'top-3' : ''}">
+          <span class="board-rank">${e.rank <= 3 ? MEDALS[e.rank - 1] : e.rank}</span>
+          <span class="board-who">
+            <div class="board-name">${escapeHtml(e.displayName)}</div>
+            <div class="board-sub">${e.completedCount} test${e.completedCount === 1 ? '' : 's'} completed</div>
+          </span>
+          ${bar(share, toneFor(share, [66, 33]))}
+          <span class="board-metric">${e.tokensEarned} <span class="unit">tokens</span></span>
+        </div>`;
+      })
+      .join('')}
+  </div>`;
+}
+
+function contributorsSection(contributors) {
+  const withListings = contributors.filter((c) => c.listings.length);
+  if (!withListings.length) {
+    return empty(
+      '◍',
+      'Nothing to show yet',
+      'When someone who tests for others posts their own listing, it appears here.',
+    );
+  }
+
+  return withListings
+    .map(
+      (c) => `
+    <div class="panel contributor-group">
+      <div class="contributor-head">
+        <span class="board-rank">${c.rank <= 3 ? MEDALS[c.rank - 1] : c.rank}</span>
+        <span style="flex:1;min-width:0">
+          <div class="board-name">${escapeHtml(c.displayName)}</div>
+          <div class="board-sub">
+            ${c.completedCount} test${c.completedCount === 1 ? '' : 's'} given back to other developers
+          </div>
+        </span>
+        <span class="board-metric">${c.tokensEarned} <span class="unit">tokens</span></span>
+      </div>
+      <div class="contributor-listings">
+        ${c.listings.map(contributorListingRow).join('')}
+      </div>
+    </div>`,
+    )
+    .join('');
+}
+
+function contributorListingRow(l) {
+  const filled = l.slotsWanted ? Math.round((l.slotsFilled / l.slotsWanted) * 100) : 0;
+  return `
+    <div class="contributor-listing" data-card="${l.id}">
+      ${appIcon(l.app.artworkUrl, l.app.name)}
+      <div class="contributor-listing-body">
+        <div class="contributor-listing-name">${escapeHtml(l.app.name)}</div>
+        <div class="board-sub">
+          ${
+            l.kind === 'testing'
+              ? `${l.slotsFilled}/${l.slotsWanted || '∞'} testers`
+              : 'Launched — open to new users'
+          }
+          · <span data-metric="health-${l.id}" class="pending">checking…</span>
+        </div>
+      </div>
+      ${l.slotsWanted ? bar(filled, toneFor(100 - filled, [66, 33])) : ''}
+      ${
+        l.kind === 'testing'
+          ? `<button class="primary comm-request" data-listing="${l.id}">Request to test</button>`
+          : `<a href="${escapeHtml(l.link)}" target="_blank" rel="noopener">Open ↗</a>`
+      }
+    </div>`;
+}
+
+/* ============================ request modal ============================ */
+
+function wireRequestButtons(container, listings) {
+  container.querySelectorAll('.comm-request').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const listing = listings.find((l) => l.id === btn.dataset.listing);
+      if (listing) openRequestModal(listing);
+    });
+  });
+}
+
+function openRequestModal(listing) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'commRequestModal';
+  overlay.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="commReqTitle">
+      <div class="modal-head">
+        <div>
+          <h3 id="commReqTitle">Request to test ${escapeHtml(listing.app.name)}</h3>
+          <p class="modal-sub">The builder reviews every request — a short, specific pitch gets picked over a one-liner.</p>
+        </div>
+        <button class="modal-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-fields">
+        ${
+          user
+            ? ''
+            : `<div class="field">
+                 <label for="commReqName">Your name</label>
+                 <input id="commReqName" type="text" placeholder="Jane Doe">
+               </div>
+               <div class="field">
+                 <label for="commReqEmail">Your email</label>
+                 <input id="commReqEmail" type="email" placeholder="you@example.com">
+               </div>`
+        }
+        <div class="field">
+          <label for="commReqMessage">Message</label>
+          <textarea id="commReqMessage" rows="4"
+            placeholder="Device/OS you'll test on, and why you're a good fit for this app."></textarea>
+        </div>
+      </div>
+      <div id="commReqStatus" class="status"></div>
+      <button id="commReqSubmit" class="primary" style="width:100%;margin-top:.5rem">Send request</button>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeModal();
+  });
+  overlay.querySelector('.modal-close').addEventListener('click', closeModal);
+  document.addEventListener('keydown', onModalKeydown);
+  el('commReqSubmit').addEventListener('click', () => submitRequest(listing));
+  el('commReqMessage').focus();
+}
+
+function closeModal() {
+  document.getElementById('commRequestModal')?.remove();
+  document.removeEventListener('keydown', onModalKeydown);
+}
+
+function onModalKeydown(e) {
+  if (e.key === 'Escape') closeModal();
+}
+
+async function submitRequest(listing) {
+  const statusEl = el('commReqStatus');
+  const message = el('commReqMessage').value.trim();
+
+  if (message.length < MIN_MESSAGE_LENGTH) {
+    statusEl.className = 'status error';
+    statusEl.textContent = `Write a bit more — at least ${MIN_MESSAGE_LENGTH} characters about your device/OS and why you're a fit.`;
+    return;
+  }
+
+  const body = { message };
   if (!user) {
-    el('testerBody').innerHTML = empty(
+    body.name = el('commReqName').value.trim();
+    body.email = el('commReqEmail').value.trim();
+    if (!body.name || !body.email) {
+      statusEl.className = 'status error';
+      statusEl.textContent = 'Name and email are required.';
+      return;
+    }
+  }
+
+  await withStatus(statusEl, el('commReqSubmit'), null, async () => {
+    const result = await client.requestToJoin(listing.id, body);
+    showRequestSuccess(result);
+  });
+}
+
+function showRequestSuccess(result) {
+  const modal = document.querySelector('#commRequestModal .modal');
+  if (!modal) return;
+  modal.innerHTML = `
+    <div class="modal-head">
+      <h3>Request sent</h3>
+      <button class="modal-close" type="button" aria-label="Close">✕</button>
+    </div>
+    <p class="modal-sub">
+      ${
+        result.magicLinkSent
+          ? 'The builder has your request. Check your email for a sign-in link so you can track it and submit feedback once accepted.'
+          : 'The builder has your request — you\'ll see it under "My testing" once they respond.'
+      }
+    </p>
+    <button id="commReqDone" class="primary" style="width:100%">Done</button>`;
+
+  const done = () => {
+    closeModal();
+    renderActiveTab();
+  };
+  modal.querySelector('.modal-close').addEventListener('click', done);
+  el('commReqDone').addEventListener('click', done);
+}
+
+/* ============================ my testing tab ============================ */
+
+function renderMineTab() {
+  if (!user) {
+    el('testerTabPanel').innerHTML = empty(
       '◑',
       'Sign in to see your testing',
-      'Sign in from Get testers — the two pages share one account.',
+      'Request to test something on the Marketplace tab, or sign in from Get testers — the two pages share one account.',
     );
     return;
   }
-  el('testerBody').innerHTML = '<div id="testerSessions"></div>';
+  el('testerTabPanel').innerHTML = '<div id="testerSessions"></div>';
   // Delegated listeners, wired exactly once on this stable container — it
   // gets its `innerHTML` replaced on every re-render (a submitted review, a
   // fresh check-in) but the element itself never does, so wiring these
@@ -102,7 +826,7 @@ async function renderSessions() {
       container.innerHTML = empty(
         '◑',
         "You haven't requested to test anything yet",
-        'Find something on the Get testers → Marketplace tab.',
+        'Find something on the Marketplace tab.',
       );
       return;
     }
@@ -240,9 +964,9 @@ function compressPhoto(file) {
   });
 }
 
-/** Delegated listeners — wired exactly once (see the call site in `render`),
- * so they never need re-wiring as the container's content changes underneath
- * them. */
+/** Delegated listeners — wired exactly once (see the call site in
+ * `renderMineTab`), so they never need re-wiring as the container's content
+ * changes underneath them. */
 function wireDelegatedActions(container) {
   wireMessageThreads(container);
 
