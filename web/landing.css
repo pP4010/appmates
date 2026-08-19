@@ -179,6 +179,23 @@
 .rail-card--indigo  { background: color-mix(in srgb, #4340a0 55%, var(--surface)); border-color: color-mix(in srgb, #4340a0 75%, var(--border)); }
 .rail-card--slate   { background: color-mix(in srgb, #4a5568 55%, var(--surface)); border-color: color-mix(in srgb, #4a5568 75%, var(--border)); }
 
+/* Hovering a coloured card brightens its own border instead of switching
+   to the generic purple `.rail-card:hover` above — same specificity (one
+   class + :hover each), so it's source order, not weight, that makes
+   these win. Full-strength hue rather than the muted `color-mix` the base
+   variant uses, so the hover state reads as "lit up", not just "still
+   blue". */
+.rail-card--blue:hover   { border-color: #2f5fa8; }
+.rail-card--green:hover  { border-color: #1f7a4d; }
+.rail-card--violet:hover { border-color: #6d3aa8; }
+.rail-card--orange:hover { border-color: #b5502a; }
+.rail-card--pink:hover   { border-color: #8a2f4a; }
+.rail-card--teal:hover   { border-color: #2c6470; }
+.rail-card--red:hover    { border-color: #a8342f; }
+.rail-card--amber:hover  { border-color: #a87e1f; }
+.rail-card--indigo:hover { border-color: #4340a0; }
+.rail-card--slate:hover  { border-color: #4a5568; }
+
 /* ============================ promo dialog ============================ */
 
 /* Reuses the app's own `.modal-overlay`/`.modal`/`.field` (see styles.css)
