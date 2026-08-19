@@ -1469,3 +1469,48 @@ body:has(#view-inbox.active) .content {
 .test-timeline summary { cursor: pointer; font-size: .78rem; color: var(--muted); }
 .test-timeline summary:hover { color: var(--text-2); }
 .test-timeline textarea { width: 100%; max-width: 40rem; margin-top: .5rem; }
+
+/* ============================ daily check-ins ============================ */
+
+.checkin-strip-row { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.checkin-strip { display: flex; gap: .2rem; }
+.checkin-day {
+  width: 14px; height: 14px; border-radius: 3px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+}
+.checkin-day.done { background: var(--ok); border-color: var(--ok); }
+.checkin-day.today:not(.done) { border-color: var(--accent); border-style: dashed; }
+
+.checkin-upload-label {
+  display: inline-flex; align-items: center; gap: .35rem;
+  margin-top: .5rem;
+  padding: .4rem .75rem;
+  border: 1.5px solid var(--border-strong); border-radius: var(--r-md);
+  background: var(--surface); color: var(--text);
+  font-size: .82rem; cursor: pointer;
+}
+.checkin-upload-label:hover { background: var(--surface-2); }
+.checkin-upload-label.disabled { color: var(--ok); border-color: var(--ok); cursor: default; background: none; }
+.checkin-status { margin-top: .3rem; }
+
+.checkin-proof-grid {
+  display: flex; gap: .6rem; flex-wrap: wrap;
+  margin-top: .5rem; padding-top: .5rem;
+  border-top: 1px solid var(--border);
+}
+.checkin-proof {
+  display: flex; flex-direction: column; gap: .25rem; align-items: center;
+  text-decoration: none; width: 4.5rem;
+}
+.checkin-proof img {
+  width: 4.5rem; height: 4.5rem; object-fit: cover;
+  border-radius: var(--r-md); border: 1px solid var(--border);
+}
+.checkin-proof span { font-size: .68rem; }
+.checkin-proof-placeholder {
+  width: 4.5rem; height: 4.5rem;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--r-md); border: 1px dashed var(--border-strong);
+  color: var(--muted); font-size: 1.1rem;
+}

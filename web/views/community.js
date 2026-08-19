@@ -41,7 +41,7 @@ const MAX_ENRICHED_CARDS = 12;
 const TABS = {
   browse: 'Marketplace',
   leaderboard: 'Leaderboard',
-  mine: 'Your testing',
+  mine: 'My dashboard',
   profile: 'My profile',
 };
 
@@ -839,29 +839,26 @@ function renderYourTestingTab() {
     <div id="commCreatePanel"></div>
 
     <h3>Your listings</h3>
-    <div id="commMyListings"></div>
-
-    <h3>Apps you're testing</h3>
-    <div id="commMySessions"></div>`;
+    <div id="commMyListings"></div>`;
 
   renderDashboardStats();
   renderAsoBridge();
   renderCreatePanel();
   renderMyListings();
-  renderMySessions();
 }
 
-/** Three cheap numbers up top — the difference between a page that manages
- * a list and one that reads as a dashboard. Deliberately not "pending
+/** Two cheap numbers up top — the difference between a page that manages a
+ * list and one that reads as a dashboard. Deliberately not "pending
  * requests": that count is already visible inline under each listing below,
- * and computing it here would mean one extra fetch per listing. */
+ * and computing it here would mean one extra fetch per listing. Testing
+ * activity has its own numbers on the Be a tester page now — this is the
+ * owner side only. */
 async function renderDashboardStats() {
   const host = el('commDashboardStats');
   if (!host) return;
   try {
-    const [listings, sessions] = await Promise.all([client.myListings(), client.mySessions()]);
+    const listings = await client.myListings();
     const activeListings = listings.filter((l) => l.status === 'open').length;
-    const testingNow = sessions.filter((s) => s.status === 'accepted' || s.status === 'submitted').length;
 
     host.innerHTML = `
       <div class="dashboard-stats">
@@ -872,10 +869,6 @@ async function renderDashboardStats() {
         <div class="dashboard-stat">
           <span class="metric-label">Active listings</span>
           <span class="dashboard-stat-value">${activeListings}</span>
-        </div>
-        <div class="dashboard-stat">
-          <span class="metric-label">Testing right now</span>
-          <span class="dashboard-stat-value">${testingNow}</span>
         </div>
       </div>`;
   } catch {
@@ -1109,6 +1102,7 @@ function sessionRow(s) {
         }
       </div>
       ${MESSAGEABLE_STATUSES.has(s.status) ? messageThreadHtml(s.id) : ''}
+      ${MESSAGEABLE_STATUSES.has(s.status) ? checkinsToggleHtml(s.id) : ''}
     </div>`;
 }
 
@@ -1160,6 +1154,7 @@ function wireMyListingActions(container) {
   wireSessionAction(container, '.comm-complete', (btn) => client.completeSession(btn.dataset.session));
   wireSessionAction(container, '.comm-close', (btn) => client.closeListing(btn.dataset.listing));
   wireMessageThreads(container);
+  wireCheckinsToggles(container);
 
   container.querySelectorAll('.comm-feature').forEach((btn) => {
     btn.addEventListener('click', async () => {
@@ -1184,29 +1179,9 @@ function wireMyListingActions(container) {
   });
 }
 
-/* ---------------------------- your sessions ---------------------------- */
-
-const STATUS_LABEL = {
-  requested: 'Waiting for review',
-  declined: 'Declined',
-  accepted: 'Accepted — go test it',
-  submitted: 'Feedback submitted',
-  completed: 'Completed',
-  abandoned: 'Abandoned',
-};
-
-const STATUS_TONE = {
-  requested: 'neutral',
-  declined: 'bad',
-  accepted: 'info',
-  submitted: 'neutral',
-  completed: 'ok',
-  abandoned: 'neutral',
-};
-
 /* ---------------------------- message threads ---------------------------- */
 
-function messageThreadHtml(sessionId) {
+export function messageThreadHtml(sessionId) {
   return `
     <div style="margin-top:.4rem">
       <button class="ghost comm-thread-toggle" data-session="${sessionId}" type="button">Messages</button>
@@ -1217,7 +1192,7 @@ function messageThreadHtml(sessionId) {
 /** Delegates once per container rather than once per toggle button, so a
  * card list that re-renders (a new session appearing, one changing status)
  * never needs its listeners rewired by hand. */
-function wireMessageThreads(container) {
+export function wireMessageThreads(container) {
   container.addEventListener('click', (e) => {
     const btn = e.target.closest('.comm-thread-toggle');
     if (btn && container.contains(btn)) toggleThread(btn);
@@ -1292,107 +1267,80 @@ function renderThread(id, thread, messages) {
   });
 }
 
-async function renderMySessions() {
-  const container = el('commMySessions');
-  if (!container) return;
-  container.innerHTML = '<div class="status"><span class="spinner"></span> Loading</div>';
-  try {
-    const sessions = await client.mySessions();
-    if (!sessions.length) {
-      container.innerHTML = empty(
-        '◍',
-        "You haven't requested to test anything yet",
-        'Find something on the Marketplace tab.',
-      );
-      return;
-    }
-    container.innerHTML = sessions.map(mySessionCard).join('');
-    wireMySessionActions(container);
-  } catch (err) {
-    container.innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
-  }
-}
+/* ---------------------------- check-in proof ---------------------------- */
 
-function mySessionCard(s) {
-  const tone = STATUS_TONE[s.status] || 'neutral';
-  const label = STATUS_LABEL[s.status] || s.status;
-
-  let body = '';
-  if (s.status === 'requested') {
-    body = `<div class="muted" style="font-size:.82rem;margin-top:.3rem">"${escapeHtml(s.requestMessage)}"</div>`;
-  } else if (s.status === 'accepted') {
-    body = `
-      <div style="margin-top:.5rem">
-        <textarea class="comm-feedback-input" data-session="${s.id}" rows="2"
-          placeholder="What did you find? Bugs, confusing steps, first impressions..."
-          style="width:100%"></textarea>
-        <div class="eval-fields">
-          <label><input type="checkbox" class="comm-bug-found" data-session="${s.id}"> Found a blocking bug</label>
-          <label>Would use again:
-            <select class="comm-would-use-again" data-session="${s.id}" style="width:auto">
-              <option value="">—</option>
-              <option value="yes">Yes</option>
-              <option value="maybe">Maybe</option>
-              <option value="no">No</option>
-            </select>
-          </label>
-        </div>
-        <button class="primary comm-submit" data-session="${s.id}">Submit feedback</button>
-        <div class="comm-session-status status" data-session="${s.id}"></div>
-      </div>`;
-  } else if (s.status === 'submitted' || s.status === 'completed') {
-    body = `<div class="muted" style="font-size:.82rem;margin-top:.3rem">"${escapeHtml(s.feedback ?? '')}"</div>`;
-  }
-
+function checkinsToggleHtml(sessionId) {
   return `
-    <div class="panel" style="padding:.9rem 1rem;margin-bottom:.6rem">
-      <div style="display:flex;gap:.7rem;align-items:flex-start">
-        ${appIcon(s.listing.artworkUrl, s.listing.appName)}
-        <div style="flex:1;min-width:0">
-          <strong>${escapeHtml(s.listing.appName)}</strong>
-          <span class="pill ${tone}" style="margin-left:.4rem">${label}</span>
-          ${body}
-          ${s.status === 'completed' ? '<div class="muted" style="font-size:.78rem">+1 token awarded</div>' : ''}
-          ${MESSAGEABLE_STATUSES.has(s.status) ? messageThreadHtml(s.id) : ''}
-        </div>
-      </div>
+    <div style="margin-top:.4rem">
+      <button class="ghost comm-checkins-toggle" data-session="${sessionId}" type="button">Check-ins</button>
+      <div class="comm-checkins" data-session="${sessionId}" hidden></div>
     </div>`;
 }
 
-function wireMySessionActions(container) {
-  wireMessageThreads(container);
-  container.querySelectorAll('.comm-submit').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const id = btn.dataset.session;
-      const textarea = container.querySelector(`.comm-feedback-input[data-session="${id}"]`);
-      const statusEl = container.querySelector(`.comm-session-status[data-session="${id}"]`);
-      const feedback = textarea.value.trim();
-      if (!feedback) {
-        if (statusEl) {
-          statusEl.className = 'comm-session-status status error';
-          statusEl.textContent = 'Write a few words about what you found first.';
-        }
-        return;
-      }
-      const bugFoundEl = container.querySelector(`.comm-bug-found[data-session="${id}"]`);
-      const wouldUseAgainEl = container.querySelector(`.comm-would-use-again[data-session="${id}"]`);
-      btn.disabled = true;
-      try {
-        await client.submitSession(id, {
-          feedback,
-          bugFound: bugFoundEl?.checked ?? false,
-          wouldUseAgain: wouldUseAgainEl?.value || undefined,
-        });
-        await renderMySessions();
-      } catch (err) {
-        btn.disabled = false;
-        if (statusEl) {
-          statusEl.className = 'comm-session-status status error';
-          statusEl.textContent = err.message;
-        }
-      }
-    });
+/** Guarded with a flag on the container itself: `wireMyListingActions` runs
+ * again after every accept/decline/complete/close/feature action (each one
+ * fully replaces the container's `innerHTML` and re-wires it), and this
+ * listener — unlike those per-button ones — is delegated, so wiring it
+ * again each time would stack a second `click` handler rather than replace
+ * the first. */
+function wireCheckinsToggles(container) {
+  if (container.dataset.checkinsWired) return;
+  container.dataset.checkinsWired = '1';
+  container.addEventListener('click', (e) => {
+    const btn = e.target.closest('.comm-checkins-toggle');
+    if (btn && container.contains(btn)) toggleCheckins(btn);
   });
+}
+
+async function toggleCheckins(btn) {
+  const id = btn.dataset.session;
+  const panel = document.querySelector(`.comm-checkins[data-session="${id}"]`);
+  if (!panel) return;
+  const opening = panel.hidden;
+  panel.hidden = !opening;
+  if (opening && !panel.dataset.loaded) {
+    panel.dataset.loaded = '1';
+    await loadCheckins(id, panel);
+  }
+}
+
+async function loadCheckins(id, panel) {
+  panel.innerHTML = '<div class="status"><span class="spinner"></span> Loading</div>';
+  try {
+    renderCheckins(panel, await client.sessionCheckins(id));
+  } catch (err) {
+    panel.innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+/** Proof, not a preview: full-size in a new tab on click, since a thumbnail
+ * this small can't show whether the app screen behind it is legible. */
+/** A check-in's photo is purged (not the row) 14 days after its date — see
+ * `purgeExpiredPhotos` in community/src/routes/checkins.js — so a `null`
+ * photo here is expected on anything that old, not a broken upload. */
+function renderCheckins(panel, checkins) {
+  if (!checkins.length) {
+    panel.innerHTML = '<p class="muted" style="font-size:.8rem">No check-ins yet.</p>';
+    return;
+  }
+  panel.innerHTML = `
+    <div class="checkin-proof-grid">
+      ${checkins
+        .map((c) =>
+          c.photo
+            ? `
+        <a class="checkin-proof" href="${escapeHtml(c.photo)}" target="_blank" rel="noopener">
+          <img src="${escapeHtml(c.photo)}" alt="Check-in ${escapeHtml(c.date)}" loading="lazy">
+          <span class="muted">${escapeHtml(c.date)}</span>
+        </a>`
+            : `
+        <div class="checkin-proof checkin-proof-purged" title="Photos are kept 14 days">
+          <span class="checkin-proof-placeholder">✓</span>
+          <span class="muted">${escapeHtml(c.date)}</span>
+        </div>`,
+        )
+        .join('')}
+    </div>`;
 }
 
 /* ============================ profile tab ============================ */

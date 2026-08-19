@@ -49,6 +49,26 @@ export const MAX_PROMO_MESSAGE_LENGTH = 1000;
 // pitch (no minimum): "ok, sent you a new invite" is a complete message.
 export const MAX_SESSION_MESSAGE_LENGTH = 2000;
 
+// A daily check-in's photo, as a base64 data URL. 260,000 chars is roughly
+// 190KB of actual image data once decoded (base64 is ~4/3 the raw size) —
+// generous for a client-side-compressed JPEG (web/views/be-tester.js
+// targets well under half that) while still keeping one row small enough
+// that this stays a TEXT column, not a reason to add object storage.
+export const MAX_CHECKIN_PHOTO_CHARS = 260_000;
+// A generous ceiling on the whole request body (photo plus JSON wrapper),
+// checked against `content-length` before the body is even parsed — a
+// legitimate client's compressed photo lands nowhere near this, so it only
+// ever rejects someone bypassing the client entirely to post an oversized
+// payload straight at the API.
+export const MAX_CHECKIN_REQUEST_BYTES = 400_000;
+
+// How long a check-in's photo is kept before the hourly purge clears it
+// (`purgeExpiredPhotos` in routes/checkins.js) — the check-in row itself
+// (date, streak history) is untouched, only the image. Matches the window
+// the feature is already built around: Play's own closed-testing streak
+// needs 14 continuous days, so a photo has no reason to outlive that.
+export const CHECKIN_RETENTION_DAYS = 14;
+
 // A conversation report — enough room to actually explain what's wrong,
 // short enough it isn't a second feedback box. Mirrors the bar a request
 // pitch clears (MIN_REQUEST_MESSAGE_LENGTH above).

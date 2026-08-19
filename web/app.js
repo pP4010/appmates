@@ -31,6 +31,7 @@ import { initSpecs } from './views/specs.js';
 import { initOverview, selectedApp, loadApp } from './views/overview.js';
 import { initFavoritesTray } from './views/favorites-tray.js';
 import { initCommunity } from './views/community.js';
+import { initBeTester } from './views/be-tester.js';
 import { initInbox } from './views/inbox.js';
 import { initAdmin } from './views/admin.js';
 import { CommunityClient, itunesRelayOptions } from './lib/community.js';
@@ -46,6 +47,7 @@ const VIEWS = {
   track: ['Track', 'Your rank over time, and every test you have running'],
   inbox: ['Inbox', 'Every conversation, in one place'],
   community: ['Get testers', 'Real closed testers, and real users at launch'],
+  'be-tester': ['Be a tester', 'Apps you are testing for other developers'],
   specs: ['Specs', 'The bundled catalogue and its provenance'],
   admin: ['Admin', 'Review "Feature your app here" requests'],
 };
@@ -167,6 +169,7 @@ async function boot() {
   // the person who posted the listing typed in.
   const communityClient = new CommunityClient();
   initCommunity(communityClient, { getCurrentApp: selectedApp, itunes: client });
+  initBeTester(communityClient);
   initInbox(communityClient);
   initAdmin(communityClient);
 

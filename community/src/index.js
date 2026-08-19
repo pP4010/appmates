@@ -13,6 +13,7 @@ import * as tokens from './routes/tokens.js';
 import * as leaderboard from './routes/leaderboard.js';
 import * as promo from './routes/promo.js';
 import * as messages from './routes/messages.js';
+import * as checkins from './routes/checkins.js';
 import * as itunes from './routes/itunes.js';
 import * as push from './routes/push.js';
 import * as reports from './routes/reports.js';
@@ -98,6 +99,13 @@ export default {
       }
       if (path === '/test-sessions/muted' && method === 'GET') return await messages.mutedSessions(request, env);
 
+      if ((m = path.match(/^\/test-sessions\/([^/]+)\/checkins$/)) && method === 'GET') {
+        return await checkins.list(request, env, m[1]);
+      }
+      if ((m = path.match(/^\/test-sessions\/([^/]+)\/checkins$/)) && method === 'POST') {
+        return await checkins.create(request, env, m[1]);
+      }
+
       if (path === '/push/subscribe' && method === 'POST') return await push.subscribe(request, env);
       if (path === '/push/unsubscribe' && method === 'POST') return await push.unsubscribe(request, env);
       if (path === '/push/test-session' && method === 'GET') return await push.testSession(request, env);
@@ -129,5 +137,6 @@ export default {
   // in routes/reports.js). Nothing else on a schedule yet.
   async scheduled(event, env, ctx) {
     ctx.waitUntil(reports.escalateUnseenReports(env).catch((err) => console.error('report escalation run failed', err)));
+    ctx.waitUntil(checkins.purgeExpiredPhotos(env).catch((err) => console.error('check-in photo purge failed', err)));
   },
 };
