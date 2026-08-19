@@ -33,6 +33,20 @@ export const LEADERBOARD_MAX_LIMIT = 100;
 // not a second full marketplace.
 export const CONTRIBUTOR_SHOWCASE_LIMIT = 6;
 
+// A listing card's highlight tier is a pure function of its owner's current
+// token balance — 0 (no highlight) through 3 (strongest). Deliberately a
+// *cosmetic* tint only: unlike `feature()`, it never touches sort order or
+// `ORDER BY` in routes/listings.js, so the "no paid placement, newest stays
+// first" guarantee that comment documents still holds — a listing with 0
+// tokens can still rank #1 by `newest`, just without the warm border. A
+// brand-new owner's very first-ever listing gets `TOKEN_TIER_BRONZE`'s
+// highlight for free even at 0 tokens (see `ownerBoostTier` in
+// routes/listings.js), so the very first card anyone ever posts isn't the
+// only dull one on the page while it's also the one most in need of eyes.
+export const TOKEN_TIER_BRONZE = 1;
+export const TOKEN_TIER_SILVER = 5;
+export const TOKEN_TIER_GOLD = 15;
+
 // Kept in sync by hand with `RAIL_COLORS` in web/landing.js — the swatches
 // a "Feature your app here" submission can pick from. Validated here so a
 // crafted request can't store a `color` the rail-card CSS has no rule for.

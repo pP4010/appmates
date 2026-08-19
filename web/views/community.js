@@ -25,10 +25,14 @@ import { checkAppHealth, profileFromEntry } from '../lib/app-profile.js';
 // real limit (it truncates), this just keeps the on-page counter honest.
 const MAX_BIO_LENGTH = 180;
 
+// Get testers only ever shows these two — "My profile" moved out to its own
+// standalone route (`#profile`, the sidebar's "Profile" link) so the two
+// pages stop being the same content under two names. `showProfileTab`/
+// `showCommunityTabs` below switch `viewMode` between them; neither ever
+// puts 'profile' back in this tab bar.
 const TABS = {
   how: 'How it works',
   mine: 'My dashboard',
-  profile: 'My profile',
 };
 
 let client = null;
@@ -36,6 +40,9 @@ let itunes = null;
 let getCurrentApp = null;
 let user = null;
 let activeTab = 'mine';
+/** 'community' renders the tab bar above (How it works / My dashboard);
+ * 'profile' renders just the profile panel, no tabs — see `renderShell`. */
+let viewMode = 'community';
 
 export function initCommunity(communityClient, { getCurrentApp: getApp, itunes: itunesClient } = {}) {
   client = communityClient;
@@ -122,6 +129,15 @@ async function sendLink() {
 /* ============================ tabs ============================ */
 
 function renderShell() {
+  if (viewMode === 'profile') {
+    // No tab bar at all — this page is the profile, not a tab inside a
+    // bigger view. See renderProfileTab's own `!user` guard for what shows
+    // before sign-in.
+    el('commBody').innerHTML = '<div id="commTabPanel" role="tabpanel"></div>';
+    renderProfileTab();
+    return;
+  }
+
   el('commBody').innerHTML = `
     <div class="tabs" role="tablist">
       ${Object.entries(TABS)
@@ -148,19 +164,35 @@ function renderShell() {
 }
 
 function renderActiveTab() {
-  if (activeTab === 'profile') renderProfileTab();
-  else if (activeTab === 'how') renderHowItWorksTab();
+  if (activeTab === 'how') renderHowItWorksTab();
   else renderMyDashboardTab();
 }
 
-/** Switches straight to the profile tab and re-renders — the "Profile"
+/** Switches to the standalone profile panel and re-renders — the "Profile"
  * sidebar shortcut (app.js's `#profile` route) calls this rather than
  * duplicating this view's markup under a second id. A no-op before
  * `initCommunity` has run or on a deployment with no community backend
- * (`renderShell` was never called, so there's no `#commTabPanel` to fill
- * in) — the shell that's actually on screen in that case already says so. */
+ * (`renderShell` was never called, so there's no `#commBody` shell to
+ * replace) — the "not set up yet" message already on screen in that case
+ * says so already. */
 export function showProfileTab() {
-  activeTab = 'profile';
+  viewMode = 'profile';
+  if (client?.configured) renderShell();
+}
+
+/** Switches back to the How it works / My dashboard tabs — app.js's route()
+ * calls this on every real `#community` navigation (not the `#profile`
+ * shortcut) so leaving Profile for Get testers doesn't leave the profile
+ * panel showing under the wrong title. Resets to My dashboard rather than
+ * keeping whatever tab was active before Profile was opened, since a tab
+ * selection from a previous visit reads as stale, not as state worth
+ * preserving. A no-op if Get testers is already showing — avoids a
+ * pointless re-render (and the tab-open animation restarting) on every
+ * click of a nav link the user was already on. */
+export function showCommunityTabs() {
+  if (viewMode === 'community') return;
+  viewMode = 'community';
+  activeTab = 'mine';
   if (client?.configured) renderShell();
 }
 
@@ -169,20 +201,20 @@ export function showProfileTab() {
 function renderHowItWorksTab() {
   el('commTabPanel').innerHTML = `
     <div class="lead" style="margin-bottom:1.2rem">
-      One reciprocal exchange, token-metered so it can't be gamed: you only
-      ever earn a token when someone else's developer confirms your testing
-      actually helped, and you only ever spend one on getting your own app
-      tested — never on anything else.
+      One reciprocal exchange, token-metered so it can't be gamed: posting a
+      listing and requesting to test one are both free — the only thing a
+      token ever buys is prominence, and the only way to earn one is for
+      another developer to confirm your testing actually helped.
     </div>
 
     <h3 style="margin-top:0">Getting your own app tested</h3>
     <ol style="margin:0 0 1.2rem;padding-left:1.3rem;line-height:1.85">
-      <li><strong>Post a listing</strong> on My dashboard — testing (not out yet) or a
-        launch/update (already out). It reuses the app you loaded on Overview: name,
+      <li><strong>Post a listing</strong> on My dashboard, free — testing (not out yet) or
+        a launch/update (already out). It reuses the app you loaded on Overview: name,
         icon and store link, not retyped.</li>
       <li><strong>Testers request to join</strong> from Be a tester's marketplace — no
-        account needed to browse, one is needed to request. You review each request and
-        accept or decline.</li>
+        account needed to browse, one is needed to request, and it costs them nothing.
+        You review each request and accept or decline.</li>
       <li><strong>Accepted testers check in daily</strong> with a screenshot of the app
         open while they test — a real streak you can see building, not a checkbox that
         could mean "tested once and forgot."</li>
@@ -196,19 +228,30 @@ function renderHowItWorksTab() {
       <li>Browse listings on <a href="#be-tester">Be a tester</a> and request to join
         one — a short message on why you're a good fit, same as above.</li>
       <li>Once accepted, test the build and check in daily until you submit feedback.</li>
-      <li>When the owner marks it completed, <strong>you earn 1 token</strong> — spend it
-        getting your own app tested in return, or toward featuring your listing (below).</li>
+      <li>When the owner marks it completed, <strong>you earn 1 token</strong>.</li>
     </ol>
 
-    <h3>Spending tokens</h3>
+    <h3>What a token actually buys</h3>
     <p class="lead" style="margin-bottom:.5rem">
-      A token is worth exactly one of these, nothing else:
+      Never a review, never a spot you couldn't get for free — only visibility, two ways:
     </p>
     <ul style="margin:0 0 1.2rem;padding-left:1.3rem;line-height:1.85">
-      <li>Requesting to join someone's listing as a tester.</li>
-      <li><strong>Featuring your listing</strong> on the promoted rail — 3 tokens per
-        day it stays featured (My dashboard → a listing's "Feature" button).</li>
+      <li><strong>Spend</strong> 3 tokens/day to feature a listing at the top of the
+        marketplace (My dashboard → a listing's "Feature" button) — a highlight sweep
+        for as many days as you pay for.</li>
+      <li><strong>Hold</strong> a growing balance and every listing you post picks up a
+        warmer border on its own — bronze, then silver, then gold — on Be a tester's
+        marketplace and the landing page's "Needs testers now". Nothing to spend or
+        click: it just reflects what's in your account. <strong>Your very first-ever
+        listing gets the bronze tint for free</strong>, at 0 tokens, so a brand-new
+        account isn't the one flat card on the page while it's also the one most in
+        need of eyes.</li>
     </ul>
+    <p class="note">
+      Neither of these ever changes sort order — a 0-token listing still ranks first
+      under "Newest" if it was posted most recently. Tokens buy how a card looks, never
+      where it lands.
+    </p>
 
     <h3>What this deliberately isn't</h3>
     <p class="lead">

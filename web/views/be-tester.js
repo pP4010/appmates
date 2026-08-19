@@ -340,6 +340,13 @@ function reliabilityBadge(rep) {
   return `<span class="pill ${tone}">${rep.completionRate}% completion${resp}</span>`;
 }
 
+/** ` boost-1`/`boost-2`/`boost-3`, or empty — see the CSS comment on
+ * `.listing-card.boost-1` in styles.css for what this does and, more
+ * importantly, what it deliberately doesn't (change sort order). */
+function boostClass(tier) {
+  return tier ? ` boost-${tier}` : '';
+}
+
 function contributionBadge(count) {
   if (!count) return '';
   return `<span class="pill info" title="Tests this developer completed for other people's apps">
@@ -373,7 +380,7 @@ function listingCard(l, { canRequest = false, alreadyRequested = false } = {}) {
       : '';
 
   return `
-    <div class="panel listing-card" data-card="${l.id}">
+    <div class="panel listing-card${boostClass(l.ownerBoostTier)}" data-card="${l.id}">
       <div class="listing-head">
         ${appIcon(l.app.artworkUrl, l.app.name)}
         <div style="flex:1;min-width:0">
@@ -426,7 +433,7 @@ function marketplaceGridCard(l, { canRequest = false, alreadyRequested = false }
       : `<button class="primary comm-request" data-listing="${l.id}" style="width:100%">Request to test</button>`;
 
   return `
-    <div class="panel marketplace-card" data-card="${l.id}">
+    <div class="panel marketplace-card${boostClass(l.ownerBoostTier)}" data-card="${l.id}">
       <div class="marketplace-card-head">
         ${appIcon(l.app.artworkUrl, l.app.name)}
         <div style="min-width:0;flex:1">

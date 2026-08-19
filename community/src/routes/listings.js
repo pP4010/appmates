@@ -11,10 +11,27 @@ import {
   MIN_REQUEST_MESSAGE_LENGTH,
   MAX_REQUEST_MESSAGE_LENGTH,
   MAX_NAME_LENGTH,
+  TOKEN_TIER_BRONZE,
+  TOKEN_TIER_SILVER,
+  TOKEN_TIER_GOLD,
 } from '../lib/config.js';
 
 const KINDS = new Set(['testing', 'launch']);
 const PLATFORMS = new Set(['ios', 'android', 'both']);
+
+/** 0–3, purely cosmetic (see the comment on `TOKEN_TIER_BRONZE` in
+ * lib/config.js) — never fed into `ORDER BY`. */
+function ownerBoostTier(row) {
+  const balance = row.owner_token_balance ?? 0;
+  // This row is the owner's one and only listing, ever, and they haven't
+  // earned a token yet — the exact shape of someone who just signed up.
+  // Free bronze so their first post isn't the only flat card on the page.
+  if (row.owner_listing_count === 1 && balance === 0) return 1;
+  if (balance >= TOKEN_TIER_GOLD) return 3;
+  if (balance >= TOKEN_TIER_SILVER) return 2;
+  if (balance >= TOKEN_TIER_BRONZE) return 1;
+  return 0;
+}
 
 function serializeListing(row) {
   return {
@@ -48,6 +65,8 @@ function serializeListing(row) {
     // so it can't be inflated from your own account — see `complete` in
     // routes/testSessions.js.
     ownerContribution: row.owner_contribution_count ?? 0,
+    // Cosmetic only — see `ownerBoostTier` above. Never used for sorting.
+    ownerBoostTier: ownerBoostTier(row),
   };
 }
 
@@ -73,8 +92,10 @@ const LISTING_SELECT = `
     ) AS owner_avg_response_hours,
     (SELECT COUNT(*) FROM test_sessions ts5
        WHERE ts5.tester_user_id = l.owner_user_id AND ts5.status = 'completed'
-    ) AS owner_contribution_count
-  FROM listings l JOIN apps a ON a.id = l.app_id
+    ) AS owner_contribution_count,
+    u.token_balance AS owner_token_balance,
+    (SELECT COUNT(*) FROM listings l6 WHERE l6.owner_user_id = l.owner_user_id) AS owner_listing_count
+  FROM listings l JOIN apps a ON a.id = l.app_id JOIN users u ON u.id = l.owner_user_id
 `;
 
 // Safelisted so a sort value can never reach the SQL string as user input.

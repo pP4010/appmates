@@ -30,7 +30,7 @@ import { initPrepare, initResearch, initTrack } from './views/launch.js';
 import { initSpecs } from './views/specs.js';
 import { initOverview, selectedApp, loadApp } from './views/overview.js';
 import { initFavoritesTray } from './views/favorites-tray.js';
-import { initCommunity, showProfileTab } from './views/community.js';
+import { initCommunity, showProfileTab, showCommunityTabs } from './views/community.js';
 import { initBeTester } from './views/be-tester.js';
 import { initInbox } from './views/inbox.js';
 import { initAdmin } from './views/admin.js';
@@ -109,13 +109,16 @@ function wireTapeTestToggle() {
 }
 
 /** `#profile` has no `view-profile` element of its own — it's the same
- * `view-community` panel, jumped straight to its "My profile" tab (see
+ * `view-community` panel, switched into a standalone profile-only mode (see
  * `showProfileTab` in views/community.js) rather than a second copy of that
- * markup under a new id. Everything else about routing still keys off the
- * real view name (`community`) so the element toggle and title/sub lookup
- * below don't need a special case of their own; only the nav-item
- * highlight needs to know the shortcut was used, so "Profile" lights up
- * instead of "Get testers". */
+ * markup under a new id. Get testers itself never shows a profile tab
+ * anymore; the two are fully split (`showCommunityTabs` puts the
+ * `view-community` panel back into its normal How it works / My dashboard
+ * shape whenever the real `#community` route is used instead). Everything
+ * else about routing still keys off the real view name (`community`) so the
+ * element toggle and title/sub lookup below don't need a special case of
+ * their own; only the nav-item highlight needs to know the shortcut was
+ * used, so "Profile" lights up instead of "Get testers". */
 const PROFILE_HASH = 'profile';
 
 function route() {
@@ -140,6 +143,7 @@ function route() {
   window.scrollTo({ top: 0 });
 
   if (isProfileShortcut) showProfileTab();
+  else if (active === 'community') showCommunityTabs();
 }
 
 /** Populate every storefront picker from the generated spec. */
