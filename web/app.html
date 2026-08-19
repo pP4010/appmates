@@ -579,18 +579,22 @@
 
       <!-- ==================== community ==================== -->
       <section class="view" id="view-community">
-        <p class="lead">
+        <!-- Get-testers-specific framing — hidden on the `#profile` shortcut
+             (see showProfileTab/showCommunityTabs in views/community.js),
+             since Profile is its own page now, not this one under another
+             name, and this intro doesn't belong there. -->
+        <p class="lead" id="commIntro">
           Get real closed testers before you ship, and real users for a launch or an update
           once you have. This is the one part of AppMates that needs an email — every other
           tool here never has, and never will.
         </p>
-        <div class="callout">
+        <div class="callout" id="commGuardrail">
           <strong>What this isn't.</strong> Nobody here trades App Store or Play reviews, and
           nothing on this page ever asks a tester to leave one. Testers give you private
           feedback on a closed build; if a launch listing earns you real users, whether they
-          review is entirely between them and the store. Tokens are earned only by actually
-          testing someone else's app — they can't be bought, and only a listing's owner
-          confirming real feedback was given can mint one.
+          review is entirely between them and the store. High Fives are earned only by
+          actually testing someone else's app — they can't be bought, and only a listing's
+          owner confirming real feedback was given can mint one.
         </div>
 
         <!-- Posting a listing or managing one needs an account; nothing
@@ -605,7 +609,7 @@
       <!-- ==================== be a tester ==================== -->
       <section class="view" id="view-be-tester">
         <p class="lead">
-          Test other developers' apps to earn tokens, then spend them getting your own app
+          Test other developers' apps to earn High Fives, then spend them getting your own app
           tested — browse listings, see who's topping the board, track what you're actively
           testing. Same account as <a href="#community">Get testers</a>, the tester half
           instead of the owner half — and browsing needs no account at all.

@@ -680,7 +680,7 @@ function idleDetailsHtml() {
   const tokensCard = user
     ? `
     <div class="inbox-detail-card">
-      <div class="inbox-detail-label">Tokens</div>
+      <div class="inbox-detail-label">High Fives</div>
       <strong>${user.tokenBalance}</strong>
       <p class="muted inbox-detail-desc">Earned by testing other people's apps — spend them to feature your own listing.</p>
     </div>`

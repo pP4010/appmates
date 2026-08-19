@@ -282,7 +282,7 @@ function leaderboardTeaser(entries, windowDays) {
           <div class="teaser-row">
             <span class="teaser-rank">${e.rank <= 3 ? MEDALS[e.rank - 1] : e.rank}</span>
             <span class="teaser-name">${escapeHtml(e.displayName)}</span>
-            <span class="teaser-metric">${e.tokensEarned} <span class="unit">tokens</span></span>
+            <span class="teaser-metric">${e.tokensEarned} <span class="unit">High Fives</span></span>
           </div>`,
           )
           .join('')}
@@ -569,8 +569,8 @@ async function renderLeaderboardTab() {
 
     panel.innerHTML = `
       <p class="lead">
-        Ranked by tokens earned over the last ${windowDays} days. A token exists only
-        because a developer confirmed by hand that someone's testing actually helped —
+        Ranked by High Fives earned over the last ${windowDays} days. A High Five exists
+        only because a developer confirmed by hand that someone's testing actually helped —
         so the ranking recomputes itself, but nothing on it was ever self-awarded.
       </p>
 
@@ -621,7 +621,7 @@ function testersBoard(entries) {
             <div class="board-sub">${e.completedCount} test${e.completedCount === 1 ? '' : 's'} completed</div>
           </span>
           ${bar(share, toneFor(share, [66, 33]))}
-          <span class="board-metric">${e.tokensEarned} <span class="unit">tokens</span></span>
+          <span class="board-metric">${e.tokensEarned} <span class="unit">High Fives</span></span>
         </div>`;
       })
       .join('')}
@@ -650,7 +650,7 @@ function contributorsSection(contributors) {
             ${c.completedCount} test${c.completedCount === 1 ? '' : 's'} given back to other developers
           </div>
         </span>
-        <span class="board-metric">${c.tokensEarned} <span class="unit">tokens</span></span>
+        <span class="board-metric">${c.tokensEarned} <span class="unit">High Fives</span></span>
       </div>
       <div class="contributor-listings">
         ${c.listings.map(contributorListingRow).join('')}
@@ -887,7 +887,7 @@ async function sessionCard(s) {
           <strong>${escapeHtml(s.listing.appName)}</strong>
           <span class="pill ${tone}" style="margin-left:.4rem">${label}</span>
           ${body}
-          ${s.status === 'completed' ? '<div class="muted" style="font-size:.78rem">+1 token awarded</div>' : ''}
+          ${s.status === 'completed' ? '<div class="muted" style="font-size:.78rem">+1 High Five awarded</div>' : ''}
           ${MESSAGEABLE_STATUSES.has(s.status) ? messageThreadHtml(s.id) : ''}
         </div>
       </div>

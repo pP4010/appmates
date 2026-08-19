@@ -111,26 +111,36 @@ function openSlotItem(emailHref, label) {
     </a>`;
 }
 
+/** Every real app, icon included, plus the permanent "slots open" pill —
+ * one copy, before any doubling or repeating. Every real app always
+ * renders through `tapeItem()` — an earlier version special-cased "fewer
+ * than two apps" into a text-only pill that dropped the app's own icon
+ * even when one had resolved. */
+function singleTapeHtml(apps, emailHref) {
+  const label = apps.length ? 'More slots open — get in touch' : 'Sponsor slots open — get in touch';
+  return apps.map(tapeItem).join('') + openSlotItem(emailHref, label);
+}
+
 /**
  * Builds the doubled-track markup a seamless `.tape-track` scroll needs:
  * the same items twice back to back, animated to `translate(-50%)` so the
  * join between the two halves never shows — by the time the first half has
  * scrolled fully out of view, the second sits exactly where the first
- * started. Every real app always renders through `tapeItem()`, icon
- * included — an earlier version special-cased "fewer than two apps" into a
- * text-only pill that dropped the app's own icon even when one had
- * resolved. A permanent "slots open" pill is appended after the real apps
- * in each half, so the tape always has something to sell alongside
- * whatever's already sponsored. Only true zero-app pages skip the
- * animation entirely — nothing to double, and no logo to hide a seam
- * behind.
+ * started. Only true zero-app pages skip the animation entirely — nothing
+ * to double, and no logo to hide a seam behind.
+ *
+ * Each half here is exactly one copy of the item list — enough to loop
+ * correctly, but not necessarily enough to ever reach the far edge of a
+ * wide screen. `mountTape` repeats it further before this ever paints; see
+ * `fillTapeWidth`'s comment for why that second pass is the one that
+ * actually matters.
  */
 export function buildTapeTrack(apps, emailHref) {
+  const single = singleTapeHtml(apps, emailHref);
   if (!apps.length) {
-    return `<div class="tape-track tape-track--static">${openSlotItem(emailHref, 'Sponsor slots open — get in touch')}</div>`;
+    return `<div class="tape-track tape-track--static">${single}</div>`;
   }
-  const half = apps.map(tapeItem).join('') + openSlotItem(emailHref, 'More slots open — get in touch');
-  return `<div class="tape-track"><div class="tape-half">${half}</div><div class="tape-half">${half}</div></div>`;
+  return `<div class="tape-track"><div class="tape-half">${single}</div><div class="tape-half">${single}</div></div>`;
 }
 
 const MOCK_COLOR_HEX = {
@@ -172,8 +182,81 @@ export function mockSponsorApps(count = 8) {
   }));
 }
 
+/**
+ * `translate(-50%)` slides a `.tape-half` across exactly its *own* width —
+ * that's what makes the loop seamless — but a half narrower than the tape
+ * container never reaches the container's far edge doing that: the whole
+ * animation plays out within the half's own short span (near the left
+ * third of the screen with, say, 2 real apps and one "More slots open"
+ * pill) and the rest of the bar just sits empty. A test-mode density of
+ * ~10 apps happens to already be wide enough to hide this, which is why it
+ * only ever showed up with a real, small sponsor count. Fixed by repeating
+ * the single-copy item list enough times that one half's width is at
+ * least the container's — the loop still repeats the same items, just
+ * enough copies of them to physically span (and keep moving all the way
+ * across) the full bar regardless of how few sponsors there are.
+ *
+ * Measured with a throwaway off-screen probe rather than the live
+ * `.tape-half` so repeated calls (a resize, see `wireTapeResize` below)
+ * always compute from the one true single-copy width — measuring the live
+ * half instead would compound on every call, since after the first fill
+ * it already holds several copies.
+ */
+function fillTapeWidth(container, singleHtml) {
+  const track = container.querySelector('.tape-track');
+  if (!track) return;
+  const containerWidth = container.getBoundingClientRect().width;
+  if (!containerWidth) return;
+
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:absolute;visibility:hidden;display:flex;white-space:nowrap;pointer-events:none';
+  probe.innerHTML = singleHtml;
+  container.appendChild(probe);
+  const singleWidth = probe.getBoundingClientRect().width;
+  probe.remove();
+  if (!singleWidth) return;
+
+  const repeats = Math.max(1, Math.ceil(containerWidth / singleWidth) + 1);
+  const half = singleHtml.repeat(repeats);
+  track.innerHTML = `<div class="tape-half">${half}</div><div class="tape-half">${half}</div>`;
+}
+
+/** Container → its one-copy item HTML, so a resize can re-run
+ * `fillTapeWidth` from the canonical single copy without needing to
+ * refetch sponsor data or re-derive it from the (possibly already
+ * repeated) live DOM. */
+const mountedTapes = new Map();
+let resizeWired = false;
+
+function wireTapeResize() {
+  if (resizeWired) return;
+  resizeWired = true;
+  let timer;
+  window.addEventListener('resize', () => {
+    clearTimeout(timer);
+    // A tape that's `display:none` at the moment of resize (mid-breakpoint
+    // swap between the landing page's rails and its tape, say) skips the
+    // fill — `fillTapeWidth` no-ops on a zero-width container — but stays
+    // in the map so the very next resize that actually reveals it fills
+    // correctly instead of showing whatever width happened to be current
+    // the last time it was visible.
+    timer = setTimeout(() => {
+      for (const [container, singleHtml] of mountedTapes) fillTapeWidth(container, singleHtml);
+    }, 150);
+  });
+}
+
 /** Renders straight into a tape container; a no-op if the page has none. */
 export function mountTape(container, apps, emailHref) {
   if (!container) return;
   container.innerHTML = buildTapeTrack(apps, emailHref);
+
+  if (!apps.length) {
+    mountedTapes.delete(container);
+    return;
+  }
+  const singleHtml = singleTapeHtml(apps, emailHref);
+  mountedTapes.set(container, singleHtml);
+  fillTapeWidth(container, singleHtml);
+  wireTapeResize();
 }
