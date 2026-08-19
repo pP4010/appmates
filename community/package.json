@@ -9,7 +9,7 @@
     "migrate:remote": "wrangler d1 migrations apply launchpilot-community --remote"
   },
   "devDependencies": {
-    "wrangler": "^4.114.0"
+    "wrangler": "^4.123.0"
   },
   "dependencies": {
     "web-push": "^3.6.7"
