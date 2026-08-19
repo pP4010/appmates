@@ -33,6 +33,26 @@ jobs:
         with:
           languages: ${{ matrix.language }}
 
+      # `upload: false` here, not the action's own default upload: on a
+      # *private* repo, pushing results to the code-scanning API needs
+      # GitHub Advanced Security, which this repo doesn't have — that push
+      # was failing with "Resource not accessible by integration" even
+      # though the analysis itself ran clean, turning every run red for a
+      # step that never actually found anything. The separate
+      # `continue-on-error` upload below still tries; it just doesn't take
+      # the whole job down when GHAS isn't there to accept it. The moment
+      # this repo goes public (code scanning is free for public repos) or
+      # GHAS gets turned on, that step starts succeeding on its own — no
+      # flag to remember to flip back.
       - uses: github/codeql-action/analyze@v3
         with:
+          category: "/language:${{ matrix.language }}"
+          upload: false
+          output: sarif-results
+
+      - name: Upload SARIF (works once the repo is public, or with GitHub Advanced Security)
+        uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
+        with:
+          sarif_file: sarif-results
           category: "/language:${{ matrix.language }}"
