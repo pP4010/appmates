@@ -30,7 +30,7 @@ import { initPrepare, initResearch, initTrack } from './views/launch.js';
 import { initSpecs } from './views/specs.js';
 import { initOverview, selectedApp, loadApp } from './views/overview.js';
 import { initFavoritesTray } from './views/favorites-tray.js';
-import { initCommunity } from './views/community.js';
+import { initCommunity, showProfileTab } from './views/community.js';
 import { initBeTester } from './views/be-tester.js';
 import { initInbox } from './views/inbox.js';
 import { initAdmin } from './views/admin.js';
@@ -108,22 +108,38 @@ function wireTapeTestToggle() {
   });
 }
 
+/** `#profile` has no `view-profile` element of its own — it's the same
+ * `view-community` panel, jumped straight to its "My profile" tab (see
+ * `showProfileTab` in views/community.js) rather than a second copy of that
+ * markup under a new id. Everything else about routing still keys off the
+ * real view name (`community`) so the element toggle and title/sub lookup
+ * below don't need a special case of their own; only the nav-item
+ * highlight needs to know the shortcut was used, so "Profile" lights up
+ * instead of "Get testers". */
+const PROFILE_HASH = 'profile';
+
 function route() {
   const name = (location.hash || '#overview').slice(1);
-  const active = name in VIEWS ? name : 'overview';
+  const isProfileShortcut = name === PROFILE_HASH;
+  const resolvedName = isProfileShortcut ? 'community' : name;
+  const active = resolvedName in VIEWS ? resolvedName : 'overview';
 
   for (const view of Object.keys(VIEWS)) {
     document.getElementById(`view-${view}`)?.classList.toggle('active', view === active);
   }
   for (const link of document.querySelectorAll('.nav-item')) {
-    link.classList.toggle('active', link.getAttribute('href') === `#${active}`);
+    link.classList.toggle('active', link.getAttribute('href') === `#${isProfileShortcut ? PROFILE_HASH : active}`);
   }
 
-  const [title, sub] = VIEWS[active];
+  const [title, sub] = isProfileShortcut
+    ? ['Profile', 'What testers and builders see before they message you']
+    : VIEWS[active];
   document.getElementById('viewTitle').textContent = title;
   document.getElementById('viewSub').textContent = sub;
   document.title = `AppMates — ${title}`;
   window.scrollTo({ top: 0 });
+
+  if (isProfileShortcut) showProfileTab();
 }
 
 /** Populate every storefront picker from the generated spec. */

@@ -26,6 +26,7 @@ import { checkAppHealth, profileFromEntry } from '../lib/app-profile.js';
 const MAX_BIO_LENGTH = 180;
 
 const TABS = {
+  how: 'How it works',
   mine: 'My dashboard',
   profile: 'My profile',
 };
@@ -148,7 +149,75 @@ function renderShell() {
 
 function renderActiveTab() {
   if (activeTab === 'profile') renderProfileTab();
+  else if (activeTab === 'how') renderHowItWorksTab();
   else renderMyDashboardTab();
+}
+
+/** Switches straight to the profile tab and re-renders — the "Profile"
+ * sidebar shortcut (app.js's `#profile` route) calls this rather than
+ * duplicating this view's markup under a second id. A no-op before
+ * `initCommunity` has run or on a deployment with no community backend
+ * (`renderShell` was never called, so there's no `#commTabPanel` to fill
+ * in) — the shell that's actually on screen in that case already says so. */
+export function showProfileTab() {
+  activeTab = 'profile';
+  if (client?.configured) renderShell();
+}
+
+/* ============================ how it works tab ============================ */
+
+function renderHowItWorksTab() {
+  el('commTabPanel').innerHTML = `
+    <div class="lead" style="margin-bottom:1.2rem">
+      One reciprocal exchange, token-metered so it can't be gamed: you only
+      ever earn a token when someone else's developer confirms your testing
+      actually helped, and you only ever spend one on getting your own app
+      tested — never on anything else.
+    </div>
+
+    <h3 style="margin-top:0">Getting your own app tested</h3>
+    <ol style="margin:0 0 1.2rem;padding-left:1.3rem;line-height:1.85">
+      <li><strong>Post a listing</strong> on My dashboard — testing (not out yet) or a
+        launch/update (already out). It reuses the app you loaded on Overview: name,
+        icon and store link, not retyped.</li>
+      <li><strong>Testers request to join</strong> from Be a tester's marketplace — no
+        account needed to browse, one is needed to request. You review each request and
+        accept or decline.</li>
+      <li><strong>Accepted testers check in daily</strong> with a screenshot of the app
+        open while they test — a real streak you can see building, not a checkbox that
+        could mean "tested once and forgot."</li>
+      <li><strong>They submit written feedback</strong>, then <strong>you mark the
+        session completed</strong>. That confirmation is what mints their token — never
+        automatic, never self-awarded by the tester.</li>
+    </ol>
+
+    <h3>Testing someone else's app</h3>
+    <ol style="margin:0 0 1.2rem;padding-left:1.3rem;line-height:1.85">
+      <li>Browse listings on <a href="#be-tester">Be a tester</a> and request to join
+        one — a short message on why you're a good fit, same as above.</li>
+      <li>Once accepted, test the build and check in daily until you submit feedback.</li>
+      <li>When the owner marks it completed, <strong>you earn 1 token</strong> — spend it
+        getting your own app tested in return, or toward featuring your listing (below).</li>
+    </ol>
+
+    <h3>Spending tokens</h3>
+    <p class="lead" style="margin-bottom:.5rem">
+      A token is worth exactly one of these, nothing else:
+    </p>
+    <ul style="margin:0 0 1.2rem;padding-left:1.3rem;line-height:1.85">
+      <li>Requesting to join someone's listing as a tester.</li>
+      <li><strong>Featuring your listing</strong> on the promoted rail — 3 tokens per
+        day it stays featured (My dashboard → a listing's "Feature" button).</li>
+    </ul>
+
+    <h3>What this deliberately isn't</h3>
+    <p class="lead">
+      Nobody here trades App Store or Play reviews, and nothing on this page ever asks a
+      tester to leave one. Feedback stays private, between the two of you — if a launch
+      listing earns you real users afterward, whether they review is entirely between them
+      and the store, same as any other user.
+    </p>
+  `;
 }
 
 /* ============================ my dashboard tab ============================ */

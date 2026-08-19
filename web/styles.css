@@ -234,7 +234,7 @@ code, .mono, .num {
 .tape { display: none; height: 42px; overflow: hidden; background: var(--surface); }
 .tape:hover .tape-track, .tape:focus-within .tape-track { animation-play-state: paused; }
 
-.tape-track { display: flex; width: max-content; animation: tape-slide 32s linear infinite; }
+.tape-track { display: flex; width: max-content; animation: tape-slide 27s linear infinite; }
 .tape-track--static { animation: none; }
 .tape-half { display: flex; }
 
