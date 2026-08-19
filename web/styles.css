@@ -203,7 +203,20 @@ code, .mono, .num {
 
 /* ============================ main ============================ */
 
-.main { min-width: 0; display: flex; flex-direction: column; }
+/* `padding-top` here, not just `.topbar`'s own `position:sticky; top:
+   var(--tape-h)` — sticky reserves flow space at its element's *static*
+   position (as if it were `position:static`), then only visually shifts it
+   at paint time; later siblings lay out from that unshifted static spot,
+   not from where sticky actually paints it. With the fixed tape occupying
+   no flow space of its own, that static position was y:0, so `.content`
+   started 42px too high and rendered underneath the topbar's own painted
+   (shifted) box — exactly `var(--tape-h)` of every view's first line lost
+   under it. Padding `.main` by that same amount makes the topbar's static
+   position already equal to its stuck one, so sticky has nothing left to
+   shift — the two positions agree and every later sibling lines up
+   correctly. Zeroed back out on the mobile stack below, where `.app`'s own
+   padding-top already clears the tape once for the whole column. */
+.main { min-width: 0; display: flex; flex-direction: column; padding-top: var(--tape-h); }
 
 .topbar {
   display: flex;
@@ -884,6 +897,11 @@ input[type=file] { display: none; }
 
 @media (max-width: 860px) {
   .app { grid-template-columns: 1fr; padding-top: var(--tape-h); }
+  /* Already cleared once by `.app`'s own padding-top above — the stacked
+     mobile layout has no separate sidebar column needing its own
+     clearance, so a second `padding-top` here would just add a blank
+     42px gap between the sidebar row and the topbar. */
+  .main { padding-top: 0; }
   .sidebar {
     position: static; height: auto;
     flex-direction: row; align-items: center;

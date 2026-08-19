@@ -319,7 +319,7 @@ export async function feature(request, env, id) {
     ]);
   } catch (err) {
     if (err instanceof InsufficientTokensError) {
-      return error(env, request, 402, `not enough tokens — this costs ${cost}`);
+      return error(env, request, 402, `not enough High Fives — this costs ${cost}`);
     }
     throw err;
   }

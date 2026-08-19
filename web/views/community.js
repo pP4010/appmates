@@ -86,7 +86,7 @@ function renderAuthBar() {
     authBar.innerHTML = `
       <div class="summary pass" style="margin-bottom:1.2rem">
         <span class="verdict">Signed in as ${escapeHtml(user.email)}</span>
-        <span class="muted">${user.tokenBalance} token${user.tokenBalance === 1 ? '' : 's'}</span>
+        <span class="muted">${user.tokenBalance} High Five${user.tokenBalance === 1 ? '' : 's'}</span>
         <button id="commLogout" class="ghost" style="margin-left:auto">Sign out</button>
       </div>`;
     el('commLogout').addEventListener('click', async () => {
@@ -168,6 +168,18 @@ function renderActiveTab() {
   else renderMyDashboardTab();
 }
 
+/** The Get-testers-only framing above `commBody` (`#commIntro`,
+ * `#commGuardrail` in app.html) — static markup, not part of `renderShell`,
+ * so it needs its own toggle rather than being naturally skipped when
+ * `renderShell` renders the profile panel instead. Runs unconditionally
+ * (unlike the tab content below, which needs a configured backend) since
+ * hiding two static paragraphs never depended on the community API. */
+function applyViewModeIntro() {
+  const isProfile = viewMode === 'profile';
+  el('commIntro')?.classList.toggle('hidden', isProfile);
+  el('commGuardrail')?.classList.toggle('hidden', isProfile);
+}
+
 /** Switches to the standalone profile panel and re-renders — the "Profile"
  * sidebar shortcut (app.js's `#profile` route) calls this rather than
  * duplicating this view's markup under a second id. A no-op before
@@ -177,6 +189,7 @@ function renderActiveTab() {
  * says so already. */
 export function showProfileTab() {
   viewMode = 'profile';
+  applyViewModeIntro();
   if (client?.configured) renderShell();
 }
 
@@ -193,6 +206,7 @@ export function showCommunityTabs() {
   if (viewMode === 'community') return;
   viewMode = 'community';
   activeTab = 'mine';
+  applyViewModeIntro();
   if (client?.configured) renderShell();
 }
 
@@ -201,10 +215,10 @@ export function showCommunityTabs() {
 function renderHowItWorksTab() {
   el('commTabPanel').innerHTML = `
     <div class="lead" style="margin-bottom:1.2rem">
-      One reciprocal exchange, token-metered so it can't be gamed: posting a
-      listing and requesting to test one are both free — the only thing a
-      token ever buys is prominence, and the only way to earn one is for
-      another developer to confirm your testing actually helped.
+      One reciprocal exchange, metered in High Fives so it can't be gamed: posting a
+      listing and requesting to test one are both free — the only thing a High Five
+      ever buys is prominence, and the only way to earn one is for another developer
+      to confirm your testing actually helped.
     </div>
 
     <h3 style="margin-top:0">Getting your own app tested</h3>
@@ -219,8 +233,8 @@ function renderHowItWorksTab() {
         open while they test — a real streak you can see building, not a checkbox that
         could mean "tested once and forgot."</li>
       <li><strong>They submit written feedback</strong>, then <strong>you mark the
-        session completed</strong>. That confirmation is what mints their token — never
-        automatic, never self-awarded by the tester.</li>
+        session completed</strong>. That confirmation is what mints their High Five —
+        never automatic, never self-awarded by the tester.</li>
     </ol>
 
     <h3>Testing someone else's app</h3>
@@ -228,29 +242,29 @@ function renderHowItWorksTab() {
       <li>Browse listings on <a href="#be-tester">Be a tester</a> and request to join
         one — a short message on why you're a good fit, same as above.</li>
       <li>Once accepted, test the build and check in daily until you submit feedback.</li>
-      <li>When the owner marks it completed, <strong>you earn 1 token</strong>.</li>
+      <li>When the owner marks it completed, <strong>you earn 1 High Five</strong>.</li>
     </ol>
 
-    <h3>What a token actually buys</h3>
+    <h3>What a High Five actually buys</h3>
     <p class="lead" style="margin-bottom:.5rem">
       Never a review, never a spot you couldn't get for free — only visibility, two ways:
     </p>
     <ul style="margin:0 0 1.2rem;padding-left:1.3rem;line-height:1.85">
-      <li><strong>Spend</strong> 3 tokens/day to feature a listing at the top of the
+      <li><strong>Spend</strong> 3 High Fives/day to feature a listing at the top of the
         marketplace (My dashboard → a listing's "Feature" button) — a highlight sweep
         for as many days as you pay for.</li>
       <li><strong>Hold</strong> a growing balance and every listing you post picks up a
         warmer border on its own — bronze, then silver, then gold — on Be a tester's
         marketplace and the landing page's "Needs testers now". Nothing to spend or
         click: it just reflects what's in your account. <strong>Your very first-ever
-        listing gets the bronze tint for free</strong>, at 0 tokens, so a brand-new
+        listing gets the bronze tint for free</strong>, at 0 High Fives, so a brand-new
         account isn't the one flat card on the page while it's also the one most in
         need of eyes.</li>
     </ul>
     <p class="note">
-      Neither of these ever changes sort order — a 0-token listing still ranks first
-      under "Newest" if it was posted most recently. Tokens buy how a card looks, never
-      where it lands.
+      Neither of these ever changes sort order — a 0-High-Five listing still ranks first
+      under "Newest" if it was posted most recently. High Fives buy how a card looks,
+      never where it lands.
     </p>
 
     <h3>What this deliberately isn't</h3>
@@ -307,7 +321,7 @@ async function renderDashboardStats() {
     host.innerHTML = `
       <div class="dashboard-stats">
         <div class="dashboard-stat">
-          <span class="metric-label">Tokens</span>
+          <span class="metric-label">High Fives</span>
           <span class="dashboard-stat-value">${user.tokenBalance}</span>
         </div>
         <div class="dashboard-stat">
@@ -492,7 +506,7 @@ async function myListingCard(l) {
             ? `<span style="display:flex;gap:.3rem;align-items:center">
                  <input type="number" class="comm-feature-days" data-listing="${l.id}"
                    value="3" min="1" max="14" style="width:4rem">
-                 <button class="comm-feature" data-listing="${l.id}">Feature (3 tokens/day)</button>
+                 <button class="comm-feature" data-listing="${l.id}">Feature (3 High Fives/day)</button>
                </span>
                <button class="ghost comm-close" data-listing="${l.id}">Close listing</button>`
             : '<span class="pill neutral">Closed</span>'
