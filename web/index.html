@@ -18,6 +18,12 @@
 <aside class="rail rail-left" id="railLeft" aria-hidden="true"></aside>
 <aside class="rail rail-right" id="railRight" aria-hidden="true"></aside>
 
+<!-- Same slots, compact and horizontal — shown instead of the rails once
+     the viewport is too narrow for two 190px columns either side of the
+     content. See landing.css's `.landing-tape` rules for the breakpoint. -->
+<div class="tape landing-tape tape-top" id="landingTapeTop" aria-hidden="true"></div>
+<div class="tape landing-tape tape-bottom" id="landingTapeBottom" aria-hidden="true"></div>
+
 <main class="landing">
 
   <!-- ============================ hero ============================ -->

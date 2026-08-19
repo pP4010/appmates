@@ -121,8 +121,8 @@ code, .mono, .num {
   padding: .85rem;
   gap: .3rem;
   position: sticky;
-  top: 0;
-  height: 100vh;
+  top: var(--tape-h);
+  height: calc(100vh - (var(--tape-h) * 2));
   overflow-y: auto;
 }
 
@@ -213,12 +213,68 @@ code, .mono, .num {
   border-bottom: 1px solid var(--border);
   background: color-mix(in srgb, var(--bg) 85%, transparent);
   backdrop-filter: saturate(180%) blur(12px);
-  position: sticky; top: 0; z-index: 20;
+  position: sticky; top: var(--tape-h); z-index: 20;
   min-height: 60px;
 }
 .topbar h1 { font-size: 1.02rem; font-weight: 650; margin: 0; letter-spacing: -0.015em; }
 .topbar .sub { color: var(--muted); font-size: .8rem; }
 .topbar-actions { margin-left: auto; display: flex; gap: .5rem; align-items: center; }
+
+/* ============================ sponsor tape ============================
+   Compact horizontal sponsor strip — shared look between the dashboard's
+   `.dash-tape` (styles.css, this file) and the landing page's
+   `.landing-tape` (landing.css); each page decides its own breakpoint and
+   position since one is a fixed-height app shell and the other a normal
+   scrolling page.
+
+   Two identical `.tape-half`s scrolled by `translate(-50%)` is the
+   standard seamless-marquee trick: because the halves are identical, the
+   instant the first has scrolled fully out of view the second sits
+   exactly where the first started, so the loop point is invisible. */
+.tape { display: none; height: 42px; overflow: hidden; background: var(--surface); }
+.tape:hover .tape-track, .tape:focus-within .tape-track { animation-play-state: paused; }
+
+.tape-track { display: flex; width: max-content; animation: tape-slide 32s linear infinite; }
+.tape-track--static { animation: none; }
+.tape-half { display: flex; }
+
+.tape-item {
+  display: flex; align-items: center; gap: .5rem;
+  height: 42px; padding: 0 1.1rem;
+  font-size: .8rem; font-weight: 600; color: var(--text-2);
+  white-space: nowrap;
+}
+.tape-item:hover { color: var(--text); text-decoration: none; background: var(--surface-2); }
+.tape-item--open { color: var(--accent); font-weight: 500; font-style: italic; }
+
+.tape-icon { width: 18px; height: 18px; border-radius: 5px; display: block; flex: 0 0 auto; object-fit: cover; }
+.tape-icon--blank { background: var(--border); }
+
+@keyframes tape-slide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .tape-track { animation: none; }
+  .tape { overflow-x: auto; }
+}
+
+/* Dashboard tape: always on, full viewport width, independent of the
+   sidebar and of viewport size — `position: fixed` with `left: 0` rather
+   than `left: var(--sidebar-w)`, so it runs edge to edge over the sidebar
+   too instead of stopping at the content column. `--tape-h` is the single
+   source every other rule that has to make room for it reads from: the
+   sidebar's own top offset and height, the topbar's sticky offset, the
+   content's bottom padding, and the inbox view's fixed-height calc further
+   down. Changing the tape's height only ever means changing this one
+   value. */
+:root { --tape-h: 42px; }
+
+.dash-tape {
+  display: block;
+  position: fixed; left: 0; right: 0; z-index: 25;
+}
+.dash-tape.tape-top { top: 0; border-bottom: 1px solid var(--border); }
+.dash-tape.tape-bottom { bottom: 0; border-top: 1px solid var(--border); }
+
 
 /* ============================ favorites tray ============================ */
 
@@ -278,7 +334,29 @@ code, .mono, .num {
 .fav-pick.active:hover { border-color: var(--accent); }
 .fav-pick .app-icon { border: none; display: block; }
 
-.content { padding: 1.5rem; max-width: 1400px; width: 100%; }
+/* Dev-only control that fills the tape with 10 apps (the 2 real ones plus
+   8 generated examples) so the marquee's density can be checked visually
+   without waiting on real sponsors — see `renderDashTape` in app.js. */
+.tape-test-toggle {
+  display: flex; align-items: center; gap: .4rem;
+  font-size: .76rem; color: var(--muted); cursor: pointer; user-select: none;
+}
+.tape-test-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+.tape-test-toggle .switch {
+  width: 32px; height: 18px; border-radius: 999px; flex: 0 0 auto;
+  background: var(--surface-2); border: 1px solid var(--border);
+  position: relative; transition: background .15s, border-color .15s;
+}
+.tape-test-toggle .switch::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--muted); transition: transform .15s, background .15s;
+}
+.tape-test-toggle input:checked + .switch { background: var(--accent-soft); border-color: var(--accent); }
+.tape-test-toggle input:checked + .switch::after { transform: translateX(14px); background: var(--accent); }
+.tape-test-toggle input:focus-visible + .switch { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.content { padding: 1.5rem; padding-bottom: calc(1.5rem + var(--tape-h)); max-width: 1400px; width: 100%; }
 .view { display: none; }
 .view.active { display: block; animation: fade .18s ease-out; }
 @keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
@@ -805,7 +883,7 @@ input[type=file] { display: none; }
 /* ============================ responsive ============================ */
 
 @media (max-width: 860px) {
-  .app { grid-template-columns: 1fr; }
+  .app { grid-template-columns: 1fr; padding-top: var(--tape-h); }
   .sidebar {
     position: static; height: auto;
     flex-direction: row; align-items: center;
@@ -814,7 +892,7 @@ input[type=file] { display: none; }
   .brand { margin-bottom: 0; flex: 0 0 auto; }
   .nav-section, .sidebar-foot { display: none; }
   .nav-item { flex: 0 0 auto; }
-  .content { padding: 1rem; }
+  .content { padding: 1rem; padding-bottom: calc(1rem + var(--tape-h)); }
   .topbar { padding: .7rem 1rem; }
 }
 
@@ -1000,7 +1078,10 @@ body:has(#view-inbox.active) {
 body:has(#view-inbox.active) .app { height: 100vh; min-height: 0; }
 body:has(#view-inbox.active) .main { height: 100vh; min-height: 0; }
 body:has(#view-inbox.active) .content {
-  height: calc(100vh - 61px); /* topbar's own height */
+  /* topbar's own height, minus the top tape's flow space when the
+     900–1300px band has it showing, minus the bottom tape's fixed
+     overlay over the same span — see `--tape-h` above. */
+  height: calc(100vh - 61px - (var(--tape-h) * 2));
   min-height: 0;
   padding: 0;
   overflow: hidden;
