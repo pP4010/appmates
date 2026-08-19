@@ -44,7 +44,7 @@ function render(report) {
       return [
         { html: `<span class="muted">${flagEmoji(result.country)} ${escapeHtml(result.countryName)}</span>` },
         { html: `<span class="muted">${result.country.toUpperCase()}</span>` },
-        { html: '<span class="muted">—</span>', num: true },
+        { html: '<span class="muted">—</span>', center: true },
         { html: pill('no data', 'neutral') },
         { html: '', num: true },
       ];
@@ -53,7 +53,7 @@ function render(report) {
     return [
       { html: `<strong>${flagEmoji(result.country)} ${escapeHtml(result.countryName)}</strong>` },
       { html: `<span class="muted mono">${result.country.toUpperCase()}</span>` },
-      { html: ring(result.report.winnability, { size: 34, stroke: 3.5, thresholds: [60, 35] }), tight: true },
+      { html: ring(result.report.winnability, { size: 34, stroke: 3.5, thresholds: [60, 35] }), tight: true, center: true },
       { html: pill(result.report.verdict, TONE[result.report.verdict]) },
       { html: String(Math.round(depth)), num: true },
     ];
@@ -93,7 +93,7 @@ function render(report) {
     tablePanel({
       title: report.keyword,
       sub: `${report.results.length} storefronts`,
-      head: ['Storefront', '', { label: 'Winnability', num: true }, 'Verdict', { label: 'Credible rivals', num: true }],
+      head: ['Storefront', '', { label: 'Winnability', center: true }, 'Verdict', { label: 'Credible rivals', num: true }],
       rows,
     }) +
     reduced +

@@ -205,7 +205,7 @@ export function tablePanel({ title, sub, head, rows, empty: emptyState }) {
   if (!rows.length && emptyState) return emptyState;
 
   const headHtml = head
-    .map((h) => `<th class="${h.num ? 'num' : ''}">${escapeHtml(h.label ?? h)}</th>`)
+    .map((h) => `<th class="${h.num ? 'num' : ''} ${h.center ? 'center' : ''}">${escapeHtml(h.label ?? h)}</th>`)
     .join('');
   const bodyHtml = rows
     .map(
@@ -213,7 +213,7 @@ export function tablePanel({ title, sub, head, rows, empty: emptyState }) {
         `<tr>${row
           .map(
             (cell) =>
-              `<td class="${cell?.num ? 'num' : ''} ${cell?.tight ? 'tight' : ''}">${
+              `<td class="${cell?.num ? 'num' : ''} ${cell?.center ? 'center' : ''} ${cell?.tight ? 'tight' : ''}">${
                 cell?.html ?? escapeHtml(cell)
               }</td>`,
           )
