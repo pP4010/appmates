@@ -47,7 +47,7 @@ const VIEWS = {
   track: ['Track', 'Your rank over time, and every test you have running'],
   inbox: ['Inbox', 'Every conversation, in one place'],
   community: ['Get testers', 'Real closed testers, and real users at launch'],
-  'be-tester': ['Be a tester', 'Apps you are testing for other developers'],
+  'be-tester': ['Be a tester', 'Browse listings, the leaderboard, and what you are testing'],
   specs: ['Specs', 'The bundled catalogue and its provenance'],
   admin: ['Admin', 'Review "Feature your app here" requests'],
 };
@@ -169,7 +169,7 @@ async function boot() {
   // the person who posted the listing typed in.
   const communityClient = new CommunityClient();
   initCommunity(communityClient, { getCurrentApp: selectedApp, itunes: client });
-  initBeTester(communityClient);
+  initBeTester(communityClient, { getCurrentApp: selectedApp, itunes: client });
   initInbox(communityClient);
   initAdmin(communityClient);
 
