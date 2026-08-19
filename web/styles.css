@@ -263,6 +263,21 @@ code, .mono, .num {
 }
 .fav-remove:hover { color: var(--bad); background: var(--bad-soft); }
 
+/* Favorite-app shortcuts on Rank: one click fills the id field instead of
+   typing it. Grey outline at rest, same as any hoverable control; only the
+   currently-selected one turns purple, matching the primary "Check" button. */
+.fav-pick-row { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+.fav-pick {
+  padding: 2px; border-radius: 9px;
+  border: 1.5px solid var(--border-strong);
+  background: none; cursor: pointer; line-height: 0;
+  transition: border-color .12s, background .12s;
+}
+.fav-pick:hover { border-color: var(--muted); background: var(--surface-2); }
+.fav-pick.active { border-color: var(--accent); background: var(--accent-soft); }
+.fav-pick.active:hover { border-color: var(--accent); }
+.fav-pick .app-icon { border: none; display: block; }
+
 .content { padding: 1.5rem; max-width: 1400px; width: 100%; }
 .view { display: none; }
 .view.active { display: block; animation: fade .18s ease-out; }
