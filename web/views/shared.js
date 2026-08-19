@@ -76,6 +76,33 @@ export function pill(text, tone = 'neutral') {
   return `<span class="pill ${tone}">${escapeHtml(text)}</span>`;
 }
 
+/** A builder's completion rate as a pill — `rep` is `ownerReliability` from
+ * a listing (be-tester.js's cards) or `reliability` from `client.profileStats()`
+ * (community.js's own Profile panel), same shape either way. Shared here,
+ * not defined once and reused by import, because it used to live only in
+ * be-tester.js while community.js called it anyway without importing it —
+ * a `ReferenceError` on every visit to Profile. */
+export function reliabilityBadge(rep) {
+  if (!rep || rep.isNew) return '<span class="pill neutral">New builder</span>';
+  const tone = rep.completionRate >= 70 ? 'ok' : rep.completionRate >= 40 ? 'warn' : 'bad';
+  const resp =
+    rep.avgResponseHours == null
+      ? ''
+      : rep.avgResponseHours < 24
+        ? ` · replies in ~${Math.max(1, Math.round(rep.avgResponseHours))}h`
+        : ` · replies in ~${Math.round(rep.avgResponseHours / 24)}d`;
+  return `<span class="pill ${tone}">${rep.completionRate}% completion${resp}</span>`;
+}
+
+/** How many *other* people's apps this person has tested — `ownerContribution`
+ * on a listing, or `contribution` from `client.profileStats()`. Same
+ * sharing reason as `reliabilityBadge` above. */
+export function contributionBadge(count) {
+  if (!count) return '';
+  return `<span class="pill info" title="Tests this developer completed for other people's apps">
+    ${count} test${count === 1 ? '' : 's'} given back</span>`;
+}
+
 /**
  * A two-letter storefront code as its flag emoji — the well-known trick of
  * mapping each ASCII letter to its Unicode regional-indicator symbol, so

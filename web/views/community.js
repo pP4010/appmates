@@ -18,7 +18,10 @@
  * none of this ever touches App Store/Play reviews or ratings.
  */
 
-import { el, escapeHtml, empty, withStatus, appIcon, iconOrInitial, ring, MESSAGEABLE_STATUSES } from './shared.js';
+import {
+  el, escapeHtml, empty, withStatus, appIcon, iconOrInitial, ring, MESSAGEABLE_STATUSES,
+  reliabilityBadge, contributionBadge,
+} from './shared.js';
 import { checkAppHealth, profileFromEntry } from '../lib/app-profile.js';
 
 // Mirrors MAX_BIO_LENGTH in community/src/lib/config.js — the server is the
@@ -876,8 +879,9 @@ async function saveProfile() {
 }
 
 /** The same badges a listing card shows for its owner (`reliabilityBadge`,
- * `contributionBadge` above) — read-only here, since these numbers only
- * ever move by completing or being completed for, never by editing a form. */
+ * `contributionBadge`, both from shared.js) — read-only here, since these
+ * numbers only ever move by completing or being completed for, never by
+ * editing a form. */
 async function renderProfileStats() {
   const host = el('commProfileStats');
   if (!host) return;
