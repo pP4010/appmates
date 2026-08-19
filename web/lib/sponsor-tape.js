@@ -209,7 +209,7 @@ export function mockSponsorApps(count = 8) {
  * computed from this constant instead, so speed stays constant no matter
  * how wide a half ends up — see the comment below on why that distinction
  * matters. */
-const TAPE_PX_PER_SECOND = 80;
+const TAPE_PX_PER_SECOND = 66;
 const TAPE_MIN_DURATION_S = 15;
 
 /**
