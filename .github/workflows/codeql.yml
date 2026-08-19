@@ -38,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
 
@@ -51,14 +51,14 @@ jobs:
       # starts succeeding on its own the moment this repo goes public (code
       # scanning is free for public repos) or GHAS gets turned on, with no
       # flag to remember to flip back.
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.language }}"
           upload: false
           output: sarif-results
 
       - name: Upload SARIF (works once the repo is public, or with GitHub Advanced Security)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         continue-on-error: true
         with:
