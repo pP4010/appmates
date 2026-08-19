@@ -168,6 +168,19 @@ export function flatHistory(daysPassed, activeTesters, today = new Date()) {
   return history;
 }
 
+/**
+ * TestFlight has no numeric gate like Play's — a build is simply testable by
+ * anyone added (individual) or anyone with the link (public group) once it
+ * clears Beta App Review, and stops being testable 90 days after upload
+ * regardless of tester count. That expiry is the one thing worth computing.
+ */
+export function testFlightExpiry(uploadedAt, today = new Date()) {
+  const uploaded = toDate(uploadedAt);
+  const expires = new Date(uploaded.getTime() + 90 * DAY_MS);
+  const daysLeft = Math.ceil((expires.getTime() - today.getTime()) / DAY_MS);
+  return { expiresOn: isoDate(expires), daysLeft, expired: daysLeft <= 0 };
+}
+
 /** Parse a pasted JSON timeline, tolerating both key spellings. */
 export function parseHistory(text) {
   const parsed = JSON.parse(text);

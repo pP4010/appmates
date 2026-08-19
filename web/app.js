@@ -43,7 +43,7 @@ const VIEWS = {
   overview: ['Overview', 'Your app, and what is left to fix'],
   prepare: ['Prepare', 'Fix what a store would reject — with real App Store Connect data'],
   research: ['Research', 'Is this market worth entering, and where'],
-  track: ['Track', 'Your rank over time, and the Play testers gate'],
+  track: ['Track', 'Your rank over time, and every test you have running'],
   inbox: ['Inbox', 'Every conversation, in one place'],
   community: ['Get testers', 'Real closed testers, and real users at launch'],
   specs: ['Specs', 'The bundled catalogue and its provenance'],
