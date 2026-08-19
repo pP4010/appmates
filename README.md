@@ -1,7 +1,7 @@
 # AppMates 🚀
 
-[![CI](https://github.com/pP4010/launchpilot/actions/workflows/ci.yml/badge.svg)](https://github.com/pP4010/launchpilot/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/pP4010/launchpilot/branch/main/graph/badge.svg)](https://codecov.io/gh/pP4010/launchpilot)
+[![CI](https://github.com/pP4010/appmates/actions/workflows/ci.yml/badge.svg)](https://github.com/pP4010/appmates/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/pP4010/appmates/branch/main/graph/badge.svg)](https://codecov.io/gh/pP4010/appmates)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Checked with mypy](https://img.shields.io/badge/mypy-strict-2a6db2.svg)](https://mypy-lang.org/)

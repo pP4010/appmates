@@ -18,6 +18,15 @@ jobs:
     permissions:
       security-events: write
       contents: read
+      # codeql-action/analyze calls the Actions API for its own run
+      # metadata (unrelated to the SARIF upload below) — without this, that
+      # call comes back "Resource not accessible by integration" and the
+      # step gets marked failed on the error annotation alone, even though
+      # the process catches it, logs a warning, and exits 0. Found by
+      # reading the actual failure log rather than guessing: `upload:
+      # false` on its own did not fix this, because it was never the
+      # upload that was failing.
+      actions: read
 
     strategy:
       fail-fast: false
@@ -35,14 +44,12 @@ jobs:
 
       # `upload: false` here, not the action's own default upload: on a
       # *private* repo, pushing results to the code-scanning API needs
-      # GitHub Advanced Security, which this repo doesn't have — that push
-      # was failing with "Resource not accessible by integration" even
-      # though the analysis itself ran clean, turning every run red for a
-      # step that never actually found anything. The separate
-      # `continue-on-error` upload below still tries; it just doesn't take
-      # the whole job down when GHAS isn't there to accept it. The moment
-      # this repo goes public (code scanning is free for public repos) or
-      # GHAS gets turned on, that step starts succeeding on its own — no
+      # GitHub Advanced Security, which this repo doesn't have. That push
+      # would fail once the fix above (actions: read) is in place, so this
+      # keeps analyze itself green regardless — the separate
+      # `continue-on-error` upload below is what actually tries it, and it
+      # starts succeeding on its own the moment this repo goes public (code
+      # scanning is free for public repos) or GHAS gets turned on, with no
       # flag to remember to flip back.
       - uses: github/codeql-action/analyze@v3
         with:
@@ -52,6 +59,7 @@ jobs:
 
       - name: Upload SARIF (works once the repo is public, or with GitHub Advanced Security)
         uses: github/codeql-action/upload-sarif@v3
+        if: always()
         continue-on-error: true
         with:
           sarif_file: sarif-results

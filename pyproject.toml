@@ -29,8 +29,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/pP4010/launchpilot"
-Issues = "https://github.com/pP4010/launchpilot/issues"
+Homepage = "https://github.com/pP4010/appmates"
+Issues = "https://github.com/pP4010/appmates/issues"
 
 [project.scripts]
 appmates = "appmates.cli.main:app"
