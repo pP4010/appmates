@@ -48,12 +48,18 @@ Last updated: 2026-08-20.
 - [x] `.github/dependabot.yml` — weekly, covers pip (root), npm
   (`community/`, `worker/`), github-actions.
 - [x] `.github/workflows/codeql.yml` — JS/TS + Python, push/PR/weekly.
-  **Known limitation**: `upload: false` on the analyze step, with a
-  best-effort `continue-on-error` upload after it — pushing results to
-  GitHub's code-scanning API needs GitHub Advanced Security, which a
-  *private* repo doesn't have without paying for it, and every run was
-  failing red on that upload alone (analysis itself was always clean). Once
-  this repo is public (free) or GHAS is purchased, the upload step starts
+  Both jobs verified green on a real push
+  (github.com/pP4010/appmates/actions/runs/32307500145). Took two fixes to
+  get there: the workflow needed `actions: read` (codeql-action's own
+  telemetry call was failing without it, and GitHub marks a step failed on
+  that error annotation alone even though the process catches it and
+  continues) — read the actual failure log rather than assumed. **Known,
+  accepted limitation**: the upload-sarif step (`continue-on-error: true`)
+  fails every run with "Code scanning is not enabled for this repository" —
+  confirmed exact cause: that needs GitHub Advanced Security, which a
+  *private* repo doesn't have without paying for it. Analysis itself always
+  runs and always succeeds; only the Security-tab upload is blocked. Once
+  this repo is public (free) or GHAS is purchased, that step starts
   succeeding on its own — nothing to flip back by hand.
 - [x] `SECURITY.md` — vulnerability disclosure policy, contact
   `appmates.contact@gmail.com`.
