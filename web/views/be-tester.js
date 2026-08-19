@@ -26,6 +26,7 @@
 
 import {
   el, escapeHtml, empty, withStatus, appIcon, bar, toneFor, MESSAGEABLE_STATUSES,
+  reliabilityBadge, contributionBadge,
 } from './shared.js';
 import { checkAppHealth, profileFromEntry } from '../lib/app-profile.js';
 import { messageThreadHtml, wireMessageThreads } from './community.js';
@@ -328,29 +329,11 @@ async function renderBrowse() {
   }
 }
 
-function reliabilityBadge(rep) {
-  if (!rep || rep.isNew) return '<span class="pill neutral">New builder</span>';
-  const tone = rep.completionRate >= 70 ? 'ok' : rep.completionRate >= 40 ? 'warn' : 'bad';
-  const resp =
-    rep.avgResponseHours == null
-      ? ''
-      : rep.avgResponseHours < 24
-        ? ` · replies in ~${Math.max(1, Math.round(rep.avgResponseHours))}h`
-        : ` · replies in ~${Math.round(rep.avgResponseHours / 24)}d`;
-  return `<span class="pill ${tone}">${rep.completionRate}% completion${resp}</span>`;
-}
-
 /** ` boost-1`/`boost-2`/`boost-3`, or empty — see the CSS comment on
  * `.listing-card.boost-1` in styles.css for what this does and, more
  * importantly, what it deliberately doesn't (change sort order). */
 function boostClass(tier) {
   return tier ? ` boost-${tier}` : '';
-}
-
-function contributionBadge(count) {
-  if (!count) return '';
-  return `<span class="pill info" title="Tests this developer completed for other people's apps">
-    ${count} test${count === 1 ? '' : 's'} given back</span>`;
 }
 
 /** Placeholder cells the enrichment pass fills in. Rendering them up front
