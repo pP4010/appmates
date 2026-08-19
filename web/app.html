@@ -495,13 +495,13 @@
       <!-- ==================== track ==================== -->
       <section class="view" id="view-track">
         <p class="lead">
-          Watches what happens after you ship: your position per keyword over time, and Google
-          Play's 12-testers-for-14-days production gate.
+          Watches what happens after you ship: your position per keyword over time, and every
+          closed test you have running — App Store or Play.
         </p>
 
         <div class="tabs" role="tablist">
           <button class="tab active" role="tab" aria-selected="true" data-tab="rank">Rank</button>
-          <button class="tab" role="tab" aria-selected="false" data-tab="testers">Play testers</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="testers">Testers</button>
         </div>
 
         <div class="view active" id="view-rank">
@@ -536,43 +536,20 @@
 
         <div class="view" id="view-testers">
           <p class="lead">
-            Personal Play developer accounts created after 13 November 2023 need 12 testers
-            opted in <strong>continuously</strong> for 14 days before applying for production
-            access. The word that costs people two weeks is <em>continuously</em>: if your
-            count drops to 11 on day nine, Google restarts the clock.
+            Every test you're running, App Store or Play, in one place — click one for its
+            invite link and progress. <strong>Both stores gate that link the same way:</strong>
+            a tester can't open it until you've added them by hand in that store's console
+            first — Play Console's tester list, or App Store Connect's TestFlight testers.
+            Nothing here can do that step for you; it only tracks where each test stands.
           </p>
 
           <div class="toolbar">
-            <div class="field">
-              <label for="testDays">Days passed</label>
-              <input id="testDays" type="number" min="0" max="120" value="9" style="width:6rem">
-            </div>
-            <div class="field">
-              <label for="testCount">Testers opted in</label>
-              <input id="testCount" type="number" min="0" max="500" value="12" style="width:7rem">
-            </div>
-            <div class="field">
-              <label for="testApproved">Release approved</label>
-              <select id="testApproved">
-                <option value="yes" selected>Yes</option>
-                <option value="no">Not yet</option>
-              </select>
-            </div>
+            <button type="button" id="testNewBtn">+ New test</button>
           </div>
 
-          <div id="testResults"></div>
+          <div id="testForm" class="callout hidden"></div>
 
-          <h3>Day-by-day timeline</h3>
-          <p class="note">
-            The flat form above cannot see a dip by construction. Paste a real timeline and
-            the reset is detected.
-          </p>
-          <textarea id="testHistory" rows="5" style="width:100%;max-width:40rem" placeholder='[
-  { "date": "2026-07-01", "opted_in": 12 },
-  { "date": "2026-07-02", "opted_in": 11 },
-  { "date": "2026-07-03", "opted_in": 13 }
-]'></textarea>
-          <div id="testHistoryStatus" class="status"></div>
+          <div id="testList"></div>
         </div>
       </section>
 
