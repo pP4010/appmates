@@ -33,9 +33,12 @@ pulled*.json
 # Local scratch for browser-driven checks
 web/.fixtures/
 
-# Cloudflare Pages deploy state (created by `wrangler pages deploy` from
-# the repo root, e.g. for web/)
+# Cloudflare Pages deploy state — `/.wrangler/` when deployed as
+# `wrangler pages deploy web` from the repo root, `web/.wrangler/` when run
+# as `wrangler pages deploy .` from inside web/ (both invocations have been
+# used; either leaves state in a different place).
 /.wrangler/
+web/.wrangler/
 
 # Worker: installed deps and local dev state, neither of which is source
 worker/node_modules/
