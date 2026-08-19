@@ -202,6 +202,46 @@ export function mockSponsorApps(count = 8) {
  * half instead would compound on every call, since after the first fill
  * it already holds several copies.
  */
+/** Pixels of `.tape-half` scrolled per second — the actual perceived speed,
+ * unlike a fixed animation-duration. styles.css's own `tape-slide` rule
+ * sets a plain `27s` as a static fallback (no-JS, or before this runs
+ * once); everything mounted through here overrides it with a duration
+ * computed from this constant instead, so speed stays constant no matter
+ * how wide a half ends up — see the comment below on why that distinction
+ * matters. */
+const TAPE_PX_PER_SECOND = 34;
+const TAPE_MIN_DURATION_S = 18;
+
+/**
+ * `translate(-50%)` slides a `.tape-half` across exactly its *own* width —
+ * that's what makes the loop seamless — but a half narrower than the tape
+ * container never reaches the container's far edge doing that: the whole
+ * animation plays out within the half's own short span (near the left
+ * third of the screen with, say, 2 real apps and one "More slots open"
+ * pill) and the rest of the bar just sits empty. A test-mode density of
+ * ~10 apps happens to already be wide enough to hide this, which is why it
+ * only ever showed up with a real, small sponsor count. Fixed by repeating
+ * the single-copy item list enough times that one half's width is at
+ * least the container's — the loop still repeats the same items, just
+ * enough copies of them to physically span (and keep moving all the way
+ * across) the full bar regardless of how few sponsors there are.
+ *
+ * A fixed animation-duration turns that repeating into a second bug: the
+ * same `27s` stretched over a half 4x wider than before (a real 2-sponsor
+ * page, repeated to fill a 1400px bar) plays 4x faster in pixels-per-second
+ * than the same duration did over a naturally-wide test-mode half — the
+ * exact "way too fast" jump a real, small sponsor count produced the
+ * moment the width fill above started working. `animationDuration` is set
+ * explicitly below from `TAPE_PX_PER_SECOND` instead, so however many
+ * copies it took to fill the bar, the scroll always reads at the same
+ * speed.
+ *
+ * Measured with a throwaway off-screen probe rather than the live
+ * `.tape-half` so repeated calls (a resize, see `wireTapeResize` below)
+ * always compute from the one true single-copy width — measuring the live
+ * half instead would compound on every call, since after the first fill
+ * it already holds several copies.
+ */
 function fillTapeWidth(container, singleHtml) {
   const track = container.querySelector('.tape-track');
   if (!track) return;
@@ -219,6 +259,8 @@ function fillTapeWidth(container, singleHtml) {
   const repeats = Math.max(1, Math.ceil(containerWidth / singleWidth) + 1);
   const half = singleHtml.repeat(repeats);
   track.innerHTML = `<div class="tape-half">${half}</div><div class="tape-half">${half}</div>`;
+  const halfWidth = singleWidth * repeats;
+  track.style.animationDuration = `${Math.max(TAPE_MIN_DURATION_S, halfWidth / TAPE_PX_PER_SECOND)}s`;
 }
 
 /** Container → its one-copy item HTML, so a resize can re-run
