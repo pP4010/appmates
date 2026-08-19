@@ -38,10 +38,14 @@
       "id": "c1c265a398fe4a6d99288c2fb6ef43ba",
     },
   ],
-  // Per-client-IP quotas on the two Apple catalogue relay routes
-  // (routes/itunes.js) — the only routes anyone can hit unauthenticated at
-  // volume. `period` is Cloudflare's own ceiling: only 10 or 60 (seconds)
-  // is valid, so 60 is the closest fit to a "per minute" budget.
+  // Per-client-IP quotas. The iTunes pair guards the two catalogue relay
+  // routes anyone can hit unauthenticated at volume; the listings pair
+  // guards the two `routes/listings.js` writes reachable without an
+  // existing session — `create` needs a session but nothing stops one
+  // account from posting listings in a loop, and `request` accepts a
+  // caller with no session at all (see its own doc comment). `period` is
+  // Cloudflare's own ceiling: only 10 or 60 (seconds) is valid, so 60 is
+  // the closest fit to a "per minute" budget.
   "ratelimits": [
     {
       "name": "ITUNES_LOOKUP_LIMITER",
@@ -52,6 +56,16 @@
       "name": "ITUNES_SEARCH_LIMITER",
       "namespace_id": "1002",
       "simple": { "limit": 20, "period": 60 },
+    },
+    {
+      "name": "LISTINGS_CREATE_LIMITER",
+      "namespace_id": "1003",
+      "simple": { "limit": 10, "period": 60 },
+    },
+    {
+      "name": "LISTINGS_REQUEST_LIMITER",
+      "namespace_id": "1004",
+      "simple": { "limit": 10, "period": 60 },
     },
   ],
   "vars": {

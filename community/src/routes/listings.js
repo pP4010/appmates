@@ -1,4 +1,4 @@
-import { json, error, newId } from '../lib/http.js';
+import { json, error, newId, withinLimit } from '../lib/http.js';
 import { currentUser, isValidEmail, issueMagicLink, sendMagicLinkEmail, getOrCreateUser } from '../lib/auth.js';
 import { spendTokens, InsufficientTokensError } from '../lib/tokens.js';
 import { isHttpUrl, isValidMessage } from '../lib/validate.js';
@@ -126,6 +126,9 @@ export function resolveSort(sort) {
 export async function create(request, env) {
   const user = await currentUser(env, request);
   if (!user) return error(env, request, 401, 'sign in required');
+  if (!(await withinLimit(env, 'LISTINGS_CREATE_LIMITER', request))) {
+    return error(env, request, 429, 'Too many listings posted from this connection. Wait a minute and try again.');
+  }
 
   let body;
   try {
@@ -345,6 +348,10 @@ export async function feature(request, env, id) {
  * a session.
  */
 export async function request(request, env, id) {
+  if (!(await withinLimit(env, 'LISTINGS_REQUEST_LIMITER', request))) {
+    return error(env, request, 429, 'Too many requests from this connection. Wait a minute and try again.');
+  }
+
   const listing = await env.DB.prepare('SELECT * FROM listings WHERE id = ?').bind(id).first();
   if (!listing || listing.status !== 'open') return error(env, request, 404, 'listing not found');
   if (listing.kind !== 'testing') {

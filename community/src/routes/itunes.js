@@ -1,4 +1,4 @@
-import { publicJson as json, publicError as error } from '../lib/http.js';
+import { publicJson as json, publicError as error, withinLimit } from '../lib/http.js';
 
 const LOOKUP_URL = 'https://itunes.apple.com/lookup';
 const SEARCH_URL = 'https://itunes.apple.com/search';
@@ -74,16 +74,6 @@ async function fetchApple(url, subject) {
   } catch {
     throw new UpstreamError(502, `The App Store catalogue returned an unreadable response for "${subject}"`);
   }
-}
-
-/** `key` is the client's IP — the only identity an unauthenticated route
- * has. Missing binding (e.g. a `wrangler dev` run without `--remote`) fails
- * open rather than breaking local development. */
-async function withinLimit(env, bindingName, request) {
-  const limiter = env[bindingName];
-  if (!limiter) return true;
-  const { success } = await limiter.limit({ key: request.headers.get('cf-connecting-ip') || 'unknown' });
-  return success;
 }
 
 function tooManyRequests(request) {

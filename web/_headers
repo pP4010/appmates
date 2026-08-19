@@ -1,0 +1,18 @@
+# Cloudflare Pages header rules — https://developers.cloudflare.com/pages/configuration/headers/
+# Applies to every static asset response (app.html, index.html, the JS/CSS
+# under it). Does NOT cover functions/_middleware.js's own gate page, which
+# Cloudflare builds as a Function response rather than serving this file.
+#
+# No 'unsafe-inline' on script-src: grep confirms nothing in web/ uses an
+# inline <script> or an inline event-handler attribute (onclick= etc.) —
+# every listener is addEventListener in an external, type="module" file.
+# style-src does need it: inline style="..." attributes are used throughout
+# the JS-generated markup (readable at the call site, no CSS build step to
+# hash them against), and that's a much smaller XSS surface than inline
+# script would be.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; font-src 'self'; connect-src 'self' https://launchpilot-community.kaizenapp-contact.workers.dev https://launchpilot-screenshot-relay.kaizenapp-contact.workers.dev https://itunes.apple.com; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()

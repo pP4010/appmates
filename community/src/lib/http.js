@@ -88,3 +88,18 @@ export function sessionCookieHeader(request, token, { maxAgeSeconds } = {}) {
 export function newId() {
   return crypto.randomUUID();
 }
+
+/** True if this request is still within its per-IP budget for `bindingName`
+ * (one of the `ratelimits` bindings in wrangler.jsonc) — `false` once it's
+ * spent. Missing binding (e.g. a `wrangler dev` run without `--remote`)
+ * fails open rather than breaking local development. Originally local to
+ * routes/itunes.js (the only unauthenticated route when it was written);
+ * shared here once `listings.create`/`listings.request` needed the same
+ * per-IP cap — a session gates *who* can call those, not *how often*, and
+ * `request` in particular accepts a caller with no session at all. */
+export async function withinLimit(env, bindingName, request) {
+  const limiter = env[bindingName];
+  if (!limiter) return true;
+  const { success } = await limiter.limit({ key: request.headers.get('cf-connecting-ip') || 'unknown' });
+  return success;
+}
