@@ -210,6 +210,19 @@ export class CommunityClient {
     );
   }
 
+  /** Every proof-of-testing check-in on one session, oldest first. */
+  sessionCheckins(id) {
+    return this._request(`/test-sessions/${id}/checkins`).then((d) => d.checkins);
+  }
+
+  /** `date` is YYYY-MM-DD, `photo` a compressed JPEG/PNG/WebP data URL —
+   * see `compressPhoto` in views/be-tester.js for how it gets that small. */
+  submitCheckin(id, { date, photo }) {
+    return this._request(`/test-sessions/${id}/checkins`, { method: 'POST', body: { date, photo } }).then(
+      (d) => d.checkin,
+    );
+  }
+
   subscribePush({ endpoint, keys }) {
     return this._request('/push/subscribe', { method: 'POST', body: { endpoint, keys } });
   }
