@@ -65,6 +65,20 @@
   }
 }
 
+/* Below the rails' own width, the same slots run as the compact tape
+   instead — full-bleed top and bottom of the page rather than flanking
+   columns, since there's no width to flank with here. `position: fixed`
+   for the same reason the rails use it above: the strip must stay put
+   regardless of scroll, not disengage once a shorter page catches up with
+   it. Body padding reserves the space so the tapes don't sit over the
+   hero on load or the footer at the bottom. */
+@media (max-width: 1179px) {
+  .landing-tape { display: block; position: fixed; left: 0; right: 0; z-index: 60; }
+  .landing-tape.tape-top { top: 0; border-bottom: 1px solid var(--border); }
+  .landing-tape.tape-bottom { bottom: 0; border-top: 1px solid var(--border); }
+  .landing-body { padding-top: 42px; padding-bottom: 42px; }
+}
+
 .rail-card {
   display: flex;
   flex-direction: column;

@@ -66,12 +66,26 @@
 
   <!-- ============================ main ============================ -->
   <div class="main">
+    <!-- Compact horizontal sponsor strip, shown only in the width band
+         between the sidebar collapsing to mobile and there being enough
+         width for a proper vertical rail column. See styles.css's
+         `.dash-tape` rules for the breakpoint and positioning. -->
+    <div class="tape dash-tape tape-top" id="dashTapeTop" aria-hidden="true"></div>
+
     <header class="topbar">
       <div>
         <h1 id="viewTitle">Overview</h1>
         <div class="sub" id="viewSub">Your app, and what is left to fix</div>
       </div>
       <div class="topbar-actions" id="topbarActions">
+        <!-- Dev-only: fills the tape with 10 apps (2 real + 8 generated
+             examples) to check its visual density without real sponsors.
+             See renderDashTape/wireTapeTestToggle in app.js. -->
+        <label class="tape-test-toggle" title="Preview the sponsor tape filled with 10 apps">
+          <input type="checkbox" id="tapeTestToggle">
+          <span class="switch" aria-hidden="true"></span>
+          <span>Test tape</span>
+        </label>
         <div class="fav-tray hidden" id="favTray">
           <button type="button" class="fav-tray-toggle" id="favTrayToggle"
             aria-haspopup="true" aria-expanded="false" title="Favorite apps">
@@ -643,6 +657,8 @@
       </footer>
 
     </div>
+
+    <div class="tape dash-tape tape-bottom" id="dashTapeBottom" aria-hidden="true"></div>
   </div>
 </div>
 

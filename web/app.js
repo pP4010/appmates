@@ -35,6 +35,8 @@ import { initBeTester } from './views/be-tester.js';
 import { initInbox } from './views/inbox.js';
 import { initAdmin } from './views/admin.js';
 import { CommunityClient, itunesRelayOptions } from './lib/community.js';
+import { fetchSponsorSlots, mockSponsorApps, mountTape } from './lib/sponsor-tape.js';
+import { RAIL_LEFT, RAIL_RIGHT } from './landing-demo.js';
 
 /** Title and one-line purpose per view, shown in the top bar.
  * `admin` has no `.nav-item` in the sidebar (see views/admin.js for why),
@@ -51,6 +53,60 @@ const VIEWS = {
   specs: ['Specs', 'The bundled catalogue and its provenance'],
   admin: ['Admin', 'Review "Feature your app here" requests'],
 };
+
+const SPONSOR_EMAIL = 'kaizenapp.contact@gmail.com';
+const SPONSOR_MAILTO = `mailto:${SPONSOR_EMAIL}?subject=${encodeURIComponent('Featuring my app on AppMates')}`;
+
+/** The real slots last fetched, cached so flipping the test toggle off
+ * restores them without a second network round-trip, and so turning it on
+ * can graft the 2 real apps onto the 8 mock ones instead of losing them. */
+let realTapeSlots = { left: [], right: [] };
+
+function mountDashTape({ left, right }) {
+  mountTape(document.getElementById('dashTapeTop'), left, SPONSOR_MAILTO);
+  mountTape(document.getElementById('dashTapeBottom'), right, SPONSOR_MAILTO);
+}
+
+/**
+ * Fills the dashboard's own compact sponsor tapes — always on, full
+ * viewport width, top and bottom of the app shell (see `.dash-tape` in
+ * styles.css) — from the same slots the landing page's rails use. A slot
+ * approved in admin shows up here too, no separate config. Not awaited by
+ * its caller: a slow catalogue lookup for a decoration must never hold up
+ * the tools people actually opened the page for.
+ */
+async function renderDashTape(itunes) {
+  const { left, right } = await fetchSponsorSlots({
+    staticLeft: RAIL_LEFT,
+    staticRight: RAIL_RIGHT,
+    itunes,
+  });
+  realTapeSlots = { left: left.filter(Boolean), right: right.filter(Boolean) };
+  if (!document.getElementById('tapeTestToggle')?.checked) mountDashTape(realTapeSlots);
+}
+
+/**
+ * "Test tape" switch in the topbar: fills both tapes with the 2 real
+ * configured apps (`RAIL_LEFT`/`RAIL_RIGHT`'s first, real-name-and-icon
+ * entries — whatever community slots happen to be approved right now are
+ * left out, so the count stays exactly 2+8 regardless of live state) plus
+ * 8 generated example apps, 5 a side, so the marquee's density can be
+ * checked visually without waiting on real sponsors to sign up.
+ */
+function wireTapeTestToggle() {
+  const toggle = document.getElementById('tapeTestToggle');
+  toggle?.addEventListener('change', () => {
+    if (!toggle.checked) {
+      mountDashTape(realTapeSlots);
+      return;
+    }
+    const mocks = mockSponsorApps(8);
+    mountDashTape({
+      left: [realTapeSlots.left[0], ...mocks.slice(0, 4)].filter(Boolean),
+      right: [realTapeSlots.right[0], ...mocks.slice(4)].filter(Boolean),
+    });
+  });
+}
 
 function route() {
   const name = (location.hash || '#overview').slice(1);
@@ -102,6 +158,11 @@ async function boot() {
   // the browser to Apple — a server-to-server fetch has no CORS story to
   // break, unlike a direct request to Apple's undocumented endpoint.
   const client = new ITunesClient(itunesRelayOptions());
+
+  // Decoration, not a tool — rendered alongside boot instead of inside it,
+  // same as the landing page's own rails.
+  renderDashTape(client);
+  wireTapeTestToggle();
 
   // The app card doubles as the selector: choosing one here prefills the tools
   // that need an id, which is the point of having a selection at all.

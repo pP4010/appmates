@@ -14,6 +14,7 @@
 import { escapeHtml } from './views/shared.js';
 import { CommunityClient, itunesRelayOptions } from './lib/community.js';
 import { ITunesClient } from './lib/itunes.js';
+import { fetchSponsorSlots, mountTape } from './lib/sponsor-tape.js';
 import {
   DEMO_TESTING,
   DEMO_LAUNCHED,
@@ -350,28 +351,6 @@ function railCard(app) {
     </a>`;
 }
 
-/**
- * A taken slot whose catalogue lookup failed.
- *
- * The tempting fallback — render the empty "available" card — would invite
- * someone to ask for a slot that is already sold, so a slot that is taken
- * stays visibly taken. `slot.name`, when the config supplied one, beats the
- * generic label for exactly this case — a lookup can fail for reasons that
- * have nothing to do with the app (the catalogue rate-limits, a network
- * hiccup), and there's no reason to show "Promoted app" when the real name
- * was sitting right there in `landing-demo.js`. The store link is built
- * from the id alone, so the card stays useful without any lookup at all.
- */
-function unresolvedSlot(slot) {
-  return railCard({
-    name: slot.name || 'Promoted app',
-    genre: '',
-    artwork: '',
-    storeUrl: `https://apps.apple.com/app/id${encodeURIComponent(slot.trackId)}`,
-    color: slot.color,
-  });
-}
-
 function emptySlot() {
   return `
     <a class="rail-card empty" data-filler href="mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Featuring my app on AppMates')}">
@@ -398,11 +377,13 @@ function markWrappedNames(rail) {
 }
 
 /**
- * Fills both rails. The promoted entries are resolved from the catalogue so
- * the name, icon and category track whatever is actually on the store — a
- * slot advertising a stale version of an app is worse than an empty one, so
- * a lookup that fails falls back to an available slot rather than to a
- * half-rendered card.
+ * Fills both rails, and the two compact tapes that stand in for them below
+ * the rails' own width — same resolved slots, so a slot approved in admin
+ * shows up everywhere at once and the iTunes lookup for it only runs once
+ * per boot rather than once per surface. Top tape mirrors the left rail,
+ * bottom tape the right rail, same split `data-slot` naming trustmrr-style
+ * marketplaces and CanIVibecodeIt both use it for: whichever rail a slot
+ * would have landed in is the tape it appears in too.
  */
 async function renderRails() {
   const left = document.getElementById('railLeft');
@@ -415,64 +396,21 @@ async function renderRails() {
   markWrappedNames(left);
   markWrappedNames(right);
 
-  const itunes = new ITunesClient(itunesRelayOptions());
-  const resolve = async (slots) => {
-    const out = [];
-    for (const slot of slots) {
-      if (slot.empty || !slot.trackId) {
-        out.push(emptySlot());
-        continue;
-      }
-      try {
-        const entry = await itunes.lookup(slot.trackId, { country: slot.country || 'us' });
-        out.push(
-          entry
-            ? railCard({
-                name: entry.trackName,
-                genre: entry.primaryGenreName ?? '',
-                artwork: entry.artworkUrl100 ?? entry.artworkUrl512 ?? '',
-                storeUrl: entry.trackViewUrl ?? '',
-                color: slot.color,
-              })
-            : unresolvedSlot(slot),
-        );
-      } catch {
-        out.push(unresolvedSlot(slot));
-      }
-    }
-    return out;
-  };
+  const { left: leftApps, right: rightApps } = await fetchSponsorSlots({
+    staticLeft: RAIL_LEFT,
+    staticRight: RAIL_RIGHT,
+  });
 
-  // Approved "Feature your app here" requests (see `views/admin.js`), when
-  // there's a community backend to ask — this is what makes approving a
-  // request there actually put a card on the page, no redeploy required.
-  // Split across the two rails by parity so both columns grow as more get
-  // approved. Any failure here (backend unreachable, nothing approved yet)
-  // just means the static config below is all that renders, exactly as it
-  // did before this existed.
-  const community = new CommunityClient();
-  let dynamicLeft = [];
-  let dynamicRight = [];
-  if (community.configured) {
-    try {
-      const slots = await community.featuredPromoSlots();
-      dynamicLeft = slots.filter((_, i) => i % 2 === 0);
-      dynamicRight = slots.filter((_, i) => i % 2 === 1);
-    } catch {
-      /* static RAIL_LEFT/RAIL_RIGHT below still render */
-    }
-  }
-
-  const [leftCards, rightCards] = [
-    await resolve([...RAIL_LEFT, ...dynamicLeft]),
-    await resolve([...RAIL_RIGHT, ...dynamicRight]),
-  ];
-  left.innerHTML = leftCards.join('');
-  right.innerHTML = rightCards.join('');
+  left.innerHTML = leftApps.map((app) => (app ? railCard(app) : emptySlot())).join('');
+  right.innerHTML = rightApps.map((app) => (app ? railCard(app) : emptySlot())).join('');
   fillRailHeight(left);
   fillRailHeight(right);
   markWrappedNames(left);
   markWrappedNames(right);
+
+  const tapeMailto = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Featuring my app on AppMates')}`;
+  mountTape(document.getElementById('landingTapeTop'), leftApps.filter(Boolean), tapeMailto);
+  mountTape(document.getElementById('landingTapeBottom'), rightApps.filter(Boolean), tapeMailto);
 }
 
 /** A card at roughly this height reads as a real promoted slot rather than
