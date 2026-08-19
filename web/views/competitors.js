@@ -2,7 +2,7 @@
 
 import { analyseCompetitors } from '../lib/competitors.js';
 import {
-  appIcon, el, empty, escapeHtml, notesHtml, pill, ring, tablePanel, withStatus,
+  appIcon, el, empty, escapeHtml, flagEmoji, notesHtml, pill, ring, tablePanel, withStatus,
 } from './shared.js';
 
 export function initCompetitors(client) {
@@ -72,7 +72,7 @@ function apps(report) {
 
   return tablePanel({
     title: report.keyword,
-    sub: `${report.country} · ${report.resultCount} results`,
+    sub: `${flagEmoji(report.country)} ${report.country.toUpperCase()} · ${report.resultCount} results`,
     head: [
       { label: '#', num: true },
       'App',
@@ -119,7 +119,7 @@ function terms(report) {
 
   const rows = report.terms.map((t) => [
     { html: `<strong>${escapeHtml(t.term)}</strong>` },
-    { html: ring(t.score, { size: 30, stroke: 3, thresholds: [50, 20] }), tight: true },
+    { html: ring(t.score, { size: 30, stroke: 3, thresholds: [50, 20] }), tight: true, center: true },
     { html: `${t.appsInName}/${t.appsTotal}`, num: true },
     { html: `${t.appsInDescription}/${t.appsTotal}`, num: true },
     { html: t.inYourListing ? pill('yours', 'ok') : pill('missing', 'neutral') },
@@ -138,7 +138,7 @@ function terms(report) {
       sub: 'app names weigh four times descriptions',
       head: [
         'Term',
-        { label: 'Consensus', num: true },
+        { label: 'Consensus', center: true },
         { label: 'In names', num: true },
         { label: 'In descriptions', num: true },
         'Yours',

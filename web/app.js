@@ -14,6 +14,7 @@ import { loadListingLimits } from './lib/metadata.js';
 import { loadAppHealthSpec } from './lib/app-profile.js';
 import { loadPricingSpec } from './lib/pricing.js';
 import { ITunesClient } from './lib/itunes.js';
+import { flagEmoji } from './views/shared.js';
 
 import { initScreenshots } from './views/screenshots.js';
 import { initKeywords } from './views/keywords.js';
@@ -70,7 +71,7 @@ function route() {
 /** Populate every storefront picker from the generated spec. */
 function fillCountrySelects() {
   const options = defaultStorefronts()
-    .map((code) => `<option value="${code}">${countryName(code)}</option>`)
+    .map((code) => `<option value="${code}">${flagEmoji(code)} ${countryName(code)}</option>`)
     .join('');
   for (const id of ['nicheCountry', 'compCountry', 'rankCountry', 'ovCountry']) {
     const select = document.getElementById(id);
