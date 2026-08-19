@@ -1316,6 +1316,32 @@ body:has(#view-inbox.active) .content {
    posted it. `pending` is the state before that recomputation lands. */
 .listing-card { padding: .95rem 1.05rem; margin-bottom: .6rem; }
 .listing-head { display: flex; gap: .7rem; align-items: flex-start; }
+
+/* ============================ token boost tiers ============================
+   A listing card's owner token balance, tinted bronze through gold —
+   `ownerBoostTier` in community/src/routes/listings.js. Cosmetic only: it
+   never touches `ORDER BY`, so a 0-token listing still ranks #1 under
+   "newest" — see that file's `browse()` docstring for why that stays true
+   on purpose. Applies to both card shapes (.listing-card, the wide
+   Browse-tab row; .marketplace-card, the curated-grid tile), since a
+   listing can appear in either. */
+.listing-card.boost-1, .marketplace-card.boost-1 {
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--warn) 16%, transparent);
+}
+.listing-card.boost-2, .marketplace-card.boost-2 {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent),
+    0 2px 10px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.listing-card.boost-3, .marketplace-card.boost-3 {
+  border-color: color-mix(in srgb, var(--warn) 70%, var(--accent) 30%);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--warn) 10%, var(--surface)), var(--surface));
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--warn) 45%, var(--accent) 20%),
+    0 4px 16px color-mix(in srgb, var(--warn) 18%, transparent);
+}
 .listing-title { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
 .listing-title strong { font-size: .95rem; letter-spacing: -0.01em; }
 .listing-desc { color: var(--text-2); font-size: .85rem; margin-top: .35rem; max-width: 70ch; }

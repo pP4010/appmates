@@ -60,10 +60,11 @@ function metric(label, value, tone = '') {
  * happened to have odd length. */
 let featuredSeen = 0;
 
-function tile({ flag, flagClass, name, genre, note, metrics, featured = false }) {
+function tile({ flag, flagClass, name, genre, note, metrics, featured = false, boostTier = 0 }) {
   const featuredClass = featured ? ` featured${featuredSeen++ % 2 ? ' warm' : ''}` : '';
+  const boostClass = boostTier ? ` boost-${boostTier}` : '';
   return `
-    <a class="listing-tile${featuredClass}" href="./app.html#community">
+    <a class="listing-tile${featuredClass}${boostClass}" href="./app.html#community">
       <span class="tile-flag ${flagClass}">${escapeHtml(flag)}</span>
       <span class="tile-head">
         ${letterTile(name)}
@@ -234,6 +235,7 @@ function renderLiveListings(listings) {
             genre: l.platform === 'android' ? 'Google Play' : l.platform === 'ios' ? 'App Store' : 'iOS + Android',
             note: l.description || 'Open for closed testers.',
             featured: isFeatured(l),
+            boostTier: l.ownerBoostTier ?? 0,
             metrics: [
               metric('Testers', `${l.slotsFilled}/${l.slotsWanted || '∞'}`),
               metric('Given back', l.ownerContribution ?? 0),
@@ -256,6 +258,7 @@ function renderLiveListings(listings) {
             genre: l.platform === 'android' ? 'Google Play' : l.platform === 'ios' ? 'App Store' : 'iOS + Android',
             note: l.description || 'Shipped and open to new users.',
             featured: isFeatured(l),
+            boostTier: l.ownerBoostTier ?? 0,
             metrics: [
               metric('Given back', l.ownerContribution ?? 0),
               metric('Reach', l.slotsFilled || '—'),

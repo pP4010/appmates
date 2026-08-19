@@ -467,6 +467,37 @@ button.landing-cta:hover {
 .tile-flag.launched { background: var(--ok-soft); color: var(--ok); }
 
 /* ---------------------------------------------------------------------
+   Token boost tiers
+
+   Bronze through gold, purely from the listing owner's current token
+   balance — `ownerBoostTier` in community/src/routes/listings.js. A
+   passive signal, unlike `.featured` below (an active spend): the two
+   stack (a card can be both), and where they conflict on background/
+   border, `.featured`'s rules win by appearing later in this file — the
+   thing you just paid for should read as the stronger signal than the
+   balance you happen to be sitting on. Same bronze/silver/gold ramp as
+   the dashboard's `.boost-1/2/3` in styles.css, so the two surfaces read
+   as one system.
+   --------------------------------------------------------------------- */
+.listing-tile.boost-1 {
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--warn) 16%, transparent);
+}
+.listing-tile.boost-2 {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent),
+    0 2px 10px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.listing-tile.boost-3 {
+  border-color: color-mix(in srgb, var(--warn) 70%, var(--accent) 30%);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--warn) 10%, var(--surface)), var(--surface));
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, var(--warn) 45%, var(--accent) 20%),
+    0 4px 16px color-mix(in srgb, var(--warn) 18%, transparent);
+}
+
+/* ---------------------------------------------------------------------
    Featured listings
 
    What a developer gets for spending tokens: a tinted card and a highlight
