@@ -101,10 +101,16 @@ Last updated: 2026-08-20.
   be made on purpose).
 - [ ] Not published to PyPI — already on the project's own roadmap as
   unchecked, not newly discovered here.
-- [ ] Repo name (`launchpilot`) vs. product name (`AppMates`) mismatch —
-  see the conversation this file was written from for the full breakdown of
-  what renaming touches. Cosmetic, not blocking, but worth doing once
-  before a public announcement rather than after.
+- [x] Repo renamed `launchpilot` → `appmates` (2026-08-20). GitHub redirects
+  the old URL for git and API access — confirmed with `git ls-remote` and
+  an authenticated `gh api repos/pP4010/launchpilot` call, both resolving
+  to the new repo. Local `origin` remote updated; the 4 in-repo references
+  (README's CI + codecov badges, `pyproject.toml`'s Homepage/Issues, the
+  footer links in `web/app.html` and `web/index.html`) updated to match.
+  Local folder is still named `launchpilot` on disk — cosmetic only, safe
+  to `mv` any time (git doesn't care what its containing folder is named);
+  recreate `.venv` after (`uv sync`) since some of its scripts hardcode the
+  old absolute path.
 
 ## What to check before flipping "public"
 
