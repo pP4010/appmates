@@ -570,13 +570,13 @@ function sessionRow(s) {
 }
 
 function listingCardHeader(l) {
-  const kindLabel = l.kind === 'testing' ? 'Looking for testers' : 'Launch / update';
+  const kindLabel = l.kind === 'testing' ? 'Closed testing' : 'Live on stores';
   return `
     <div style="display:flex;gap:.7rem;align-items:flex-start">
       ${appIcon(l.app.artworkUrl, l.app.name)}
       <div>
         <strong>${escapeHtml(l.app.name)}</strong>
-        <span class="pill ${l.kind === 'testing' ? 'info' : 'ok'}" style="margin-left:.4rem">${kindLabel}</span>
+        <span class="pill ${l.kind === 'testing' ? 'warn' : 'ok'}" style="margin-left:.4rem">${kindLabel}</span>
         <div class="muted" style="font-size:.82rem">${escapeHtml(l.description || '')}</div>
       </div>
     </div>`;

@@ -28,7 +28,7 @@ import { initRank } from './views/rank.js';
 import { initTesters } from './views/testers.js';
 import { initPrepare, initResearch, initTrack } from './views/launch.js';
 import { initSpecs } from './views/specs.js';
-import { initOverview, selectedApp, loadApp } from './views/overview.js';
+import { initOverview, selectedApp, loadApp, lastReport } from './views/overview.js';
 import { initFavoritesTray } from './views/favorites-tray.js';
 import { initCommunity, showProfileTab, showCommunityTabs } from './views/community.js';
 import { initBeTester } from './views/be-tester.js';
@@ -255,7 +255,7 @@ async function boot() {
   initBeTester(communityClient, { getCurrentApp: selectedApp, itunes: client });
   initInbox(communityClient);
   initAdmin(communityClient);
-  initOnboard({ getCurrentApp: selectedApp, communityClient });
+  initOnboard({ getCurrentApp: selectedApp, getLastReport: lastReport, communityClient });
 
   const apple = specs.stores.apple;
   const google = specs.stores.google;

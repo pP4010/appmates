@@ -28,6 +28,9 @@ let displayedTrackId = null;
  * with stale data, so each call checks it is still the most recent before
  * touching the DOM or persisting anything. */
 let loadSeq = 0;
+/** The most recently rendered readiness report, so the onboarding checklist
+ * can ask "is the loaded app's listing passing?" without recomputing it. */
+let lastLoadedReport = null;
 
 /** The app the whole session is about. Null until one is chosen. */
 export function selectedApp() {
@@ -63,7 +66,14 @@ export function forgetApp() {
   } catch {
     /* nothing to do */
   }
+  lastLoadedReport = null;
   onChange?.();
+}
+
+/** The last readiness report rendered by `load()`, or `null` before any app
+ * has been loaded this session. */
+export function lastReport() {
+  return lastLoadedReport;
 }
 
 export function initOverview(itunesClient, { onAppChange } = {}) {
@@ -162,6 +172,7 @@ async function load() {
   if (seq !== loadSeq) return;
 
   remember(report.profile, country);
+  lastLoadedReport = report;
   onChange?.();
   displayedTrackId = report.profile.trackId;
   results.innerHTML = render(report, recoveredScreenshots);

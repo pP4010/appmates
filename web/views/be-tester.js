@@ -349,7 +349,7 @@ function metricCell(label, id, value = '…', cls = 'pending', sub = '') {
 }
 
 function listingCard(l, { canRequest = false, alreadyRequested = false } = {}) {
-  const kindLabel = l.kind === 'testing' ? 'Looking for testers' : 'Launch / update';
+  const kindLabel = l.kind === 'testing' ? 'Closed testing' : 'Live on stores';
   const featured = l.featuredUntil && new Date(l.featuredUntil) > new Date();
   const action = !canRequest
     ? ''
@@ -369,7 +369,7 @@ function listingCard(l, { canRequest = false, alreadyRequested = false } = {}) {
         <div style="flex:1;min-width:0">
           <div class="listing-title">
             <strong>${escapeHtml(l.app.name)}</strong>
-            <span class="pill ${l.kind === 'testing' ? 'info' : 'ok'}">${kindLabel}</span>
+            <span class="pill ${l.kind === 'testing' ? 'warn' : 'ok'}">${kindLabel}</span>
             ${featured ? '<span class="pill warn">Featured</span>' : ''}
           </div>
           <div style="margin-top:.35rem;display:flex;gap:.3rem;flex-wrap:wrap">
@@ -403,7 +403,7 @@ function listingCard(l, { canRequest = false, alreadyRequested = false } = {}) {
  * a contributor's own apps), so those sections read as one visual family.
  */
 function marketplaceGridCard(l, { canRequest = false, alreadyRequested = false } = {}) {
-  const kindLabel = l.kind === 'testing' ? 'Looking for testers' : 'Launch / update';
+  const kindLabel = l.kind === 'testing' ? 'Closed testing' : 'Live on stores';
   const thirdMetric =
     l.kind === 'testing'
       ? { label: 'Testers', value: `${l.slotsFilled}/${l.slotsWanted || '∞'}` }
@@ -422,7 +422,7 @@ function marketplaceGridCard(l, { canRequest = false, alreadyRequested = false }
         <div style="min-width:0;flex:1">
           <strong class="marketplace-card-name">${escapeHtml(l.app.name)}</strong>
           <div class="marketplace-card-badges">
-            <span class="pill ${l.kind === 'testing' ? 'info' : 'ok'}">${kindLabel}</span>
+            <span class="pill ${l.kind === 'testing' ? 'warn' : 'ok'}">${kindLabel}</span>
             ${reliabilityBadge(l.ownerReliability)}
           </div>
         </div>

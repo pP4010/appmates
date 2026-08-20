@@ -721,7 +721,7 @@ function renderDetailsPane() {
       ${iconOrInitial(conv.artworkUrl, conv.appName)}
       <strong>${escapeHtml(conv.appName)}</strong>
       <div class="inbox-detail-pills">
-        ${conv.kind ? `<span class="pill ${conv.kind === 'testing' ? 'info' : 'ok'}">${conv.kind === 'testing' ? 'Looking for testers' : 'Launch / update'}</span>` : ''}
+        ${conv.kind ? `<span class="pill ${conv.kind === 'testing' ? 'warn' : 'ok'}">${conv.kind === 'testing' ? 'Closed testing' : 'Live on stores'}</span>` : ''}
         ${conv.platform ? `<span class="pill neutral">${platformLabel(conv.platform)}</span>` : ''}
       </div>
       ${conv.description ? `<p class="muted inbox-detail-desc">${escapeHtml(conv.description)}</p>` : ''}
