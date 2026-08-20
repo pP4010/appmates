@@ -97,7 +97,7 @@ function renderDemo() {
         featured: a.featured,
         metrics: [
           metric('Testers', a.testers),
-          metric('Health', a.health, healthTone(a.health)),
+          metric('High 5s', a.helped),
           metric('Days left', a.daysLeft),
         ].join(''),
       }),
@@ -238,7 +238,7 @@ function renderLiveListings(listings) {
             boostTier: l.ownerBoostTier ?? 0,
             metrics: [
               metric('Testers', `${l.slotsFilled}/${l.slotsWanted || '∞'}`),
-              metric('Given back', l.ownerContribution ?? 0),
+              metric('High 5s', l.ownerContribution ?? 0),
               metric('Slots', Math.max(0, (l.slotsWanted || 0) - l.slotsFilled) || '—'),
             ].join(''),
           }),
@@ -260,7 +260,7 @@ function renderLiveListings(listings) {
             featured: isFeatured(l),
             boostTier: l.ownerBoostTier ?? 0,
             metrics: [
-              metric('Given back', l.ownerContribution ?? 0),
+              metric('High 5s', l.ownerContribution ?? 0),
               metric('Reach', l.slotsFilled || '—'),
               metric('Status', 'Live'),
             ].join(''),

@@ -34,6 +34,7 @@ import { initCommunity, showProfileTab, showCommunityTabs } from './views/commun
 import { initBeTester } from './views/be-tester.js';
 import { initInbox } from './views/inbox.js';
 import { initAdmin } from './views/admin.js';
+import { initOnboard, refreshOnboard } from './views/onboard.js';
 import { CommunityClient, itunesRelayOptions } from './lib/community.js';
 import { fetchSponsorSlots, mockSponsorApps, mountTape } from './lib/sponsor-tape.js';
 import { RAIL_LEFT, RAIL_RIGHT } from './landing-demo.js';
@@ -187,6 +188,7 @@ async function boot() {
   // The app card doubles as the selector: choosing one here prefills the tools
   // that need an id, which is the point of having a selection at all.
   const refreshAppCard = () => {
+    refreshOnboard();
     const app = selectedApp();
     const mark = document.getElementById('appMark');
     document.getElementById('appName').textContent = app?.name ?? 'Select your app';
@@ -253,6 +255,7 @@ async function boot() {
   initBeTester(communityClient, { getCurrentApp: selectedApp, itunes: client });
   initInbox(communityClient);
   initAdmin(communityClient);
+  initOnboard({ getCurrentApp: selectedApp, communityClient });
 
   const apple = specs.stores.apple;
   const google = specs.stores.google;

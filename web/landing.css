@@ -611,6 +611,7 @@ button.landing-cta:hover {
 }
 
 .tile-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; margin-top: auto; }
+.tile-metrics > div { text-align: center; }
 .tile-metrics .k {
   display: block;
   font-size: .56rem;

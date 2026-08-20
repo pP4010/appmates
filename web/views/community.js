@@ -23,6 +23,7 @@ import {
   reliabilityBadge, contributionBadge,
 } from './shared.js';
 import { checkAppHealth, profileFromEntry } from '../lib/app-profile.js';
+import { refreshOnboard } from './onboard.js';
 
 // Mirrors MAX_BIO_LENGTH in community/src/lib/config.js — the server is the
 // real limit (it truncates), this just keeps the on-page counter honest.
@@ -460,6 +461,7 @@ async function createListing(app) {
     el('commLink').value = '';
     el('commDescription').value = '';
     await renderMyListings();
+    refreshOnboard();
   });
 }
 
