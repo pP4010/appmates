@@ -768,10 +768,18 @@ button.landing-cta:hover {
 
 /* ============================ tools ============================ */
 
+/* A fixed 2-column-by-default, 4-across-from-tablet-up grid rather than
+   auto-fill: with exactly 8 cards, a width-driven column count would give
+   a clean 2×4 at some viewports and an uneven 3+3+2 at others (the sponsor
+   rails alone shrink this section's own width by ~300px starting at
+   1180px) — fixed columns keep it 2 full rows everywhere. */
 .tools-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: .55rem;
+}
+@media (min-width: 640px) {
+  .tools-grid { grid-template-columns: repeat(4, 1fr); }
 }
 .tool-card {
   display: flex;
@@ -785,7 +793,8 @@ button.landing-cta:hover {
   transition: border-color .12s, transform .1s, box-shadow .12s;
 }
 .tool-card:hover { text-decoration: none; border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow-md); }
-.tool-icon { font-size: 1rem; color: var(--accent); line-height: 1; margin-bottom: .15rem; }
+.tool-icon { display: inline-flex; color: var(--accent); margin-bottom: .15rem; }
+.tool-icon svg { width: 19px; height: 19px; }
 .tool-card strong { font-size: .87rem; }
 .tool-card span:last-child { font-size: .78rem; color: var(--text-2); line-height: 1.45; }
 

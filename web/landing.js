@@ -884,8 +884,8 @@ function openPromoDialog() {
  * that get thrown away and rebuilt would silently stop firing. */
 function wirePromoDialog() {
   document.addEventListener('click', (e) => {
-    const card = e.target.closest('.rail-card.empty');
-    if (!card) return;
+    const trigger = e.target.closest('.rail-card.empty, #heroAdvertise');
+    if (!trigger) return;
     e.preventDefault();
     openPromoDialog();
   });
