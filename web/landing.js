@@ -185,12 +185,12 @@ async function hydrateDemoApps() {
       const ratingEl = cell.querySelector('[data-metric="rating"]');
       if (ratingEl) {
         const rating = Number(entry.averageUserRating);
-        ratingEl.textContent = rating ? `${rating.toFixed(1)}★` : 'No rating';
+        ratingEl.textContent = rating ? `${rating.toFixed(1)}★` : '-.-★';
       }
       const ratingsEl = cell.querySelector('[data-metric="ratings"]');
       if (ratingsEl) {
         const count = Number(entry.userRatingCount ?? 0);
-        ratingsEl.textContent = count > 0 ? count.toLocaleString('en-US') : 'No ratings';
+        ratingsEl.textContent = count > 0 ? count.toLocaleString('en-US') : '-';
       }
       const healthEl = cell.querySelector('[data-metric="health"]');
       if (healthEl && specsLoaded) {
@@ -314,7 +314,7 @@ function renderLiveListings(listings) {
             flagClass: 'testing',
             name: l.app.name,
             genre: l.platform === 'android' ? 'Google Play' : l.platform === 'ios' ? 'App Store' : 'iOS + Android',
-            note: l.description || 'Open for closed testers.',
+            note: l.tagline || 'Open for closed testers.',
             featured: isFeatured(l),
             boostTier: l.ownerBoostTier ?? 0,
             metrics: [
@@ -337,7 +337,7 @@ function renderLiveListings(listings) {
             flagClass: 'launched',
             name: l.app.name,
             genre: l.platform === 'android' ? 'Google Play' : l.platform === 'ios' ? 'App Store' : 'iOS + Android',
-            note: l.description || 'Shipped and open to new users.',
+            note: l.tagline || 'Shipped and open to new users.',
             featured: isFeatured(l),
             boostTier: l.ownerBoostTier ?? 0,
             metrics: [

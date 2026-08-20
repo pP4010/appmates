@@ -426,6 +426,9 @@ function renderCreatePanel() {
         placeholder="TestFlight/Play testing link, or the store listing once it's out">
       <label for="commSlots">Testers wanted</label>
       <input id="commSlots" type="number" min="0" max="100" value="10" style="width:6rem">
+      <label for="commTagline">Card tagline</label>
+      <input id="commTagline" type="text" maxlength="140"
+        placeholder="One line for your card — shown on the marketplace, max 2 lines">
       <label for="commDescription">What should they know</label>
       <textarea id="commDescription" rows="3"
         placeholder="What to focus feedback on, or what's new in this release"></textarea>
@@ -454,11 +457,13 @@ async function createListing(app) {
       kind: el('commKind').value,
       platform: el('commPlatform').value,
       link: el('commLink').value.trim(),
+      tagline: el('commTagline').value.trim(),
       description: el('commDescription').value.trim(),
       slotsWanted: Number(el('commSlots').value) || 0,
     });
 
     el('commLink').value = '';
+    el('commTagline').value = '';
     el('commDescription').value = '';
     await renderMyListings();
     refreshOnboard();

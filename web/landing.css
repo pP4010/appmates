@@ -693,7 +693,7 @@ button.landing-cta:hover {
   .listing-tile.boost-7::after { animation: none; opacity: 0; }
 }
 
-.tile-head { display: flex; align-items: center; gap: .6rem; margin: .15rem 0 .7rem; padding-right: 4.2rem; }
+.tile-head { display: flex; align-items: center; gap: .6rem; margin: .7rem 0 .7rem; }
 /* `display:block` is load-bearing, not tidiness: `overflow`/`text-overflow`
    are ignored on a non-replaced inline element, so without it these two
    only stack (and only truncate) when the parent happens to be narrow
