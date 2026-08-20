@@ -491,58 +491,103 @@ button.landing-cta:hover {
    High Fives received — `ownerBoostTier` in
    community/src/routes/listings.js, reading `owner_contribution_count`.
    Automatic and permanent (it only ever goes up, and can't be bought),
-   unlike `.featured` below (an active, time-boxed spend): the two stack
-   (a card can be both), and where they conflict on background/border,
-   `.featured`'s rules normally win by appearing later in this file — the
-   thing you just paid for reads as the stronger signal than a passive
-   badge. Légendaire (boost-7) is the one exception: declared after
-   `.featured` further down, so the rarest tier this app can hand out
-   for real, sustained contribution outranks a placement anyone can pay
-   for. Same ramp as the dashboard's `.boost-1..7` in styles.css, so the
-   two surfaces read as one system.
+   unlike `.featured` below (an active, time-boxed spend). Deliberately
+   built as escalating versions of `.featured`'s own look — a soft
+   background tint, a tinted border, no box-shadow ring (a heavy outline
+   read as a badge glued on top of the card, not a property of the card
+   itself) — rather than a separate visual language: Silver (boost-2)
+   is the exact accent-tint formula `.featured` uses, so a card that's
+   merely Silver and one that's actively `.featured` are indistinguishable
+   at that tier, and every tier above it just turns the same two dials
+   (tint strength, hue) further. Every tier also gets the shine sweep,
+   not just Légendaire — see `.listing-tile.boost-1::after` below.
+
+   The two stack (a card can be both boosted and `.featured`), and where
+   they'd conflict on background/border, `.featured`'s rules win by
+   appearing later in this file — the thing you just paid for reads as
+   the stronger signal than a passive badge. Légendaire (boost-7) is the
+   one exception: declared after `.featured` further down, so the rarest
+   tier this app can hand out for real, sustained contribution outranks
+   a placement anyone can pay for. Same ramp as the dashboard's
+   `.boost-1..7` in styles.css, so the two surfaces read as one system
+   (minus the shine, which is landing-only motion).
    --------------------------------------------------------------------- */
+/* Bronze dilutes warn against the neutral --border rather than against
+   --surface-only, at a ratio picked to actually land on a muddy
+   brown/bronze rather than a paler copy of Gold's bright warm tone. */
 .listing-tile.boost-1 {
+  background: color-mix(in srgb, var(--warn) 8%, var(--surface));
   border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--warn) 16%, transparent);
 }
+/* Silver — the exact `.featured` accent formula further down, on purpose. */
 .listing-tile.boost-2 {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent),
-    0 2px 10px color-mix(in srgb, var(--accent) 12%, transparent);
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
 }
+/* Gold — a purer, brighter warm tint than Bronze's (less --border diluting
+   it), so it reads as shining rather than tarnished. */
 .listing-tile.boost-3 {
-  border-color: color-mix(in srgb, var(--warn) 70%, var(--accent) 30%);
-  background: linear-gradient(135deg, color-mix(in srgb, var(--warn) 10%, var(--surface)), var(--surface));
-  box-shadow:
-    0 0 0 1.5px color-mix(in srgb, var(--warn) 45%, var(--accent) 20%),
-    0 4px 16px color-mix(in srgb, var(--warn) 18%, transparent);
+  background: color-mix(in srgb, var(--warn) 16%, var(--surface));
+  border-color: color-mix(in srgb, var(--warn) 75%, var(--border));
 }
 /* Platine — blue, same hex as the sponsor rail's `blue` swatch
    (RAIL_COLORS in landing.js), reused rather than inventing a new hue. */
 .listing-tile.boost-4 {
-  border-color: color-mix(in srgb, #2f5fa8 60%, var(--border));
-  background: linear-gradient(135deg, color-mix(in srgb, #2f5fa8 12%, var(--surface)), var(--surface));
-  box-shadow:
-    0 0 0 1.5px color-mix(in srgb, #2f5fa8 40%, transparent),
-    0 4px 18px color-mix(in srgb, #2f5fa8 20%, transparent);
+  background: color-mix(in srgb, #2f5fa8 15%, var(--surface));
+  border-color: color-mix(in srgb, #2f5fa8 45%, var(--border));
 }
 /* Diamant — violet, rail's `violet` swatch. */
 .listing-tile.boost-5 {
-  border-color: color-mix(in srgb, #6d3aa8 65%, var(--border));
-  background: linear-gradient(135deg, color-mix(in srgb, #6d3aa8 14%, var(--surface)), var(--surface));
-  box-shadow:
-    0 0 0 1.5px color-mix(in srgb, #6d3aa8 45%, transparent),
-    0 5px 20px color-mix(in srgb, #6d3aa8 22%, transparent);
+  background: color-mix(in srgb, #6d3aa8 17%, var(--surface));
+  border-color: color-mix(in srgb, #6d3aa8 50%, var(--border));
 }
-/* Rubis — red, rail's `red` swatch. Strongest of the static (non-gold,
-   non-animated) tiers. */
+/* Rubis — red, rail's `red` swatch. Strongest tint before Légendaire. */
 .listing-tile.boost-6 {
-  border-color: color-mix(in srgb, #a8342f 70%, var(--border));
-  background: linear-gradient(135deg, color-mix(in srgb, #a8342f 16%, var(--surface)), var(--surface));
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, #a8342f 50%, transparent),
-    0 6px 22px color-mix(in srgb, #a8342f 25%, transparent);
+  background: color-mix(in srgb, #a8342f 19%, var(--surface));
+  border-color: color-mix(in srgb, #a8342f 55%, var(--border));
+}
+
+/* One shine sweep, shared by every non-Légendaire boost tier (1-6) — see
+   the comment above for why they all get it, not just the top tier.
+   Declared before `.featured::after` so a card that's both boosted 1-6
+   and `.featured` shows the paid placement's own (slightly softer) sweep,
+   matching the precedence documented above. */
+.listing-tile.boost-1::after, .listing-tile.boost-2::after, .listing-tile.boost-3::after,
+.listing-tile.boost-4::after, .listing-tile.boost-5::after, .listing-tile.boost-6::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(
+    120deg,
+    transparent 0%, transparent 30%,
+    rgb(255 255 255 / 45%) 44%,
+    rgb(255 255 255 / 60%) 50%,
+    rgb(255 255 255 / 45%) 56%,
+    transparent 70%, transparent 100%
+  ) 0 0 / 200% 100% no-repeat;
+  animation: tile-streak 5s ease-in-out infinite;
+}
+@media (prefers-color-scheme: dark) {
+  .listing-tile.boost-1::after, .listing-tile.boost-2::after, .listing-tile.boost-3::after,
+  .listing-tile.boost-4::after, .listing-tile.boost-5::after, .listing-tile.boost-6::after {
+    background-image: linear-gradient(
+      120deg,
+      transparent 0%, transparent 30%,
+      rgb(255 255 255 / 12%) 44%,
+      rgb(255 255 255 / 20%) 50%,
+      rgb(255 255 255 / 12%) 56%,
+      transparent 70%, transparent 100%
+    );
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .listing-tile.boost-1::after, .listing-tile.boost-2::after, .listing-tile.boost-3::after,
+  .listing-tile.boost-4::after, .listing-tile.boost-5::after, .listing-tile.boost-6::after {
+    animation: none; opacity: 0;
+  }
 }
 
 /* ---------------------------------------------------------------------
@@ -620,12 +665,9 @@ button.landing-cta:hover {
   border-color: var(--warn);
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--warn) 35%, var(--surface)),
-    color-mix(in srgb, var(--warn) 18%, var(--surface))
+    color-mix(in srgb, var(--warn) 32%, var(--surface)),
+    color-mix(in srgb, var(--warn) 16%, var(--surface))
   );
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--warn) 65%, transparent),
-    0 8px 28px color-mix(in srgb, var(--warn) 32%, transparent);
 }
 .listing-tile.boost-7::after {
   content: "";
@@ -637,9 +679,9 @@ button.landing-cta:hover {
   background: linear-gradient(
     120deg,
     transparent 0%, transparent 30%,
-    rgb(255 255 255 / 45%) 44%,
-    rgb(255 255 255 / 60%) 50%,
-    rgb(255 255 255 / 45%) 56%,
+    rgb(255 255 255 / 55%) 44%,
+    rgb(255 255 255 / 72%) 50%,
+    rgb(255 255 255 / 55%) 56%,
     transparent 70%, transparent 100%
   ) 0 0 / 200% 100% no-repeat;
   animation: tile-streak 5s ease-in-out infinite;
@@ -666,6 +708,7 @@ button.landing-cta:hover {
   font-weight: 700; font-size: .95rem;
   color: #fff;
   border: 1px solid rgb(255 255 255 / 14%);
+  object-fit: cover;
 }
 
 .tile-note {

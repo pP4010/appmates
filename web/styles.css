@@ -1421,64 +1421,54 @@ body:has(#view-inbox.active) .content {
    still ranks #1 under "newest" — see that file's `browse()` docstring
    for why that stays true on purpose. Applies to both card shapes
    (.listing-card, the wide Browse-tab row; .marketplace-card, the
-   curated-grid tile), since a listing can appear in either. Same ramp as
-   landing.css's `.listing-tile.boost-1..7`, so the marketplace and the
-   dashboard read as one system (landing.css additionally gives boost-7
-   an animated shine the way `.featured` gets one there — skipped here
-   since this surface has no such motion on any other card variant). */
+   curated-grid tile), since a listing can appear in either.
+
+   A soft background tint plus a tinted border, no box-shadow ring — the
+   same escalating-`.featured`-look landing.css's `.listing-tile.boost-*`
+   uses (Silver/boost-2 is the exact accent-tint formula `.featured` gets
+   there), just without the shine sweep, since no other card variant on
+   this surface has that motion either. Same ramp as landing.css, so the
+   marketplace and the dashboard read as one system. */
+/* Bronze dilutes warn against --border at a ratio picked to land on a
+   muddy brown/bronze rather than a paler copy of Gold's bright tone (see
+   landing.css's copy of this rule). */
 .listing-card.boost-1, .marketplace-card.boost-1 {
+  background: color-mix(in srgb, var(--warn) 8%, var(--surface));
   border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--warn) 16%, transparent);
 }
 .listing-card.boost-2, .marketplace-card.boost-2 {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent),
-    0 2px 10px color-mix(in srgb, var(--accent) 12%, transparent);
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
 }
+/* Gold — a purer, brighter warm tint than Bronze's. */
 .listing-card.boost-3, .marketplace-card.boost-3 {
-  border-color: color-mix(in srgb, var(--warn) 70%, var(--accent) 30%);
-  background: linear-gradient(135deg, color-mix(in srgb, var(--warn) 10%, var(--surface)), var(--surface));
-  box-shadow:
-    0 0 0 1.5px color-mix(in srgb, var(--warn) 45%, var(--accent) 20%),
-    0 4px 16px color-mix(in srgb, var(--warn) 18%, transparent);
+  background: color-mix(in srgb, var(--warn) 16%, var(--surface));
+  border-color: color-mix(in srgb, var(--warn) 75%, var(--border));
 }
 /* Platine — blue, same hex as the sponsor rail's `blue` swatch
    (RAIL_COLORS in landing.js). */
 .listing-card.boost-4, .marketplace-card.boost-4 {
-  border-color: color-mix(in srgb, #2f5fa8 60%, var(--border));
-  background: linear-gradient(135deg, color-mix(in srgb, #2f5fa8 12%, var(--surface)), var(--surface));
-  box-shadow:
-    0 0 0 1.5px color-mix(in srgb, #2f5fa8 40%, transparent),
-    0 4px 18px color-mix(in srgb, #2f5fa8 20%, transparent);
+  background: color-mix(in srgb, #2f5fa8 15%, var(--surface));
+  border-color: color-mix(in srgb, #2f5fa8 45%, var(--border));
 }
 /* Diamant — violet, rail's `violet` swatch. */
 .listing-card.boost-5, .marketplace-card.boost-5 {
-  border-color: color-mix(in srgb, #6d3aa8 65%, var(--border));
-  background: linear-gradient(135deg, color-mix(in srgb, #6d3aa8 14%, var(--surface)), var(--surface));
-  box-shadow:
-    0 0 0 1.5px color-mix(in srgb, #6d3aa8 45%, transparent),
-    0 5px 20px color-mix(in srgb, #6d3aa8 22%, transparent);
+  background: color-mix(in srgb, #6d3aa8 17%, var(--surface));
+  border-color: color-mix(in srgb, #6d3aa8 50%, var(--border));
 }
-/* Rubis — red, rail's `red` swatch. Strongest of the static tiers. */
+/* Rubis — red, rail's `red` swatch. Strongest tint before Légendaire. */
 .listing-card.boost-6, .marketplace-card.boost-6 {
-  border-color: color-mix(in srgb, #a8342f 70%, var(--border));
-  background: linear-gradient(135deg, color-mix(in srgb, #a8342f 16%, var(--surface)), var(--surface));
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, #a8342f 50%, transparent),
-    0 6px 22px color-mix(in srgb, #a8342f 25%, transparent);
+  background: color-mix(in srgb, #a8342f 19%, var(--surface));
+  border-color: color-mix(in srgb, #a8342f 55%, var(--border));
 }
 /* Légendaire — the top of the ladder, a fully gold card. */
 .listing-card.boost-7, .marketplace-card.boost-7 {
   border-color: var(--warn);
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--warn) 35%, var(--surface)),
-    color-mix(in srgb, var(--warn) 18%, var(--surface))
+    color-mix(in srgb, var(--warn) 32%, var(--surface)),
+    color-mix(in srgb, var(--warn) 16%, var(--surface))
   );
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--warn) 65%, transparent),
-    0 8px 28px color-mix(in srgb, var(--warn) 32%, transparent);
 }
 .listing-title { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
 .listing-title strong { font-size: .95rem; letter-spacing: -0.01em; }
