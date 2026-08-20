@@ -7,110 +7,50 @@
  * rows fill that gap and are replaced wholesale the moment
  * `COMMUNITY_API_URL` is set (see `landing.js`).
  *
- * The apps are invented, not real listings, and the page says so on the
- * page rather than only here: passing placeholder numbers off as traction
- * is the one thing a landing page for a product about *verified* listing
- * data must not do. Icons are generated letter tiles for the same reason —
- * a real app's logo here would imply a customer who doesn't exist.
+ * The page says so on the page, not only here (`data-demo` in index.html
+ * renders the visible "sample" tag): passing placeholder numbers off as
+ * traction is the one thing a landing page for a product about *verified*
+ * listing data must not do. The apps below are real — the site's own,
+ * genuinely on the App Store, before any third-party listing exists to
+ * show instead — but the per-row counts that aren't public App Store
+ * facts (testers signed up, High Fives, days left) are still invented,
+ * same as the "sample" tag says.
  */
 
-/** `featured` mirrors what a real listing gets by spending tokens: a tinted
- * card with a slow highlight sweep. Kept rare on purpose — the effect only
- * means anything while most cards don't have it. */
+// The site's own 2 apps — the only real listings that exist before anyone
+// else has posted one. `trackId`/`country` let landing.js patch in each
+// app's real icon, genre and (for DEMO_LAUNCHED) rating straight from the
+// public catalogue; `note` and the counts below it are placeholders (this
+// isn't backed by a real community session) — edit them once real numbers
+// exist. Still tagged "sample" on the page either way (see index.html's
+// `data-demo` span), so this never reads as live traction.
 export const DEMO_TESTING = [
   {
-    name: 'Habitloop',
-    genre: 'Productivity',
-    testers: '9/12',
-    helped: 6,
-    daysLeft: 4,
-    note: 'Streak logic and the widget refresh',
-    featured: true,
-  },
-  {
-    name: 'Ferment',
-    genre: 'Food & Drink',
-    testers: '5/12',
-    helped: 2,
-    daysLeft: 11,
-    note: 'Sourdough timers, offline mode',
-  },
-  {
-    name: 'Trailmix',
+    name: 'Rebuild: Resist & Build',
+    trackId: '6782585843',
+    country: 'us',
     genre: 'Health & Fitness',
-    testers: '12/12',
-    helped: 9,
-    daysLeft: 2,
-    note: 'GPS drift on long routes',
-  },
-  {
-    name: 'Inkwell',
-    genre: 'Productivity',
-    testers: '3/12',
+    testers: '0/12',
     helped: 0,
-    daysLeft: 13,
-    note: 'Markdown export, iPad split view',
-  },
-  {
-    name: 'Quietly',
-    genre: 'Health & Fitness',
-    testers: '7/12',
-    helped: 14,
-    daysLeft: 6,
-    note: 'Sleep sounds, background audio',
-    featured: true,
-  },
-  {
-    name: 'Snapcook',
-    genre: 'Food & Drink',
-    testers: '2/12',
-    helped: 3,
     daysLeft: 14,
-    note: 'Recipe scanning accuracy',
+    note: 'Looking for Google Play closed testers.',
   },
 ];
 
 export const DEMO_LAUNCHED = [
   {
-    name: 'Tempo Run',
-    genre: 'Health & Fitness',
-    health: 94,
-    rating: '4.7',
-    ratings: '2,140',
-    note: 'v2.0 — live pacing',
-    featured: true,
-  },
-  {
-    name: 'Sunbeam',
-    genre: 'Weather',
-    health: 89,
-    rating: '4.6',
-    ratings: '870',
-    note: 'Hourly radar rewrite',
-  },
-  {
-    name: 'Bulletpoint',
+    name: 'Kaizen - Screen Time & Detox',
+    trackId: '6768688178',
+    country: 'us',
     genre: 'Productivity',
-    health: 82,
-    rating: '4.4',
-    ratings: '431',
-    note: 'Shipped after 3 weeks of beta',
+    note: 'Live on the App Store.',
   },
   {
-    name: 'Cadence',
-    genre: 'Music',
-    health: 76,
-    rating: '4.8',
-    ratings: '1,309',
-    note: 'Metronome + setlists',
-  },
-  {
-    name: 'Fernweh',
-    genre: 'Travel',
-    health: 90,
-    rating: '4.5',
-    ratings: '624',
-    note: 'Offline maps for 40 cities',
+    name: 'Rebuild: Resist & Build',
+    trackId: '6782585843',
+    country: 'us',
+    genre: 'Health & Fitness',
+    note: 'Live on the App Store.',
   },
 ];
 

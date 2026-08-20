@@ -512,23 +512,26 @@ button.landing-cta:hover {
    `.boost-1..7` in styles.css, so the two surfaces read as one system
    (minus the shine, which is landing-only motion).
    --------------------------------------------------------------------- */
-/* Bronze dilutes warn against the neutral --border rather than against
-   --surface-only, at a ratio picked to actually land on a muddy
-   brown/bronze rather than a paler copy of Gold's bright warm tone. */
+/* Bronze mixes warn with --bad (red) before diluting into --border — an
+   actual mahogany/acajou brown, not just a duller gold. Plain warn only
+   ever ranges from pale to bright yellow-gold, never red-brown enough to
+   read as a different metal from Gold; warn+bad gives it a hue of its
+   own. */
 .listing-tile.boost-1 {
-  background: color-mix(in srgb, var(--warn) 8%, var(--surface));
-  border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
+  background: color-mix(in srgb, color-mix(in srgb, var(--warn) 60%, var(--bad) 40%) 10%, var(--surface));
+  border-color: color-mix(in srgb, color-mix(in srgb, var(--warn) 60%, var(--bad) 40%) 55%, var(--border));
 }
 /* Silver — the exact `.featured` accent formula further down, on purpose. */
 .listing-tile.boost-2 {
   background: color-mix(in srgb, var(--accent) 9%, var(--surface));
   border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
 }
-/* Gold — a purer, brighter warm tint than Bronze's (less --border diluting
-   it), so it reads as shining rather than tarnished. */
+/* Gold — deliberately modest (a milder warm tint than Silver's accent
+   strength, even), so it stays clearly a step below Légendaire's fully
+   gold card rather than nearly matching it. */
 .listing-tile.boost-3 {
-  background: color-mix(in srgb, var(--warn) 16%, var(--surface));
-  border-color: color-mix(in srgb, var(--warn) 75%, var(--border));
+  background: color-mix(in srgb, var(--warn) 8%, var(--surface));
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
 }
 /* Platine — blue, same hex as the sponsor rail's `blue` swatch
    (RAIL_COLORS in landing.js), reused rather than inventing a new hue. */

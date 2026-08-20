@@ -1429,21 +1429,22 @@ body:has(#view-inbox.active) .content {
    there), just without the shine sweep, since no other card variant on
    this surface has that motion either. Same ramp as landing.css, so the
    marketplace and the dashboard read as one system. */
-/* Bronze dilutes warn against --border at a ratio picked to land on a
-   muddy brown/bronze rather than a paler copy of Gold's bright tone (see
-   landing.css's copy of this rule). */
+/* Bronze mixes warn with --bad (red) before diluting into --border — a
+   mahogany/acajou brown with a hue of its own, not just a duller gold
+   (see landing.css's copy of this rule). */
 .listing-card.boost-1, .marketplace-card.boost-1 {
-  background: color-mix(in srgb, var(--warn) 8%, var(--surface));
-  border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
+  background: color-mix(in srgb, color-mix(in srgb, var(--warn) 60%, var(--bad) 40%) 10%, var(--surface));
+  border-color: color-mix(in srgb, color-mix(in srgb, var(--warn) 60%, var(--bad) 40%) 55%, var(--border));
 }
 .listing-card.boost-2, .marketplace-card.boost-2 {
   background: color-mix(in srgb, var(--accent) 9%, var(--surface));
   border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
 }
-/* Gold — a purer, brighter warm tint than Bronze's. */
+/* Gold — deliberately modest, so it stays a clear step below Légendaire's
+   fully gold card. */
 .listing-card.boost-3, .marketplace-card.boost-3 {
-  background: color-mix(in srgb, var(--warn) 16%, var(--surface));
-  border-color: color-mix(in srgb, var(--warn) 75%, var(--border));
+  background: color-mix(in srgb, var(--warn) 8%, var(--surface));
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
 }
 /* Platine — blue, same hex as the sponsor rail's `blue` swatch
    (RAIL_COLORS in landing.js). */

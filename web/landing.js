@@ -15,6 +15,7 @@ import { escapeHtml } from './views/shared.js';
 import { CommunityClient, itunesRelayOptions } from './lib/community.js';
 import { ITunesClient } from './lib/itunes.js';
 import { fetchSponsorSlots, mountTape } from './lib/sponsor-tape.js';
+import { checkAppHealth, loadAppHealthSpec, profileFromEntry } from './lib/app-profile.js';
 import {
   DEMO_TESTING,
   DEMO_LAUNCHED,
@@ -49,9 +50,10 @@ function healthTone(score) {
   return score >= 80 ? 'ok' : score >= 50 ? 'warn' : 'bad';
 }
 
-function metric(label, value, tone = '', icon = '') {
+function metric(label, value, tone = '', icon = '', hook = '') {
   const iconHtml = icon ? `<img class="metric-icon" src="${icon}" alt="" width="17" height="17">` : '';
-  return `<div><span class="k">${escapeHtml(label)}</span><span class="v ${tone}">${escapeHtml(String(value))}${iconHtml}</span></div>`;
+  const hookAttr = hook ? ` data-metric="${hook}"` : '';
+  return `<div><span class="k">${escapeHtml(label)}</span><span class="v ${tone}"${hookAttr}>${escapeHtml(String(value))}${iconHtml}</span></div>`;
 }
 
 /** Alternates the featured tint across a page's featured cards. A counter
@@ -61,14 +63,15 @@ function metric(label, value, tone = '', icon = '') {
  * happened to have odd length. */
 let featuredSeen = 0;
 
-function tile({ flag, flagClass, name, genre, note, metrics, featured = false, boostTier = 0 }) {
+function tile({ flag, flagClass, name, genre, note, metrics, featured = false, boostTier = 0, icon = '', trackId = '' }) {
   const featuredClass = featured ? ` featured${featuredSeen++ % 2 ? ' warm' : ''}` : '';
   const boostClass = boostTier ? ` boost-${boostTier}` : '';
+  const trackAttr = trackId ? ` data-track="${escapeHtml(String(trackId))}"` : '';
   return `
-    <a class="listing-tile${featuredClass}${boostClass}" href="./app.html#community">
+    <a class="listing-tile${featuredClass}${boostClass}" href="./app.html#community"${trackAttr}>
       <span class="tile-flag ${flagClass}">${escapeHtml(flag)}</span>
       <span class="tile-head">
-        ${letterTile(name)}
+        ${icon ? `<img class="tile-icon" src="${icon}" alt="">` : letterTile(name)}
         <span style="min-width:0">
           <span class="tile-name">${escapeHtml(name)}</span>
           <span class="tile-genre">${escapeHtml(genre)}</span>
@@ -87,6 +90,7 @@ function moreTile(label) {
 
 function renderDemo() {
   featuredSeen = 0;
+
   document.getElementById('rowTesting').innerHTML =
     DEMO_TESTING.map((a) =>
       tile({
@@ -95,7 +99,7 @@ function renderDemo() {
         name: a.name,
         genre: a.genre,
         note: a.note,
-        featured: a.featured,
+        trackId: a.trackId,
         metrics: [
           metric('Testers', a.testers),
           metric('High 5s', a.helped, '', './assets/darkHighFive.png'),
@@ -112,11 +116,11 @@ function renderDemo() {
         name: a.name,
         genre: a.genre,
         note: a.note,
-        featured: a.featured,
+        trackId: a.trackId,
         metrics: [
-          metric('Health', a.health, healthTone(a.health)),
-          metric('Rating', `${a.rating}★`),
-          metric('Ratings', a.ratings),
+          metric('Health', '—', '', '', 'health'),
+          metric('Rating', '—', '', '', 'rating'),
+          metric('Ratings', '—', '', '', 'ratings'),
         ].join(''),
       }),
     ).join('') + moreTile('See every launch and update');
@@ -124,6 +128,82 @@ function renderDemo() {
   // Paged and sorted the same way the toggles will render it, so the first
   // paint already matches what a click on "Show more" extends.
   renderBoard(sortedDemo());
+
+  // Not awaited: real icon/genre/health are a nice-to-have patched in once
+  // available, not something the rest of boot() should wait on.
+  hydrateDemoApps();
+}
+
+/** `DEMO_TESTING`/`DEMO_LAUNCHED` name real apps (the site's own, before
+ * any third-party listing exists) via `trackId`, so their icon, genre and
+ * (for the launched row) health/rating/ratings come from the public
+ * catalogue instead of being invented — everything else about the row
+ * (testers signed up, High Fives, days left) still is, same as the
+ * "sample" tag on the page already discloses. Each distinct app is looked
+ * up once and patched into every card that names it via `[data-track]`,
+ * the same multi-target approach `fillAppFacts` uses for the board. */
+async function hydrateDemoApps() {
+  const trackIds = [...new Set(
+    [...DEMO_TESTING, ...DEMO_LAUNCHED].map((a) => a.trackId).filter(Boolean),
+  )];
+  if (!trackIds.length) return;
+
+  let specsLoaded = false;
+  try {
+    loadAppHealthSpec(await (await fetch('./lib/specs.json')).json());
+    specsLoaded = true;
+  } catch {
+    /* health metric stays '—' below if this fails */
+  }
+
+  const itunes = new ITunesClient(itunesRelayOptions());
+  for (const trackId of trackIds) {
+    let entry;
+    try {
+      entry = await itunes.lookup(trackId, { country: 'us' });
+    } catch {
+      continue; // leaves the letter tile and '—' placeholders for this app
+    }
+    if (!entry) continue;
+
+    const cells = document.querySelectorAll(`[data-track="${CSS.escape(trackId)}"]`);
+    cells.forEach((cell) => {
+      const artwork = entry.artworkUrl100 ?? entry.artworkUrl512;
+      const iconEl = cell.querySelector('.tile-icon');
+      if (artwork && iconEl && iconEl.tagName !== 'IMG') {
+        const img = document.createElement('img');
+        img.className = 'tile-icon';
+        img.src = artwork;
+        img.alt = '';
+        iconEl.replaceWith(img);
+      }
+      const nameEl = cell.querySelector('.tile-name');
+      if (nameEl && entry.trackName) nameEl.textContent = entry.trackName;
+      const genreEl = cell.querySelector('.tile-genre');
+      if (genreEl && entry.primaryGenreName) genreEl.textContent = entry.primaryGenreName;
+
+      const ratingEl = cell.querySelector('[data-metric="rating"]');
+      if (ratingEl) {
+        const rating = Number(entry.averageUserRating);
+        ratingEl.textContent = rating ? `${rating.toFixed(1)}★` : 'No rating';
+      }
+      const ratingsEl = cell.querySelector('[data-metric="ratings"]');
+      if (ratingsEl) {
+        const count = Number(entry.userRatingCount ?? 0);
+        ratingsEl.textContent = count > 0 ? count.toLocaleString('en-US') : 'No ratings';
+      }
+      const healthEl = cell.querySelector('[data-metric="health"]');
+      if (healthEl && specsLoaded) {
+        try {
+          const { score } = checkAppHealth(profileFromEntry(entry));
+          healthEl.textContent = String(Math.round(score));
+          healthEl.className = `v ${healthTone(score)}`;
+        } catch {
+          /* leaves '—' */
+        }
+      }
+    });
+  }
 }
 
 /* ============================ leaderboard ============================ */
