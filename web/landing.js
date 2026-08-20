@@ -49,8 +49,9 @@ function healthTone(score) {
   return score >= 80 ? 'ok' : score >= 50 ? 'warn' : 'bad';
 }
 
-function metric(label, value, tone = '') {
-  return `<div><span class="k">${escapeHtml(label)}</span><span class="v ${tone}">${escapeHtml(String(value))}</span></div>`;
+function metric(label, value, tone = '', icon = '') {
+  const iconHtml = icon ? `<img class="metric-icon" src="${icon}" alt="" width="17" height="17">` : '';
+  return `<div><span class="k">${escapeHtml(label)}</span><span class="v ${tone}">${escapeHtml(String(value))}${iconHtml}</span></div>`;
 }
 
 /** Alternates the featured tint across a page's featured cards. A counter
@@ -97,7 +98,7 @@ function renderDemo() {
         featured: a.featured,
         metrics: [
           metric('Testers', a.testers),
-          metric('High 5s', a.helped),
+          metric('High 5s', a.helped, '', './assets/darkHighFive.png'),
           metric('Days left', a.daysLeft),
         ].join(''),
       }),
@@ -238,7 +239,7 @@ function renderLiveListings(listings) {
             boostTier: l.ownerBoostTier ?? 0,
             metrics: [
               metric('Testers', `${l.slotsFilled}/${l.slotsWanted || '∞'}`),
-              metric('High 5s', l.ownerContribution ?? 0),
+              metric('High 5s', l.ownerContribution ?? 0, '', './assets/darkHighFive.png'),
               metric('Slots', Math.max(0, (l.slotsWanted || 0) - l.slotsFilled) || '—'),
             ].join(''),
           }),
@@ -260,7 +261,7 @@ function renderLiveListings(listings) {
             featured: isFeatured(l),
             boostTier: l.ownerBoostTier ?? 0,
             metrics: [
-              metric('High 5s', l.ownerContribution ?? 0),
+              metric('High 5s', l.ownerContribution ?? 0, '', './assets/darkHighFive.png'),
               metric('Reach', l.slotsFilled || '—'),
               metric('Status', 'Live'),
             ].join(''),

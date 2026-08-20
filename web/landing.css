@@ -110,6 +110,7 @@
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
 }
 /* Only once a name has actually wrapped (see `.name-wrap` below) does it
@@ -628,6 +629,7 @@ button.landing-cta:hover {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+.tile-metrics .v .metric-icon { vertical-align: -4px; margin-left: 1px; }
 .tile-metrics .v.ok { color: var(--ok); }
 .tile-metrics .v.warn { color: var(--warn); }
 .tile-metrics .v.bad { color: var(--bad); }

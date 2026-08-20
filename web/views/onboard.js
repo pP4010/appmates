@@ -16,10 +16,15 @@ import { el, escapeHtml } from './shared.js';
 
 const STORAGE_KEY = 'appmates:onboard-collapsed';
 
+const ICON_DASHBOARD =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>';
+const ICON_MEGAPHONE =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 6a13 13 0 0 0 8.4-2.8A1 1 0 0 1 21 4v12a1 1 0 0 1-1.6.8A13 13 0 0 0 11 14H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/><path d="M6 14a12 12 0 0 0 2.4 7.2 2 2 0 0 0 3.2-2.4A8 8 0 0 1 10 14"/><path d="M8 6v8"/></svg>';
+
 const STEPS = [
   {
     id: 'load-app',
-    icon: '◈',
+    icon: ICON_DASHBOARD,
     title: 'Load your app',
     desc: 'Point AppMates at your App Store id or bundle id — every other tool uses it from there.',
     hash: '#overview',
@@ -27,7 +32,7 @@ const STEPS = [
   },
   {
     id: 'get-testers',
-    icon: '◍',
+    icon: ICON_MEGAPHONE,
     title: 'Get testers for it',
     desc: 'Post a listing on Get testers so other developers can test it.',
     hash: '#community',
