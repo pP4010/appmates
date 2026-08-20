@@ -1413,14 +1413,19 @@ body:has(#view-inbox.active) .content {
 .listing-card { padding: .95rem 1.05rem; margin-bottom: .6rem; }
 .listing-head { display: flex; gap: .7rem; align-items: flex-start; }
 
-/* ============================ token boost tiers ============================
-   A listing card's owner token balance, tinted bronze through gold —
-   `ownerBoostTier` in community/src/routes/listings.js. Cosmetic only: it
-   never touches `ORDER BY`, so a 0-token listing still ranks #1 under
-   "newest" — see that file's `browse()` docstring for why that stays true
-   on purpose. Applies to both card shapes (.listing-card, the wide
-   Browse-tab row; .marketplace-card, the curated-grid tile), since a
-   listing can appear in either. */
+/* ============================ contribution boost tiers ============================
+   A listing card's owner lifetime High Fives received, tinted bronze
+   through Légendaire — `ownerBoostTier` in
+   community/src/routes/listings.js, reading `owner_contribution_count`.
+   Cosmetic only: it never touches `ORDER BY`, so a 0-High-Five listing
+   still ranks #1 under "newest" — see that file's `browse()` docstring
+   for why that stays true on purpose. Applies to both card shapes
+   (.listing-card, the wide Browse-tab row; .marketplace-card, the
+   curated-grid tile), since a listing can appear in either. Same ramp as
+   landing.css's `.listing-tile.boost-1..7`, so the marketplace and the
+   dashboard read as one system (landing.css additionally gives boost-7
+   an animated shine the way `.featured` gets one there — skipped here
+   since this surface has no such motion on any other card variant). */
 .listing-card.boost-1, .marketplace-card.boost-1 {
   border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--warn) 16%, transparent);
@@ -1437,6 +1442,43 @@ body:has(#view-inbox.active) .content {
   box-shadow:
     0 0 0 1.5px color-mix(in srgb, var(--warn) 45%, var(--accent) 20%),
     0 4px 16px color-mix(in srgb, var(--warn) 18%, transparent);
+}
+/* Platine — blue, same hex as the sponsor rail's `blue` swatch
+   (RAIL_COLORS in landing.js). */
+.listing-card.boost-4, .marketplace-card.boost-4 {
+  border-color: color-mix(in srgb, #2f5fa8 60%, var(--border));
+  background: linear-gradient(135deg, color-mix(in srgb, #2f5fa8 12%, var(--surface)), var(--surface));
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, #2f5fa8 40%, transparent),
+    0 4px 18px color-mix(in srgb, #2f5fa8 20%, transparent);
+}
+/* Diamant — violet, rail's `violet` swatch. */
+.listing-card.boost-5, .marketplace-card.boost-5 {
+  border-color: color-mix(in srgb, #6d3aa8 65%, var(--border));
+  background: linear-gradient(135deg, color-mix(in srgb, #6d3aa8 14%, var(--surface)), var(--surface));
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, #6d3aa8 45%, transparent),
+    0 5px 20px color-mix(in srgb, #6d3aa8 22%, transparent);
+}
+/* Rubis — red, rail's `red` swatch. Strongest of the static tiers. */
+.listing-card.boost-6, .marketplace-card.boost-6 {
+  border-color: color-mix(in srgb, #a8342f 70%, var(--border));
+  background: linear-gradient(135deg, color-mix(in srgb, #a8342f 16%, var(--surface)), var(--surface));
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, #a8342f 50%, transparent),
+    0 6px 22px color-mix(in srgb, #a8342f 25%, transparent);
+}
+/* Légendaire — the top of the ladder, a fully gold card. */
+.listing-card.boost-7, .marketplace-card.boost-7 {
+  border-color: var(--warn);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--warn) 35%, var(--surface)),
+    color-mix(in srgb, var(--warn) 18%, var(--surface))
+  );
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--warn) 65%, transparent),
+    0 8px 28px color-mix(in srgb, var(--warn) 32%, transparent);
 }
 .listing-title { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
 .listing-title strong { font-size: .95rem; letter-spacing: -0.01em; }

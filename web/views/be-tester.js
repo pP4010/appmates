@@ -329,7 +329,7 @@ async function renderBrowse() {
   }
 }
 
-/** ` boost-1`/`boost-2`/`boost-3`, or empty — see the CSS comment on
+/** ` boost-1` through ` boost-7`, or empty — see the CSS comment on
  * `.listing-card.boost-1` in styles.css for what this does and, more
  * importantly, what it deliberately doesn't (change sort order). */
 function boostClass(tier) {

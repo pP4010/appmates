@@ -485,17 +485,21 @@ button.landing-cta:hover {
 .tile-flag.launched { background: var(--ok-soft); color: var(--ok); }
 
 /* ---------------------------------------------------------------------
-   Token boost tiers
+   Contribution boost tiers
 
-   Bronze through gold, purely from the listing owner's current token
-   balance — `ownerBoostTier` in community/src/routes/listings.js. A
-   passive signal, unlike `.featured` below (an active spend): the two
-   stack (a card can be both), and where they conflict on background/
-   border, `.featured`'s rules win by appearing later in this file — the
-   thing you just paid for should read as the stronger signal than the
-   balance you happen to be sitting on. Same bronze/silver/gold ramp as
-   the dashboard's `.boost-1/2/3` in styles.css, so the two surfaces read
-   as one system.
+   Bronze through Légendaire, purely from the listing owner's lifetime
+   High Fives received — `ownerBoostTier` in
+   community/src/routes/listings.js, reading `owner_contribution_count`.
+   Automatic and permanent (it only ever goes up, and can't be bought),
+   unlike `.featured` below (an active, time-boxed spend): the two stack
+   (a card can be both), and where they conflict on background/border,
+   `.featured`'s rules normally win by appearing later in this file — the
+   thing you just paid for reads as the stronger signal than a passive
+   badge. Légendaire (boost-7) is the one exception: declared after
+   `.featured` further down, so the rarest tier this app can hand out
+   for real, sustained contribution outranks a placement anyone can pay
+   for. Same ramp as the dashboard's `.boost-1..7` in styles.css, so the
+   two surfaces read as one system.
    --------------------------------------------------------------------- */
 .listing-tile.boost-1 {
   border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
@@ -513,6 +517,32 @@ button.landing-cta:hover {
   box-shadow:
     0 0 0 1.5px color-mix(in srgb, var(--warn) 45%, var(--accent) 20%),
     0 4px 16px color-mix(in srgb, var(--warn) 18%, transparent);
+}
+/* Platine — blue, same hex as the sponsor rail's `blue` swatch
+   (RAIL_COLORS in landing.js), reused rather than inventing a new hue. */
+.listing-tile.boost-4 {
+  border-color: color-mix(in srgb, #2f5fa8 60%, var(--border));
+  background: linear-gradient(135deg, color-mix(in srgb, #2f5fa8 12%, var(--surface)), var(--surface));
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, #2f5fa8 40%, transparent),
+    0 4px 18px color-mix(in srgb, #2f5fa8 20%, transparent);
+}
+/* Diamant — violet, rail's `violet` swatch. */
+.listing-tile.boost-5 {
+  border-color: color-mix(in srgb, #6d3aa8 65%, var(--border));
+  background: linear-gradient(135deg, color-mix(in srgb, #6d3aa8 14%, var(--surface)), var(--surface));
+  box-shadow:
+    0 0 0 1.5px color-mix(in srgb, #6d3aa8 45%, transparent),
+    0 5px 20px color-mix(in srgb, #6d3aa8 22%, transparent);
+}
+/* Rubis — red, rail's `red` swatch. Strongest of the static (non-gold,
+   non-animated) tiers. */
+.listing-tile.boost-6 {
+  border-color: color-mix(in srgb, #a8342f 70%, var(--border));
+  background: linear-gradient(135deg, color-mix(in srgb, #a8342f 16%, var(--surface)), var(--surface));
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, #a8342f 50%, transparent),
+    0 6px 22px color-mix(in srgb, #a8342f 25%, transparent);
 }
 
 /* ---------------------------------------------------------------------
@@ -577,6 +607,45 @@ button.landing-cta:hover {
    page unusable for some readers, and it carries no information. */
 @media (prefers-reduced-motion: reduce) {
   .listing-tile.featured::after { animation: none; opacity: 0; }
+}
+
+/* Légendaire (boost-7) — the top of the contribution ladder, a fully gold
+   card. Declared after `.featured` on purpose (see the comment above the
+   boost tiers) so a listing that is both boosted to Légendaire and
+   `.featured` reads as gold, not the paler `.featured` accent tint —
+   contribution this sustained outranks a placement anyone can buy. Gets
+   its own shine sweep rather than depending on `.featured` being present,
+   reusing the same `tile-streak` keyframes. */
+.listing-tile.boost-7 {
+  border-color: var(--warn);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--warn) 35%, var(--surface)),
+    color-mix(in srgb, var(--warn) 18%, var(--surface))
+  );
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--warn) 65%, transparent),
+    0 8px 28px color-mix(in srgb, var(--warn) 32%, transparent);
+}
+.listing-tile.boost-7::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(
+    120deg,
+    transparent 0%, transparent 30%,
+    rgb(255 255 255 / 45%) 44%,
+    rgb(255 255 255 / 60%) 50%,
+    rgb(255 255 255 / 45%) 56%,
+    transparent 70%, transparent 100%
+  ) 0 0 / 200% 100% no-repeat;
+  animation: tile-streak 5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .listing-tile.boost-7::after { animation: none; opacity: 0; }
 }
 
 .tile-head { display: flex; align-items: center; gap: .6rem; margin: .15rem 0 .7rem; padding-right: 4.2rem; }
