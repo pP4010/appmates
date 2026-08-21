@@ -15,7 +15,21 @@
    where a tidy grid of six reads as everything there is.
    ========================================================================== */
 
-.landing-body { height: auto; }
+/* `height: auto` (not the `100%` `styles.css` sets for the app shell) lets
+   this page grow past the viewport when its content needs it — but a short
+   view (`#browseView` with one or two listings, say) must not leave the
+   footer stranded right under the content with a slab of bare viewport
+   beneath it. `min-height: 100vh` plus a column flex pins it to the
+   viewport's bottom edge either way: flush when content is short, pushed
+   down normally once content actually needs the scroll. */
+.landing-body {
+  height: auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+main.landing { flex: 1 0 auto; }
+.landing-footer { flex-shrink: 0; }
 .landing,
 .landing-footer { --landing-max: 1120px; }
 
