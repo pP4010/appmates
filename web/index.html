@@ -26,6 +26,8 @@
 
 <main class="landing">
 
+<div id="landingHome">
+
   <!-- ============================ hero ============================ -->
   <section class="hero">
     <a class="hero-brand" href="./">
@@ -55,7 +57,7 @@
       <span aria-hidden="true">·</span>
       <a href="#leaderboard">Leaderboard</a>
       <span aria-hidden="true">·</span>
-      <a href="#" id="heroAdvertise">Advertise</a>
+      <a href="#sponsor" id="heroAdvertise">Advertise</a>
     </nav>
   </section>
 
@@ -216,6 +218,271 @@
     <p>Paste an App Store id or bundle id and see what a reviewer — and a tester — would find.</p>
     <a class="landing-cta lg" href="./app.html#overview">Check my listing</a>
   </section>
+
+</div>
+
+<!-- ==================== sponsor view ====================
+     Same document as landingHome above, toggled by a same-page hash
+     (#sponsor / #sponsor-left / #sponsor-right, see landing.js's boot())
+     rather than a separate page — so the promoted rails either side never
+     reload or reflow when this opens. -->
+<div id="sponsorView" class="sponsor-page" hidden>
+
+  <section class="hero sponsor-hero">
+    <a class="hero-brand" href="#">
+      <img src="./assets/icon.svg" alt="" width="22" height="22">
+      <span>AppMates</span>
+    </a>
+
+    <h1>Feature your app on AppMates.</h1>
+
+    <p class="hero-sub">
+      Eight slots in the rails either side of every listing and tool page on the site,
+      read by developers deciding what to ship and what to ship it with. If your app
+      belongs in that stack, this is the shelf it gets picked from.
+    </p>
+
+    <!-- Every number here is measured, and each renders an em dash until its
+         own source answers. A stat band that briefly shows a dash is honest;
+         one that shows a confident 0 is not. -->
+    <dl class="sponsor-statband">
+      <div class="sponsor-stat">
+        <dt id="sponsorStatLive">—</dt>
+        <dd>on the site right now</dd>
+      </div>
+      <div class="sponsor-stat">
+        <dt id="sponsorStatVisits">—</dt>
+        <dd id="sponsorStatVisitsLab">visits</dd>
+      </div>
+      <div class="sponsor-stat">
+        <dt id="sponsorStatListings">—</dt>
+        <dd>apps looking for testers</dd>
+      </div>
+      <div class="sponsor-stat sponsor-stat--ok">
+        <dt id="sponsorStatOpen">—</dt>
+        <dd>slots open right now</dd>
+      </div>
+    </dl>
+
+    <nav class="hero-nav">
+      <a href="#slots">The slots</a>
+      <span aria-hidden="true">·</span>
+      <a href="#sponsorForm">Request one</a>
+      <span aria-hidden="true">·</span>
+      <a href="#">← Back to AppMates</a>
+    </nav>
+  </section>
+
+  <!-- The live panel. Country-level throughout: the worker never sends a
+       coordinate and the database stores none, so the globe maps ISO codes
+       to centroids itself (web/lib/globe-centroids.js). -->
+  <aside class="sponsor-globe-strip" id="sponsorLive" aria-label="Live visitors around the world">
+    <div class="sponsor-globe-inner">
+      <div class="sponsor-strip-head">
+        <span class="sponsor-microlabel">Live · who's on the site right now</span>
+        <a class="sponsor-strip-note" href="./privacy.html#globe">
+          Country-level only — nobody here is identifiable
+        </a>
+      </div>
+
+      <div class="sponsor-globe-grid">
+        <div class="sponsor-globe-wrap">
+          <canvas id="sponsorGlobe" role="img"
+            aria-label="Rotating globe of the countries visitors are reading from"></canvas>
+        </div>
+
+        <div class="sponsor-globe-side">
+          <p class="sponsor-g-count">
+            <strong class="sponsor-g-num" id="sponsorLiveCount">—</strong>
+            <span class="sponsor-g-lab">people on the site right now</span>
+          </p>
+          <p class="sponsor-g-sub" id="sponsorLiveSub"></p>
+          <ul class="sponsor-g-feed" id="sponsorLiveFeed"></ul>
+          <div class="sponsor-g-countries">
+            <span class="sponsor-microlabel">Visitors · 7 days · by country</span>
+            <div class="sponsor-g-chips" id="sponsorGlobeChips"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Owned by the page, driven by lib/globe.js — that module makes no DOM
+         of its own, so the tooltip's markup and styling stay here with the
+         rest of the page's. -->
+    <div class="sponsor-globe-tip" id="sponsorGlobeTip" role="status" hidden></div>
+  </aside>
+
+  <section class="row-section" id="sponsorPricing">
+    <div class="row-head">
+      <h2>What a slot costs</h2>
+    </div>
+    <div class="sponsor-price-card">
+      <p class="sponsor-flat-price">
+        <s>$20/mo</s>
+        <strong>Free</strong>
+      </p>
+      <p class="sponsor-flat-note">
+        Free while AppMates is growing — and if you take a slot now, your rate never
+        rises. That's the deal, not a promotion.
+      </p>
+      <ol class="sponsor-timeline">
+        <li class="sponsor-tl-step sponsor-tl-step--live">
+          <span class="sponsor-tl-dot" aria-hidden="true"></span>
+          <span class="sponsor-tl-when">Right now</span>
+          <span class="sponsor-tl-what">Every open slot is free. No card, no trial, no contract.</span>
+        </li>
+        <li class="sponsor-tl-step">
+          <span class="sponsor-tl-dot" aria-hidden="true"></span>
+          <span class="sponsor-tl-when">Once the site clears 10,000 visits a month</span>
+          <span class="sponsor-tl-what">New sponsors start paying $20/mo. You'll see it coming — the
+            counter above is the same one we're watching.</span>
+        </li>
+        <li class="sponsor-tl-step">
+          <span class="sponsor-tl-dot" aria-hidden="true"></span>
+          <span class="sponsor-tl-when">Always</span>
+          <span class="sponsor-tl-what">Anyone who took a slot while it was free stays free, for as
+            long as they keep it.</span>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="row-section" id="sponsorWho">
+    <div class="row-head">
+      <h2>Who sponsors here</h2>
+    </div>
+    <p class="row-sub">Two kinds of sponsor do well on this page.</p>
+    <div class="sponsor-who-grid">
+      <div class="sponsor-who-card">
+        <span class="sponsor-who-head">You made an app</span>
+        <p>
+          It's built, it's on the store, and nobody has heard of it yet. A fixed card
+          beside every listing puts it in front of the people most likely to open it,
+          try it properly, and tell you what's wrong with it.
+        </p>
+      </div>
+      <div class="sponsor-who-card">
+        <span class="sponsor-who-head">You made something app developers need</span>
+        <p>
+          Analytics, screenshot tooling, ASO, crash reporting, a backend. Self-serve,
+          priced for one person's card, obviously useful in the first session. The
+          people reading this page are the people who buy that.
+        </p>
+      </div>
+    </div>
+    <p class="row-note">
+      Works best for: iOS and Android apps · developer tools · ASO and store assets ·
+      analytics · testing and QA services
+    </p>
+  </section>
+
+  <section class="row-section" id="slots">
+    <div class="row-head">
+      <h2>The slots</h2>
+    </div>
+    <p class="row-sub">
+      Ten cards, five a side. The top card on each rail is one of ours and isn't for
+      sale; the eight below them are. Every card links straight to the app's store
+      listing.
+    </p>
+    <div class="sponsor-board">
+      <div>
+        <p class="sponsor-slot-label">Left rail</p>
+        <div class="sponsor-board-col" id="sponsorLeftCol"></div>
+      </div>
+      <div>
+        <p class="sponsor-slot-label">Right rail</p>
+        <div class="sponsor-board-col" id="sponsorRightCol"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="row-section" id="how">
+    <div class="row-head">
+      <h2>How it works</h2>
+    </div>
+    <p class="row-sub">About two minutes, end to end.</p>
+    <ol class="sponsor-how">
+      <li>
+        <strong>Pick an open slot and tell us about your app</strong>
+        <span>App Store id or bundle id, a colour for the card, and a short pitch. We
+          pull the name, icon and genre from the store ourselves.</span>
+      </li>
+      <li>
+        <strong>We read it by hand</strong>
+        <span>Usually the same day. If more people want a slot than there are slots,
+          the pitch is what decides it.</span>
+      </li>
+      <li>
+        <strong>You're live</strong>
+        <span>Approved apps go straight into the rail, on every page of the site, and
+          stay there until you ask us to take them down.</span>
+      </li>
+    </ol>
+  </section>
+
+  <section class="row-section" id="sponsorForm">
+    <div class="row-head">
+      <h2>Request a slot</h2>
+    </div>
+    <div class="sponsor-form-wrap" id="sponsorFormMount"></div>
+
+    <div class="sponsor-notify" id="sponsorNotify">
+      <h3>Nothing open?</h3>
+      <p>Leave your email and we'll write to you the next time a slot frees up.</p>
+      <form id="sponsorNotifyForm">
+        <!-- Clipped, not display:none — a bot skips hidden fields, which is
+             the whole point of leaving one where only a bot will fill it. -->
+        <label class="sponsor-hp" aria-hidden="true">
+          Leave this empty
+          <input type="text" id="sponsorNotifyWebsite" name="website" tabindex="-1" autocomplete="off">
+        </label>
+        <input type="email" id="sponsorNotifyEmail" name="email" required
+          placeholder="you@yourcompany.com" aria-label="Email address">
+        <button type="submit" class="landing-cta">Tell me when one opens</button>
+      </form>
+      <p class="status" id="sponsorNotifyStatus" role="status"></p>
+    </div>
+  </section>
+
+  <section class="row-section" id="sponsorTerms">
+    <div class="row-head">
+      <h2>The boring part</h2>
+    </div>
+    <div class="sponsor-terms-prose">
+      <p>
+        A slot is a card in one of the two rails that sit either side of the site —
+        the landing page, every listing, every tool page. It carries your icon, your
+        name, your genre, and links straight to your store listing. It is not a
+        banner, it does not follow the reader around, and it loads no third-party
+        script.
+      </p>
+      <p>
+        Every request is read by a person before it goes live, usually the same day.
+        We turn down anything we wouldn't want sitting next to a listing: apps that
+        aren't on a store yet, anything built to harvest data, anything adult, and
+        anything whose store page and pitch don't describe the same product.
+      </p>
+      <p>
+        Sponsor links carry <code>rel="sponsored noopener"</code>. Sponsorship buys a
+        card and nothing else: it never moves an app up the marketplace, never
+        affects a listing's readiness score, and never touches what a check reports.
+        Those run on the same rules for a sponsor as for anyone else.
+      </p>
+      <p>
+        Slots are free right now, and a slot taken while it's free stays free. If
+        pricing ever starts, it starts for new sponsors only, changes at most once a
+        month, never mid-run, and always by email first. Nothing is charged without
+        your confirmation.
+      </p>
+      <p>
+        Ask us to take your card down and it's gone the same day, no reason needed.
+        Questions, or something that looks wrong:
+        <a href="mailto:kaizenapp.contact@gmail.com">kaizenapp.contact@gmail.com</a>.
+      </p>
+    </div>
+  </section>
+
+</div>
 
 </main>
 

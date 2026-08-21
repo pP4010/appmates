@@ -21,7 +21,7 @@
 
 <main class="legal-main">
   <h1>Privacy Policy</h1>
-  <p class="legal-updated">Last updated: 2 August 2026</p>
+  <p class="legal-updated">Last updated: 21 August 2026</p>
 
   <p>
     AppMates is operated by an individual (sole trader / <em>auto-entrepreneur</em>),
@@ -37,6 +37,46 @@
     you is sent anywhere to use them — every lookup is public App Store or Play
     catalogue data, read live, cached only in your own browser's session storage
     (cleared when you close the tab) and never uploaded anywhere on our end.
+  </p>
+
+  <h2 id="globe">The "who's on the site right now" globe</h2>
+  <p>
+    The sponsor page's live globe needs no account either, but — unlike the pre-flight
+    checks above — it isn't purely local: while you have a tab open, your browser pings
+    us roughly every 20 seconds so the counter and globe can reflect who's actually
+    here. Each ping carries a random id generated for that browser tab (not tied to any
+    account or device fingerprint), your <strong>country</strong>, and a coarse
+    <strong>device family</strong> — one of iPhone, iPad, Mac, Android, Windows or
+    Linux, and nothing else about your browser. The country is read from Cloudflare's
+    own edge network as your request already passes through it: no third-party
+    geolocation service is called. We do not store your coordinates. The globe places
+    a dot at the middle of a country, which your own browser works out from the country
+    code — so the map can't show anything more precise than a country even in
+    principle, because nothing more precise ever reaches us.
+  </p>
+  <p>
+    Pings older than five minutes are deleted, so the "here right now" row for your tab
+    disappears shortly after you close it.
+  </p>
+
+  <h2>What is kept as visit history</h2>
+  <p>
+    The sponsor page also shows how much traffic the site gets — a running total and
+    the busiest countries of the past week. That comes from two counters, and counters
+    are all they are:
+  </p>
+  <ul>
+    <li><strong>Visits per country, per day</strong>, where one visit means one browser
+      tab on one day. Kept for 30 days.</li>
+    <li><strong>An all-time visit count per country.</strong> Kept indefinitely — it is
+      what lets the total stay accurate after the daily rows above are deleted.</li>
+  </ul>
+  <p>
+    There is no per-visitor history of any kind. To count a tab once a day rather than
+    once every 20 seconds, we keep a two-column list of (day, tab id) — no country, no
+    page, nothing else — and it is deleted after two days. Neither counter records what
+    you read, and neither can be traced back to a person: they are totals, and a total
+    does not remember who was in it.
   </p>
 
   <h2>What's collected if you create an account</h2>
@@ -88,7 +128,13 @@
 
   <h2>How long data is kept</h2>
   <p>
-    For as long as your account exists. Ask
+    For the globe and its counters: five minutes for the "here right now" row, two days
+    for the once-a-day tab list, 30 days for the per-country daily counts, and
+    indefinitely for the all-time per-country totals — which are aggregate numbers with
+    nothing personal left in them.
+  </p>
+  <p>
+    For everything else: as long as your account exists. Ask
     <a href="mailto:appmates.contact@gmail.com">appmates.contact@gmail.com</a> to
     delete your account and we'll remove your email, display name, and listings;
     message content already sent to another member as part of a completed test may

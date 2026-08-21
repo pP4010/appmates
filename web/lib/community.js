@@ -310,6 +310,29 @@ export class CommunityClient {
     return this._request('/promo/featured', { credentials: 'omit' }).then((d) => d.slots);
   }
 
+  /** One heartbeat for the sponsor view's live globe (`lib/presence.js`
+   * calls this every ~20s from every page). `id` is a per-tab id the
+   * caller generates once and reuses; uncredentialed for the same reason
+   * `featuredPromoSlots` is. */
+  pingPresence({ id, page }) {
+    return this._request('/presence/ping', { method: 'POST', body: { id, page }, credentials: 'omit' });
+  }
+
+  /** Public: the sponsor page's entire live panel *and* stat band in one
+   * call — `{ live, liveCountries, allTime, topCountries, moreCountries,
+   * feed, pins, site, age }`. They always render together, so a second
+   * request just to count listings would be a round trip for nothing.
+   *
+   * `pins` carry an ISO2 country code, never coordinates — the browser maps
+   * those to centroids itself (`lib/globe-centroids.js`). `age` is how many
+   * seconds the server's snapshot had already spent in its cache, which the
+   * caller adds to every `ago` so a cached payload's "12s ago" doesn't read
+   * "12s ago" for the whole window. Uncredentialed, same reasoning as
+   * `featuredPromoSlots`. */
+  globeSnapshot() {
+    return this._request('/presence/globe', { credentials: 'omit' });
+  }
+
   tokens() {
     return this._request('/tokens/me');
   }

@@ -289,6 +289,402 @@ button.promo-swatch:hover {
   .rail-card.promo-shine::after { animation: none; opacity: 0; }
 }
 
+/* ============================ sponsor page ============================ */
+
+/* `#sponsorView`'s own sections — an in-page view swapped in for
+   `#landingHome` by a same-document hash (see landing.js's `boot()`), not
+   a separate page, so the `.rail`/`.rail-card` styles above are shared,
+   not duplicated. Reuses `.promo-*`/`.field`/`.status` wholesale for
+   anything generic; only the layout unique to this view (a fixed 5-a-side
+   grid instead of the rails' elastic viewport-fill, the stats strip, the
+   live panel, the numbered steps) gets rules here. */
+
+.sponsor-page[hidden] { display: none; }
+
+/* Nothing below hardcodes a colour: every hue is either a token or a
+   `color-mix` onto one, and the globe reads its palette off the same tokens
+   at runtime — so dark mode needs no override block anywhere in this
+   section. */
+.sponsor-microlabel {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---------- hero stat band ---------- */
+
+/* The four measured numbers, as one row wherever they fit. The 128px floor
+   is deliberate rather than round: the landing shell reserves the rails, so
+   this band is ~688px at a 1280px viewport, and anything above ~135px tips
+   `auto-fit` into three columns and leaves the fourth stat stranded on its
+   own line. Below roughly 620px it wraps to a tidy 2x2 instead. */
+.sponsor-statband {
+  margin: 1.6rem 0 0;
+  display: grid;
+  gap: 1.4rem 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+}
+.sponsor-stat { display: flex; flex-direction: column; gap: .2rem; min-width: 0; }
+.sponsor-stat dt {
+  font-size: clamp(1.7rem, 4vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.sponsor-stat dd {
+  margin: 0;
+  font-size: .72rem;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1.35;
+}
+/* The one stat a prospective sponsor is actually shopping for. */
+.sponsor-stat--ok dt { color: var(--ok); }
+
+/* ---------- live globe panel ---------- */
+
+.sponsor-globe-strip {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  margin: 2rem 0;
+}
+.sponsor-globe-inner { padding: 1.1rem 1.3rem 1.4rem; display: flex; flex-direction: column; gap: 1rem; }
+.sponsor-strip-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .4rem 1rem;
+}
+.sponsor-strip-note { font-size: .72rem; color: var(--muted); text-decoration: none; }
+.sponsor-strip-note:hover { color: var(--text-2); text-decoration: underline; }
+
+.sponsor-globe-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: 1.6rem;
+}
+@media (min-width: 760px) {
+  .sponsor-globe-grid { grid-template-columns: minmax(240px, 360px) 1fr; gap: 2.4rem; }
+}
+.sponsor-globe-wrap { display: flex; justify-content: center; }
+/* Square and transparent on purpose: the globe strokes its own rim, and the
+   circular clip this used to carry would have eaten the pin halos exactly
+   where they matter, at the limb. `height` is set by the script from the
+   measured width, so the box stays square at any column size. */
+#sponsorGlobe { width: min(360px, 78vw); max-width: 100%; display: block; }
+
+.sponsor-globe-side { display: flex; flex-direction: column; gap: .9rem; min-width: 0; }
+.sponsor-g-count { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; }
+.sponsor-g-num {
+  font-size: clamp(2rem, 4.4vw, 2.9rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -.035em;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+.sponsor-g-lab { font-size: .86rem; color: var(--text-2); }
+.sponsor-g-sub { margin: -.5rem 0 0; font-size: .76rem; color: var(--muted); }
+
+.sponsor-g-feed {
+  list-style: none;
+  margin: 0;
+  padding: .9rem 0 0;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+.sponsor-g-feed li { display: flex; align-items: center; gap: .55rem; min-width: 0; font-size: .78rem; color: var(--text-2); }
+.sponsor-g-line { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sponsor-g-ago { color: var(--muted); font-size: .72rem; white-space: nowrap; }
+.sponsor-g-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--accent) 45%, var(--surface));
+}
+.sponsor-g-fresh .sponsor-g-line { color: var(--text); }
+.sponsor-g-fresh .sponsor-g-dot { background: var(--accent); animation: sponsor-pulse 2s ease-in-out infinite; }
+@keyframes sponsor-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .45; transform: scale(1.35); }
+}
+
+.sponsor-g-countries { border-top: 1px solid var(--border); padding-top: .9rem; display: flex; flex-direction: column; gap: .6rem; }
+.sponsor-g-chips { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+.sponsor-g-chip {
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  padding: .28rem .55rem;
+  font-size: .74rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+}
+.sponsor-g-more { font-size: .74rem; color: var(--muted); }
+
+/* Fixed, not absolute: the globe positions this from `clientX`/`clientY`,
+   and an absolutely positioned tip would be clipped by the panel's own box
+   the moment a pin near the edge was hovered. */
+.sponsor-globe-tip {
+  position: fixed;
+  z-index: 90;
+  pointer-events: none;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-md);
+  padding: .5rem .7rem;
+  font-size: .74rem;
+  line-height: 1.55;
+  color: var(--text);
+  max-width: 15rem;
+}
+.sponsor-globe-tip[hidden] { display: none; }
+.sponsor-globe-tip span { color: var(--muted); }
+
+/* ---------- price and timeline ---------- */
+
+.sponsor-price-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: 1.4rem 1.5rem;
+}
+.sponsor-flat-price { margin: 0; display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap; }
+.sponsor-flat-price s { font-size: 1.15rem; color: var(--muted); }
+.sponsor-flat-price strong { font-size: clamp(2rem, 5vw, 2.8rem); line-height: 1; letter-spacing: -.03em; color: var(--accent); }
+.sponsor-flat-note { margin: .5rem 0 0; font-size: .84rem; color: var(--text-2); max-width: 52ch; line-height: 1.55; }
+
+.sponsor-timeline { list-style: none; margin: 1.4rem 0 0; padding: 0; display: flex; flex-direction: column; gap: .9rem; }
+.sponsor-tl-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: .2rem .7rem;
+  padding-left: .1rem;
+}
+.sponsor-tl-dot {
+  grid-row: span 2;
+  align-self: start;
+  margin-top: .38rem;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--border-strong);
+}
+.sponsor-tl-when { font-size: .84rem; font-weight: 650; color: var(--text); }
+.sponsor-tl-what { grid-column: 2; font-size: .82rem; color: var(--text-2); line-height: 1.5; max-width: 56ch; }
+.sponsor-tl-step--live .sponsor-tl-dot { background: var(--ok); animation: sponsor-pulse 2s ease-in-out infinite; }
+.sponsor-tl-step--live .sponsor-tl-when { color: var(--ok); }
+
+/* ---------- who sponsors here ---------- */
+
+.sponsor-who-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.sponsor-who-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: 1.1rem 1.2rem;
+}
+.sponsor-who-head { display: block; font-size: .9rem; font-weight: 650; margin-bottom: .4rem; }
+.sponsor-who-card p { margin: 0; font-size: .82rem; color: var(--text-2); line-height: 1.55; }
+
+/* ---------- slot board ---------- */
+
+.sponsor-board { display: grid; grid-template-columns: 1fr; gap: 1.6rem; }
+@media (min-width: 640px) {
+  .sponsor-board { grid-template-columns: 1fr 1fr; }
+}
+.sponsor-slot-label {
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 .6rem;
+}
+.sponsor-board-col {
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  border-radius: var(--r-md);
+  transition: box-shadow .2s;
+}
+/* Marks the column a visitor arrived from — via a "Your app here" click on
+   the landing rail/tape or the dashboard tape — so the page they land on
+   still points at roughly the right half, even though those surfaces show
+   as many filler cards as their viewport fits and this page always shows
+   exactly four sellable slots a side. Class name unchanged from when this
+   applied to `.sponsor-slot-col`: `landing.js` and `sponsor-view.js` both
+   still address it by that name. */
+.sponsor-slot-col--highlight {
+  box-shadow: 0 0 0 2px var(--accent);
+  padding: .6rem;
+  margin: -.6rem;
+}
+
+/* One card per slot. Deliberately not a `.rail-card`: a rail card is a
+   compact advert, this is an inventory row, and it has to carry a slot id
+   and a status chip the rail version has no room for. The colour tints
+   *are* borrowed though — `sponsor-view.js` puts `.rail-card--<hue>` on
+   these, so a sponsor's colour on the board is the same one source as their
+   colour in the rail. */
+.sponsor-slot {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas:
+    'tag  tag  chip'
+    'icon name name'
+    'icon note note';
+  align-items: center;
+  gap: .15rem .6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: .7rem .8rem;
+  text-decoration: none;
+  color: inherit;
+  text-align: left;
+  transition: border-color .15s, transform .15s;
+}
+.sponsor-slot:hover { border-color: var(--accent); transform: translateY(-1px); }
+.sponsor-slot-tag { grid-area: tag; font-size: .64rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.sponsor-slot-icon { grid-area: icon; width: 34px; height: 34px; border-radius: var(--r-sm); margin-top: .3rem; }
+.sponsor-slot-name { grid-area: name; font-size: .9rem; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sponsor-slot-note { grid-area: note; font-size: .74rem; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.sponsor-chip {
+  grid-area: chip;
+  justify-self: end;
+  border-radius: var(--r-pill);
+  padding: .12rem .5rem;
+  font-size: .64rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.sponsor-chip--open { background: var(--ok-soft); color: var(--ok); }
+.sponsor-chip--taken { background: var(--surface-3); color: var(--muted); }
+.sponsor-chip--house { background: var(--accent-soft); color: var(--accent-strong); }
+
+/* An open slot is a `<button>` (it scrolls to the form rather than
+   navigating), so it needs the button reset the anchor version doesn't. */
+.sponsor-slot--open {
+  width: 100%;
+  font: inherit;
+  cursor: pointer;
+  border-style: dashed;
+  background: transparent;
+}
+.sponsor-slot--open:hover { background: var(--surface-2); }
+.sponsor-slot--open .sponsor-slot-name { color: var(--text-2); }
+
+/* ---------- how it works ---------- */
+
+.sponsor-how {
+  list-style: none;
+  counter-reset: sponsor-step;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.sponsor-how li {
+  counter-increment: sponsor-step;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: 1.1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+}
+/* `decimal-leading-zero` — "01" reads as one of a fixed short sequence in a
+   way "1" doesn't. */
+.sponsor-how li::before {
+  content: counter(sponsor-step, decimal-leading-zero);
+  font-size: .8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  margin-bottom: .3rem;
+}
+.sponsor-how li strong { font-size: .92rem; }
+.sponsor-how li span { font-size: .82rem; color: var(--text-2); line-height: 1.45; }
+
+/* ---------- request form and waitlist ---------- */
+
+.sponsor-form-wrap {
+  max-width: 30rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: 1.4rem 1.5rem;
+}
+
+.sponsor-notify {
+  max-width: 30rem;
+  margin-top: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  padding: 1.1rem 1.2rem;
+}
+.sponsor-notify h3 { margin: 0; font-size: .95rem; }
+.sponsor-notify p { margin: .3rem 0 .8rem; font-size: .82rem; color: var(--text-2); line-height: 1.5; }
+.sponsor-notify form { display: flex; flex-wrap: wrap; gap: .5rem; }
+.sponsor-notify input[type="email"] {
+  flex: 1 1 14rem;
+  min-width: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  padding: .55rem .7rem;
+  font: inherit;
+  font-size: .85rem;
+}
+.sponsor-notify .status { margin: .6rem 0 0; }
+
+/* Clipped rather than `display: none`: a bot skips fields it can tell are
+   hidden, and a honeypot only works on the ones it can't. */
+.sponsor-hp {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- terms ---------- */
+
+.sponsor-terms-prose { max-width: 64ch; }
+.sponsor-terms-prose p { margin: 0 0 .9rem; font-size: .82rem; color: var(--text-2); line-height: 1.65; }
+.sponsor-terms-prose code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sponsor-g-fresh .sponsor-g-dot,
+  .sponsor-tl-step--live .sponsor-tl-dot { animation: none; }
+  .sponsor-slot { transition: none; }
+  .sponsor-slot:hover { transform: none; }
+}
+
 /* ============================ hero ============================ */
 
 .hero {

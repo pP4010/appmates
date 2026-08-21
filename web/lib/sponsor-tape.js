@@ -29,12 +29,17 @@ async function resolveSlots(slots, itunes) {
       out.push(null);
       continue;
     }
+    // `liveSince` is carried through both branches on purpose: this builds a
+    // fresh object per slot rather than spreading the input, so anything not
+    // named here is silently dropped — and the sponsor board reads it to
+    // print "live since 14 Aug" under a taken slot.
     const fallback = {
       name: slot.name || 'Promoted app',
       genre: '',
       artwork: '',
       storeUrl: `https://apps.apple.com/app/id${encodeURIComponent(slot.trackId)}`,
       color: slot.color,
+      liveSince: slot.liveSince ?? null,
     };
     try {
       const entry = await itunes.lookup(slot.trackId, { country: slot.country || 'us' });
@@ -46,6 +51,7 @@ async function resolveSlots(slots, itunes) {
               artwork: entry.artworkUrl100 ?? entry.artworkUrl512 ?? '',
               storeUrl: entry.trackViewUrl ?? '',
               color: slot.color,
+              liveSince: slot.liveSince ?? null,
             }
           : fallback,
       );
@@ -103,9 +109,9 @@ function tapeItem(app) {
     </a>`;
 }
 
-function openSlotItem(emailHref, label) {
+function openSlotItem(slotHref, label) {
   return `
-    <a class="tape-item tape-item--open" href="${escapeHtml(emailHref)}">
+    <a class="tape-item tape-item--open" href="${escapeHtml(slotHref)}">
       <img class="tape-icon" src="./assets/icon.svg" alt="" width="18" height="18">
       <span>${escapeHtml(label)}</span>
     </a>`;
@@ -116,9 +122,9 @@ function openSlotItem(emailHref, label) {
  * renders through `tapeItem()` — an earlier version special-cased "fewer
  * than two apps" into a text-only pill that dropped the app's own icon
  * even when one had resolved. */
-function singleTapeHtml(apps, emailHref) {
-  const label = apps.length ? 'More slots open — get in touch' : 'Sponsor slots open — get in touch';
-  return apps.map(tapeItem).join('') + openSlotItem(emailHref, label);
+function singleTapeHtml(apps, slotHref) {
+  const label = apps.length ? 'More slots open — claim one' : 'Sponsor slots open — claim one';
+  return apps.map(tapeItem).join('') + openSlotItem(slotHref, label);
 }
 
 /**
@@ -135,8 +141,8 @@ function singleTapeHtml(apps, emailHref) {
  * `fillTapeWidth`'s comment for why that second pass is the one that
  * actually matters.
  */
-export function buildTapeTrack(apps, emailHref) {
-  const single = singleTapeHtml(apps, emailHref);
+export function buildTapeTrack(apps, slotHref) {
+  const single = singleTapeHtml(apps, slotHref);
   if (!apps.length) {
     return `<div class="tape-track tape-track--static">${single}</div>`;
   }
@@ -291,15 +297,15 @@ function wireTapeResize() {
 }
 
 /** Renders straight into a tape container; a no-op if the page has none. */
-export function mountTape(container, apps, emailHref) {
+export function mountTape(container, apps, slotHref) {
   if (!container) return;
-  container.innerHTML = buildTapeTrack(apps, emailHref);
+  container.innerHTML = buildTapeTrack(apps, slotHref);
 
   if (!apps.length) {
     mountedTapes.delete(container);
     return;
   }
-  const singleHtml = singleTapeHtml(apps, emailHref);
+  const singleHtml = singleTapeHtml(apps, slotHref);
   mountedTapes.set(container, singleHtml);
   fillTapeWidth(container, singleHtml);
   wireTapeResize();

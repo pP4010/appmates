@@ -37,6 +37,7 @@ import { initAdmin } from './views/admin.js';
 import { initOnboard, refreshOnboard } from './views/onboard.js';
 import { CommunityClient, itunesRelayOptions } from './lib/community.js';
 import { fetchSponsorSlots, mockSponsorApps, mountTape } from './lib/sponsor-tape.js';
+import { startPresencePing } from './lib/presence.js';
 import { RAIL_LEFT, RAIL_RIGHT } from './landing-demo.js';
 
 /** Title and one-line purpose per view, shown in the top bar.
@@ -55,17 +56,17 @@ const VIEWS = {
   admin: ['Admin', 'Review "Feature your app here" requests'],
 };
 
-const SPONSOR_EMAIL = 'kaizenapp.contact@gmail.com';
-const SPONSOR_MAILTO = `mailto:${SPONSOR_EMAIL}?subject=${encodeURIComponent('Featuring my app on AppMates')}`;
-
 /** The real slots last fetched, cached so flipping the test toggle off
  * restores them without a second network round-trip, and so turning it on
  * can graft the 2 real apps onto the 8 mock ones instead of losing them. */
 let realTapeSlots = { left: [], right: [] };
 
 function mountDashTape({ left, right }) {
-  mountTape(document.getElementById('dashTapeTop'), left, SPONSOR_MAILTO);
-  mountTape(document.getElementById('dashTapeBottom'), right, SPONSOR_MAILTO);
+  // A real cross-page navigation, unlike the landing page's own `#sponsor`
+  // hash links — app.html has no rails to disturb, so there's no "cards
+  // shouldn't move" constraint here.
+  mountTape(document.getElementById('dashTapeTop'), left, './index.html#sponsor-left');
+  mountTape(document.getElementById('dashTapeBottom'), right, './index.html#sponsor-right');
 }
 
 /**
@@ -251,6 +252,7 @@ async function boot() {
   // re-derive an app's public catalogue facts rather than trusting numbers
   // the person who posted the listing typed in.
   const communityClient = new CommunityClient();
+  startPresencePing(communityClient, 'app');
   initCommunity(communityClient, { getCurrentApp: selectedApp, itunes: client });
   initBeTester(communityClient, { getCurrentApp: selectedApp, itunes: client });
   initInbox(communityClient);
