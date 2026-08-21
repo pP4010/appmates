@@ -44,3 +44,8 @@ web/.wrangler/
 worker/node_modules/
 worker/.wrangler/
 
+# community/ moved to its own private repo (appmates-community) — this
+# local copy is a leftover, not part of the repo at all anymore. Ignored
+# wholesale rather than deleted, since it still holds local dev state
+# (.dev.vars, .wrangler) not worth losing by hand.
+/community/
