@@ -10,7 +10,7 @@
 import { escapeHtml } from './views/shared.js';
 import { fetchSponsorSlots } from './lib/sponsor-tape.js';
 import { RAIL_LEFT, RAIL_RIGHT } from './landing-demo.js';
-import { mountPromoForm } from './lib/promo-form.js';
+import { openPromoModal } from './lib/promo-form.js';
 import { mountGlobe } from './lib/globe.js';
 import { flagFor, countryInSentence } from './lib/globe-centroids.js';
 import { CommunityClient } from './lib/community.js';
@@ -72,7 +72,7 @@ function slotCard(app, { label, kind, liveSince }) {
         <span class="sponsor-slot-tag">${escapeHtml(label)}</span>
         ${chip}
         <span class="sponsor-slot-name">Your app here</span>
-        <span class="sponsor-slot-note">Claim this slot below.</span>
+        <span class="sponsor-slot-note">Click to claim this slot.</span>
       </button>`;
   }
 
@@ -136,9 +136,7 @@ async function loadSlotsOnce() {
   setText('sponsorStatOpen', String(SELLABLE_PER_SIDE * 2 - taken));
 
   document.querySelectorAll('.sponsor-slot--open').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      document.getElementById('sponsorForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+    btn.addEventListener('click', () => openPromoModal());
   });
 }
 
@@ -175,11 +173,11 @@ async function refreshLive() {
   const drift = Number(data.age) || 0;
 
   setText('sponsorStatLive', numberFmt.format(data.live));
-  setText('sponsorStatVisits', numberFmt.format(data.allTime?.views ?? 0));
+  setText('sponsorStatVisits', numberFmt.format(data.allTime?.viewsPerMonth ?? 0));
   setText('sponsorStatListings', numberFmt.format(data.site?.openListings ?? 0));
+  setText('sponsorWhyViews', numberFmt.format(data.allTime?.viewsPerMonth ?? 0));
 
   const since = shortDay(data.allTime?.since);
-  setText('sponsorStatVisitsLab', since ? `visits since ${since}` : 'visits');
 
   countEl.textContent = numberFmt.format(data.live);
   subEl.textContent = data.live
@@ -253,7 +251,6 @@ function wireNotifyForm() {
  * mounts either. */
 export function initSponsorView() {
   loadSlotsOnce();
-  mountPromoForm(document.getElementById('sponsorFormMount'));
   globeApi.instance = mountGlobe(document.getElementById('sponsorGlobe'), {
     tip: document.getElementById('sponsorGlobeTip'),
   });

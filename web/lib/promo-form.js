@@ -1,9 +1,9 @@
 /**
  * The two-step "feature your app here" form — pitch (app lookup + colour),
- * then confirm (who's asking, and why) — extracted from what used to be a
- * landing-page-only modal so `sponsor.html` (and anything else that wants
- * the same flow) can mount it straight into a page section instead of an
- * overlay.
+ * then confirm (who's asking, and why). `mountPromoForm` is container-
+ * agnostic (it only ever touches what's passed in), so it works equally
+ * mounted straight into a page section or, via `openPromoModal` below,
+ * inside the app's usual `.modal-overlay`/`.modal` dialog shell.
  *
  * Submits to the same `promo_requests` backend the modal always used
  * (`CommunityClient#submitPromoRequest`, lands as `pending` for manual
@@ -281,4 +281,48 @@ export function mountPromoForm(container, { presetColor } = {}) {
   }
 
   renderPitchStep();
+}
+
+let closeCurrentModal = null;
+
+/**
+ * Opens the pitch/confirm flow as an overlay — the same `.modal-overlay`/
+ * `.modal` shape `views/inbox.js` and `views/be-tester.js` already use for
+ * their own dialogs (`web/styles.css:996-1024`), so a sponsor slot's
+ * "claim this" click feels like the rest of the app rather than a one-off.
+ * `mountPromoForm` itself stays container-agnostic; this only wraps it.
+ */
+export function openPromoModal({ presetColor } = {}) {
+  closeCurrentModal?.(); // never stack two
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'sponsorPromoModal';
+  overlay.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sponsorPromoTitle">
+      <div class="modal-head">
+        <h3 id="sponsorPromoTitle">Request a slot</h3>
+        <button type="button" class="modal-close" aria-label="Close">✕</button>
+      </div>
+      <div id="sponsorPromoMount"></div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const close = () => {
+    overlay.remove();
+    document.removeEventListener('keydown', onKeydown);
+    closeCurrentModal = null;
+  };
+  const onKeydown = (e) => {
+    if (e.key === 'Escape') close();
+  };
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) close();
+  });
+  overlay.querySelector('.modal-close').addEventListener('click', close);
+  document.addEventListener('keydown', onKeydown);
+  closeCurrentModal = close;
+
+  mountPromoForm(document.getElementById('sponsorPromoMount'), { presetColor });
+  document.getElementById('promoAppInput')?.focus();
 }

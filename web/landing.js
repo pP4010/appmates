@@ -656,12 +656,11 @@ function wireRailResize() {
 
 /** `#sponsor`/`#sponsor-left`/`#sponsor-right` are the only hashes that
  * open the sponsor view — exact match, not a prefix check, so this never
- * fires for `#sponsorForm` (the in-panel scroll target the slot grid's
- * "Available" cards use) or any of the page's real anchors (`#leaderboard`,
- * `#tools`, `#faq`). A plain hash link never triggers a network navigation
- * on the page it's already on, so `#landingHome`'s rails are never
- * recreated by opening this — only their `hidden` attribute, and the
- * sponsor view's, ever change. */
+ * fires for `#slots` (the hero-nav's own in-page anchor) or any of the
+ * page's real anchors (`#leaderboard`, `#tools`, `#faq`). A plain hash link
+ * never triggers a network navigation on the page it's already on, so
+ * `#landingHome`'s rails are never recreated by opening this — only their
+ * `hidden` attribute, and the sponsor view's, ever change. */
 const SPONSOR_HASHES = new Set(['#sponsor', '#sponsor-left', '#sponsor-right']);
 
 function applySponsorHash() {

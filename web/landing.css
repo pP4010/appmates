@@ -626,26 +626,49 @@ button.promo-swatch:hover {
 .sponsor-how li strong { font-size: .92rem; }
 .sponsor-how li span { font-size: .82rem; color: var(--text-2); line-height: 1.45; }
 
-/* ---------- request form and waitlist ---------- */
+/* ---------- why it works ---------- */
 
-.sponsor-form-wrap {
-  max-width: 30rem;
+/* One live number, called out on its own — reusing the accent/tabular-nums
+   treatment `.sponsor-g-num`/`.sponsor-stat dt` already establish for a
+   headline figure, rather than duplicating the hero band's stat tiles a
+   second time. */
+.sponsor-why-stat {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: .5rem;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--surface);
-  padding: 1.4rem 1.5rem;
+  padding: 1rem 1.2rem;
+  margin: 0 0 1.2rem;
 }
+.sponsor-why-stat strong {
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+.sponsor-why-stat span { font-size: .85rem; color: var(--text-2); }
+
+.sponsor-why-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.sponsor-why-item {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  padding: 1.1rem 1.2rem;
+}
+.sponsor-why-head { display: block; font-size: .88rem; font-weight: 650; margin-bottom: .35rem; }
+.sponsor-why-item p { margin: 0; font-size: .8rem; color: var(--text-2); line-height: 1.5; }
+
+/* ---------- waitlist ---------- */
 
 .sponsor-notify {
   max-width: 30rem;
-  margin-top: 1.2rem;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--surface-2);
   padding: 1.1rem 1.2rem;
 }
-.sponsor-notify h3 { margin: 0; font-size: .95rem; }
-.sponsor-notify p { margin: .3rem 0 .8rem; font-size: .82rem; color: var(--text-2); line-height: 1.5; }
 .sponsor-notify form { display: flex; flex-wrap: wrap; gap: .5rem; }
 .sponsor-notify input[type="email"] {
   flex: 1 1 14rem;
