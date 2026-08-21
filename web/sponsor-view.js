@@ -40,6 +40,43 @@ function setText(id, value) {
   if (el) el.textContent = value;
 }
 
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** Counts an element's displayed number up (or down) from whatever it
+ * currently shows to `target`, formatted with `numberFmt` along the way —
+ * every headline figure on this page uses this rather than `setText` so a
+ * number arriving, or updating on the 30s poll, reads as counting rather
+ * than just swapping. Skipped entirely under `prefers-reduced-motion`, and
+ * a no-op jump when the value hasn't actually changed.
+ *
+ * Stepped with `setTimeout`, not `requestAnimationFrame` — this section can
+ * start its count-up while its tab is backgrounded (opened in a new tab,
+ * the window minimised), and rAF callbacks are exactly the ones a browser
+ * suspends there; a stat that stayed stuck at "—" until the tab regained
+ * focus would be worse than no animation at all. `setTimeout` still runs
+ * in the background (browsers only clamp its rate, never park it), and a
+ * few-hundred-ms count-up has no need for frame-perfect timing anyway. */
+function animateNumber(id, target) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const to = Number(target) || 0;
+  const from = Number(String(el.textContent).replace(/[^0-9.-]/g, '')) || 0;
+  if (reducedMotion || from === to) {
+    el.textContent = numberFmt.format(to);
+    return;
+  }
+  const duration = 900;
+  const stepMs = 30;
+  const start = Date.now();
+  const tick = () => {
+    const t = Math.min(1, (Date.now() - start) / duration);
+    const eased = 1 - (1 - t) ** 3; // ease-out cubic — fast start, settles gently
+    el.textContent = numberFmt.format(Math.round(from + (to - from) * eased));
+    if (t < 1) setTimeout(tick, stepMs);
+  };
+  tick();
+}
+
 function agoLabel(seconds) {
   if (seconds == null || seconds < 10) return 'just now';
   if (seconds < 60) return `${seconds}s ago`;
@@ -133,7 +170,7 @@ async function loadSlotsOnce() {
   const { left, right } = await fetchSponsorSlots({ staticLeft: RAIL_LEFT, staticRight: RAIL_RIGHT });
   const taken = renderSide(leftCol, 'left', left) + renderSide(rightCol, 'right', right);
 
-  setText('sponsorStatOpen', String(SELLABLE_PER_SIDE * 2 - taken));
+  animateNumber('sponsorStatOpenNum', SELLABLE_PER_SIDE * 2 - taken);
 
   document.querySelectorAll('.sponsor-slot--open').forEach((btn) => {
     btn.addEventListener('click', () => openPromoModal());
@@ -172,14 +209,14 @@ async function refreshLive() {
   // for the whole window.
   const drift = Number(data.age) || 0;
 
-  setText('sponsorStatLive', numberFmt.format(data.live));
-  setText('sponsorStatVisits', numberFmt.format(data.allTime?.viewsPerMonth ?? 0));
-  setText('sponsorStatListings', numberFmt.format(data.site?.openListings ?? 0));
-  setText('sponsorWhyViews', numberFmt.format(data.allTime?.viewsPerMonth ?? 0));
+  animateNumber('sponsorStatLive', data.live);
+  animateNumber('sponsorStatVisits', data.allTime?.viewsPerMonth ?? 0);
+  animateNumber('sponsorStatListings', data.site?.openListings ?? 0);
+  animateNumber('sponsorWhyViews', data.allTime?.viewsPerMonth ?? 0);
 
   const since = shortDay(data.allTime?.since);
 
-  countEl.textContent = numberFmt.format(data.live);
+  animateNumber('sponsorLiveCount', data.live);
   subEl.textContent = data.live
     ? `from ${data.liveCountries} countr${data.liveCountries === 1 ? 'y' : 'ies'} · ` +
       `${numberFmt.format(data.allTime?.views ?? 0)} visits${since ? ` since ${since}` : ''}`

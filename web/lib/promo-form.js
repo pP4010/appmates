@@ -104,9 +104,10 @@ export function mountPromoForm(container, { presetColor } = {}) {
         <span class="promo-price-new">Free</span>
       </div>
       <p class="modal-sub">
-        Free while AppMates is growing. As traffic and demand pick up, pricing may
-        change — at most once a month, never mid-cycle — but you'll always hear about
-        it first by email. Nothing is ever charged without your confirmation.
+        Free right now, locked for the month you're in — it never changes mid-run.
+        Before the next month, if the rate is changing you'll hear about it first by
+        email and choose: keep the card at that rate, or let it go. Nothing is ever
+        charged without your confirmation.
       </p>
 
       <button type="button" id="promoRequestBtn" class="landing-cta" style="width:100%;margin-top:.4rem">

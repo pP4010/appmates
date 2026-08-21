@@ -770,6 +770,10 @@ button.promo-swatch:hover {
 }
 .hero-nav a { color: var(--text-2); }
 .hero-nav a:hover { color: var(--text); text-decoration: none; }
+/* Sponsor page only — its nav sits right under the stat band rather than a
+   search bar, and reads better with a little more air above it than the
+   shared `.hero-nav` gives every hero by default. */
+.sponsor-hero .hero-nav { margin-top: 1.5rem; }
 
 /* Anchors can't inherit the app's <button> rules, so the shared look is
    restated rather than approximated. */
