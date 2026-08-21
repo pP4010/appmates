@@ -9,15 +9,6 @@ updates:
       python-dependencies:
         patterns: ["*"]
 
-  # Community backend Worker (auth, listings, tokens)
-  - package-ecosystem: "npm"
-    directory: "/community"
-    schedule:
-      interval: "weekly"
-    groups:
-      npm-dependencies:
-        patterns: ["*"]
-
   # Screenshot relay Worker
   - package-ecosystem: "npm"
     directory: "/worker"

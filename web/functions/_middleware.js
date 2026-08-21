@@ -18,6 +18,22 @@
 
 const COOKIE_NAME = 'appmates_gate';
 
+// Constant-time compare via SHA-256 digests (fixed 32-byte length either
+// side, so no early-exit on length or byte position leaks timing about the
+// real password).
+async function timingSafeEqual(a, b) {
+  const enc = new TextEncoder();
+  const [da, db] = await Promise.all([
+    crypto.subtle.digest('SHA-256', enc.encode(a)),
+    crypto.subtle.digest('SHA-256', enc.encode(b)),
+  ]);
+  const va = new Uint8Array(da);
+  const vb = new Uint8Array(db);
+  let diff = 0;
+  for (let i = 0; i < va.length; i++) diff |= va[i] ^ vb[i];
+  return diff === 0;
+}
+
 function loginPage(wrongPassword) {
   return `<!doctype html>
 <html lang="en">
@@ -77,7 +93,7 @@ export async function onRequest(context) {
     const form = await request.formData();
     const submitted = form.get('password');
 
-    if (submitted && submitted === env.SITE_PASSWORD) {
+    if (submitted && (await timingSafeEqual(submitted, env.SITE_PASSWORD))) {
       return new Response(null, {
         status: 302,
         headers: {

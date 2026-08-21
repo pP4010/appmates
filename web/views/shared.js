@@ -232,7 +232,7 @@ export function tablePanel({ title, sub, head, rows, empty: emptyState }) {
   if (!rows.length && emptyState) return emptyState;
 
   const headHtml = head
-    .map((h) => `<th class="${h.num ? 'num' : ''} ${h.center ? 'center' : ''}">${escapeHtml(h.label ?? h)}</th>`)
+    .map((h) => `<th scope="col" class="${h.num ? 'num' : ''} ${h.center ? 'center' : ''}">${escapeHtml(h.label ?? h)}</th>`)
     .join('');
   const bodyHtml = rows
     .map(

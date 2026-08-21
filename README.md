@@ -683,9 +683,9 @@ history and live store credentials — never a gate on the local checks.
 
 ## Contributing
 
-Issues and PRs welcome. When a store changes a rule, the fix is usually a
-one-line edit to `src/appmates/core/specs/*.yaml` plus a bump of
-`last_verified` — please include the source URL.
+Issues and PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for dev
+setup, checks to run before opening a PR, and the code style expected. This
+project follows the [Contributor Covenant](CODE_OF_CONDUCT.md).
 
 ## License
 

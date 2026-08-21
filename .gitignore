@@ -44,7 +44,3 @@ web/.wrangler/
 worker/node_modules/
 worker/.wrangler/
 
-# Community backend: same, plus local-only dev secrets
-community/node_modules/
-community/.wrangler/
-community/.dev.vars

@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # javascript-typescript covers web/, community/, worker/ in one pass.
+        # javascript-typescript covers web/, worker/ in one pass.
         # python covers src/appmates.
         language: ["javascript-typescript", "python"]
 
