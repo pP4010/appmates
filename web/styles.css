@@ -41,6 +41,12 @@
   --bad: #be123c;
   --bad-soft: #fdecef;
 
+  /* Apple's own system blue — distinct from `--accent`'s indigo, used only
+     for the iOS platform badge so "iOS" reads as a store colour, not the
+     site's brand colour. */
+  --ios: #007aff;
+  --ios-soft: #e8f2ff;
+
   --r-sm: 7px;
   --r-md: 10px;
   --r-lg: 14px;
@@ -75,6 +81,9 @@
     --warn-soft: #2a2010;
     --bad: #fb7185;
     --bad-soft: #2b1219;
+
+    --ios: #0a84ff;
+    --ios-soft: #10233d;
 
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
     --shadow-md: 0 4px 18px rgb(0 0 0 / 45%);

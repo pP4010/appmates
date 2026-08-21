@@ -18,6 +18,7 @@ import { fetchSponsorSlots, mountTape } from './lib/sponsor-tape.js';
 import { checkAppHealth, loadAppHealthSpec, profileFromEntry } from './lib/app-profile.js';
 import { startPresencePing } from './lib/presence.js';
 import { initSponsorView, showSponsorView, hideSponsorView } from './sponsor-view.js';
+import { initBrowseView, showBrowseView, hideBrowseView } from './browse-view.js';
 import {
   DEMO_TESTING,
   DEMO_LAUNCHED,
@@ -83,8 +84,8 @@ function tile({ flag, flagClass, name, genre, note, metrics, featured = false, b
     </a>`;
 }
 
-function moreTile(label) {
-  return `<a class="row-more" href="./app.html#community">${escapeHtml(label)}</a>`;
+function moreTile(label, href) {
+  return `<a class="row-more" href="${escapeHtml(href)}">${escapeHtml(label)}</a>`;
 }
 
 /* ============================ demo rendering ============================ */
@@ -107,7 +108,7 @@ function renderDemo() {
           metric('Days left', a.daysLeft),
         ].join(''),
       }),
-    ).join('') + moreTile('Browse every listing looking for testers');
+    ).join('') + moreTile('Browse every listing looking for testers', '#browse-testing');
 
   document.getElementById('rowLaunched').innerHTML =
     DEMO_LAUNCHED.map((a) =>
@@ -124,7 +125,7 @@ function renderDemo() {
           metric('Ratings', '—', '', '', 'ratings'),
         ].join(''),
       }),
-    ).join('') + moreTile('See every launch and update');
+    ).join('') + moreTile('See every launch and update', '#browse-launched');
 
   // Paged and sorted the same way the toggles will render it, so the first
   // paint already matches what a click on "Show more" extends.
@@ -327,7 +328,7 @@ function renderLiveListings(listings) {
             ].join(''),
           }),
         )
-        .join('') + moreTile('Browse every listing looking for testers');
+        .join('') + moreTile('Browse every listing looking for testers', '#browse-testing');
     clearDemoTag('testing');
   }
 
@@ -352,7 +353,7 @@ function renderLiveListings(listings) {
             ].join(''),
           }),
         )
-        .join('') + moreTile('See every launch and update');
+        .join('') + moreTile('See every launch and update', '#browse-launched');
     clearDemoTag('launched');
   }
 }
@@ -623,7 +624,7 @@ async function refreshBoard() {
 }
 
 function wireBoardControls() {
-  document.querySelectorAll('.seg-btn').forEach((btn) => {
+  document.querySelectorAll('#leaderboard .seg-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const group = btn.closest('.seg');
       group.querySelectorAll('.seg-btn').forEach((b) => b.classList.remove('active'));
@@ -673,20 +674,29 @@ function wireFooterBrand() {
  * `#landingHome`'s rails are never recreated by opening this — only their
  * `hidden` attribute, and the sponsor view's, ever change. */
 const SPONSOR_HASHES = new Set(['#sponsor', '#sponsor-left', '#sponsor-right']);
+const BROWSE_HASHES = new Set(['#browse-testing', '#browse-launched']);
 
-function applySponsorHash() {
+function applyPageHash() {
   const hash = location.hash;
-  if (!SPONSOR_HASHES.has(hash)) {
-    hideSponsorView();
+  if (SPONSOR_HASHES.has(hash)) {
+    hideBrowseView();
+    showSponsorView(hash === '#sponsor-left' ? 'left' : hash === '#sponsor-right' ? 'right' : null);
     return;
   }
-  showSponsorView(hash === '#sponsor-left' ? 'left' : hash === '#sponsor-right' ? 'right' : null);
+  if (BROWSE_HASHES.has(hash)) {
+    hideSponsorView();
+    showBrowseView(hash === '#browse-launched' ? 'launch' : 'testing');
+    return;
+  }
+  hideSponsorView();
+  hideBrowseView();
 }
 
-function wireSponsorView() {
+function wirePageViews() {
   initSponsorView();
-  window.addEventListener('hashchange', applySponsorHash);
-  applySponsorHash();
+  initBrowseView();
+  window.addEventListener('hashchange', applyPageHash);
+  applyPageHash();
 }
 
 async function boot() {
@@ -695,7 +705,7 @@ async function boot() {
   wireBoardControls();
   wireRailResize();
   wireFooterBrand();
-  wireSponsorView();
+  wirePageViews();
   // Not awaited: the rails are decoration, and a slow catalogue lookup for
   // them must not hold up the live community data below.
   renderRails();

@@ -65,7 +65,7 @@
   <section class="row-section">
     <div class="row-head">
       <h2>Needs testers now <span class="demo-tag" data-demo="testing">sample</span></h2>
-      <a class="row-link" href="./app.html#community">View all →</a>
+      <a class="row-link" href="#browse-testing">View all →</a>
     </div>
     <div class="card-row" id="rowTesting"></div>
   </section>
@@ -74,7 +74,7 @@
   <section class="row-section">
     <div class="row-head">
       <h2>Just launched <span class="demo-tag" data-demo="launched">sample</span></h2>
-      <a class="row-link" href="./app.html#community">View all →</a>
+      <a class="row-link" href="#browse-launched">View all →</a>
     </div>
     <div class="card-row" id="rowLaunched"></div>
   </section>
@@ -502,6 +502,67 @@
         looks wrong, or any question at all —
         <a href="mailto:kaizenapp.contact@gmail.com">kaizenapp.contact@gmail.com</a>.
       </p>
+    </div>
+  </section>
+
+</div>
+
+<!-- ==================== browse view ====================
+     Same document as landingHome above, toggled by a same-page hash
+     (#browse-testing / #browse-launched, see landing.js's applyPageHash())
+     rather than a separate page — opened from the "Browse every listing..."
+     / "See every launch..." cards. -->
+<div id="browseView" class="sponsor-page" hidden>
+
+  <section class="hero browse-hero">
+    <a class="hero-brand" href="#">
+      <img src="./assets/icon.svg" alt="" width="22" height="22">
+      <span>AppMates</span>
+    </a>
+
+    <h1 id="browseTitle">Needs testers now</h1>
+
+    <p class="hero-sub">Every open listing, filterable by category and platform.</p>
+
+    <nav class="hero-nav">
+      <a href="#">← Back to AppMates</a>
+    </nav>
+  </section>
+
+  <section class="row-section">
+    <div class="browse-toolbar">
+      <div class="seg" id="browseKindToggle" role="group" aria-label="Listing kind">
+        <button type="button" class="seg-btn active" data-kind="testing">Needs testers</button>
+        <button type="button" class="seg-btn" data-kind="launch">Just launched</button>
+      </div>
+
+      <span class="cat-dd" id="browseCatDd">
+        <button type="button" class="cat-dd-btn" id="browseCatBtn" aria-haspopup="listbox" aria-expanded="false">
+          <span id="browseCatLabel">⚡ all categories</span>
+          <span class="dd-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="cat-dd-panel" id="browseCatPanel" role="listbox" aria-label="Filter by category" hidden></div>
+      </span>
+
+      <span class="vchip-group" id="browsePlatformFilter" role="group" aria-label="Filter by platform">
+        <button type="button" class="vchip all active" data-platform="">all</button>
+        <button type="button" class="vchip ios" data-platform="ios">iOS</button>
+        <button type="button" class="vchip android" data-platform="android">Android</button>
+        <button type="button" class="vchip both" data-platform="both">Both</button>
+      </span>
+
+      <span class="browse-count" id="browseCount"></span>
+    </div>
+
+    <div class="panel browse-table-wrap">
+      <div class="browse-thead">
+        <span class="browse-c-app">App</span>
+        <span class="browse-c-cat">Category</span>
+        <span class="browse-c-platform">Platform</span>
+        <span class="browse-c-metric" id="browseMetricHead">Status</span>
+      </div>
+      <div id="browseBody"></div>
+      <div class="browse-empty" id="browseEmpty" hidden>No listings match these filters yet.</div>
     </div>
   </section>
 

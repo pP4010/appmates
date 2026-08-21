@@ -1331,6 +1331,222 @@ table.lb td.app-col { font-size: .82rem; }
 .lb-more:hover:not(:disabled) { background: var(--surface-3); color: var(--text); }
 .lb-more:disabled { opacity: .55; cursor: default; }
 
+/* A row's app icon gets a small snap of life on hover — the same treatment
+   the browse table's rows use below, so a tester's linked app and a plain
+   listing read as the same kind of thing on hover. */
+.lb-app-icon, .lb-who .tile-icon { transition: transform .15s cubic-bezier(.2,.8,.3,1.4); }
+table.lb tbody tr:hover .lb-app-icon,
+table.lb tbody tr:hover .lb-who .tile-icon { transform: scale(1.12) rotate(-3deg); }
+
+/* ============================ category dropdown ============================
+   Shared by the leaderboard-style browse table below — one distinct app
+   category (an App Store/Play genre, not a listing field) per option, built
+   at runtime from whatever has resolved so far rather than a fixed list. */
+.cat-dd { display: inline-flex; position: relative; }
+.cat-dd-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 600;
+  padding: .4rem .7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color .12s, color .12s;
+}
+.cat-dd-btn:hover, .cat-dd-btn[aria-expanded="true"] { border-color: var(--accent); }
+.dd-caret { font-size: .65rem; color: var(--muted); }
+.cat-dd-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  min-width: 15rem;
+  max-height: 20rem;
+  overflow-y: auto;
+  padding: .3rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-md);
+}
+.cat-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .8rem;
+  width: 100%;
+  font: inherit;
+  font-size: .8rem;
+  text-align: left;
+  padding: .45rem .6rem;
+  border: none;
+  border-radius: calc(var(--r-md) - 3px);
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+.cat-opt:hover { background: var(--surface-2); }
+.cat-opt.active { background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
+.co-count { color: var(--muted); font-variant-numeric: tabular-nums; font-size: .74rem; }
+
+/* ============================ platform chips / badges ============================
+   Verdict-chip styling, borrowed for a fact this app actually has: which
+   store(s) a listing lives on. */
+.vchip-group { display: inline-flex; gap: .4rem; flex-wrap: wrap; }
+.vchip {
+  font: inherit;
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  padding: .4rem .75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition: color .12s, border-color .12s, background-color .12s, transform .1s;
+}
+.vchip:hover { color: var(--text); border-color: var(--border-strong); transform: translateY(-1px); }
+.vchip:active { transform: scale(.94); }
+.vchip.all.active { background: var(--text); border-color: var(--text); color: var(--bg); }
+.vchip.ios.active { background: var(--ios); border-color: var(--ios); color: #fff; }
+.vchip.android.active { background: var(--ok); border-color: var(--ok); color: #062b16; }
+.vchip.both.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+/* Solid fills, not soft tints — a platform badge is the one fact in this
+   row a visitor filters and scans by, so it reads at a glance the way
+   Death List's own verdict badge does, not as a quiet footnote. iOS gets
+   Apple's own blue rather than the site's indigo `--accent`, so it reads
+   as "which store", not "AppMates picked this app". */
+.pf-badge {
+  display: inline-block;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  padding: .28rem .6rem;
+  border-radius: var(--r-sm);
+  transition: transform .12s cubic-bezier(.2,.8,.3,1.4);
+}
+.pf-badge.ios { background: var(--ios); color: #fff; }
+.pf-badge.android { background: var(--ok); color: #062b16; }
+.pf-badge.both { background: var(--accent); color: var(--on-accent); }
+
+/* ============================ browse view ============================ */
+
+.browse-hero { padding-bottom: 1.5rem; }
+
+.browse-toolbar {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  flex-wrap: wrap;
+  margin-bottom: .7rem;
+}
+.browse-count { margin-left: auto; font-size: .78rem; color: var(--muted); }
+
+.browse-table-wrap { padding: 0; overflow-x: auto; }
+.browse-thead, .browse-row {
+  display: grid;
+  grid-template-columns: 1fr 10rem 7rem 8rem;
+  align-items: center;
+  gap: .8rem;
+  padding: .7rem .9rem;
+}
+.browse-thead {
+  font-size: .66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.browse-row {
+  position: relative;
+  color: inherit;
+  border-bottom: 1px solid var(--border);
+  transition: background-color .15s;
+}
+.browse-row:last-child { border-bottom: none; }
+.browse-row:hover { background: var(--surface-2); text-decoration: none; }
+.browse-row::after {
+  content: "→";
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translate(-6px, -50%);
+  color: var(--accent);
+  opacity: 0;
+  transition: opacity .15s ease, transform .2s ease;
+}
+.browse-row:hover::after { opacity: 1; transform: translate(0, -50%); }
+
+.browse-c-app { display: flex; align-items: center; gap: .7rem; min-width: 0; }
+.browse-rank { flex: 0 0 auto; width: 1.4rem; font-size: .74rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.browse-c-app img, .browse-icon-fallback {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  transition: transform .15s cubic-bezier(.2,.8,.3,1.4);
+}
+.browse-icon-fallback {
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 700;
+  font-size: .8rem;
+}
+.browse-row:hover .browse-c-app img,
+.browse-row:hover .browse-icon-fallback { transform: scale(1.15) rotate(-3deg); }
+.browse-row:hover .pf-badge { transform: scale(1.06); }
+.browse-name { font-weight: 600; font-size: .87rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.browse-c-cat {
+  font-size: .74rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Right-aligned but pulled in from the row's own edge, so the "→" that
+   fades in on hover (`.browse-row::after`, anchored to that same edge)
+   never sits under the last character of "Testers"/"Status". */
+.browse-c-metric {
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  padding-right: 1.1rem;
+}
+
+.browse-empty { padding: 2.5rem 1rem; text-align: center; color: var(--muted); font-size: .86rem; }
+
+@media (max-width: 720px) {
+  .browse-thead { display: none; }
+  .browse-row {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "app app platform" "cat cat metric";
+    row-gap: .3rem;
+  }
+  .browse-c-app { grid-area: app; }
+  .browse-c-cat { grid-area: cat; padding-left: 2.1rem; }
+  .browse-c-platform { grid-area: platform; justify-self: end; }
+  .browse-c-metric { grid-area: metric; justify-self: end; }
+  .browse-row::after { display: none; }
+}
+
 /* ============================ steps ============================ */
 
 .steps {
