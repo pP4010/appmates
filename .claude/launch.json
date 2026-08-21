@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "launchpilot-web",
+      "name": "appmates-web",
       "runtimeExecutable": "python3",
       "runtimeArgs": [
         "-m",
@@ -12,20 +12,6 @@
         "web"
       ],
       "port": 8123
-    },
-    {
-      "name": "launchpilot-community-dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev",
-        "--prefix",
-        "community",
-        "--",
-        "--port",
-        "8788"
-      ],
-      "port": 8788
     }
   ]
 }

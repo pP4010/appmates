@@ -36,7 +36,7 @@ import { initInbox } from './views/inbox.js';
 import { initAdmin } from './views/admin.js';
 import { initOnboard, refreshOnboard } from './views/onboard.js';
 import { CommunityClient, itunesRelayOptions } from './lib/community.js';
-import { fetchSponsorSlots, mockSponsorApps, mountTape } from './lib/sponsor-tape.js';
+import { fetchSponsorSlots, mountTape } from './lib/sponsor-tape.js';
 import { startPresencePing } from './lib/presence.js';
 import { RAIL_LEFT, RAIL_RIGHT } from './landing-demo.js';
 
@@ -56,9 +56,6 @@ const VIEWS = {
   admin: ['Admin', 'Review "Feature your app here" requests'],
 };
 
-/** The real slots last fetched, cached so flipping the test toggle off
- * restores them without a second network round-trip, and so turning it on
- * can graft the 2 real apps onto the 8 mock ones instead of losing them. */
 let realTapeSlots = { left: [], right: [] };
 
 function mountDashTape({ left, right }) {
@@ -84,30 +81,7 @@ async function renderDashTape(itunes) {
     itunes,
   });
   realTapeSlots = { left: left.filter(Boolean), right: right.filter(Boolean) };
-  if (!document.getElementById('tapeTestToggle')?.checked) mountDashTape(realTapeSlots);
-}
-
-/**
- * "Test tape" switch in the topbar: fills both tapes with the 2 real
- * configured apps (`RAIL_LEFT`/`RAIL_RIGHT`'s first, real-name-and-icon
- * entries — whatever community slots happen to be approved right now are
- * left out, so the count stays exactly 2+8 regardless of live state) plus
- * 8 generated example apps, 5 a side, so the marquee's density can be
- * checked visually without waiting on real sponsors to sign up.
- */
-function wireTapeTestToggle() {
-  const toggle = document.getElementById('tapeTestToggle');
-  toggle?.addEventListener('change', () => {
-    if (!toggle.checked) {
-      mountDashTape(realTapeSlots);
-      return;
-    }
-    const mocks = mockSponsorApps(8);
-    mountDashTape({
-      left: [realTapeSlots.left[0], ...mocks.slice(0, 4)].filter(Boolean),
-      right: [realTapeSlots.right[0], ...mocks.slice(4)].filter(Boolean),
-    });
-  });
+  mountDashTape(realTapeSlots);
 }
 
 /** `#profile` has no `view-profile` element of its own — it's the same
@@ -184,7 +158,6 @@ async function boot() {
   // Decoration, not a tool — rendered alongside boot instead of inside it,
   // same as the landing page's own rails.
   renderDashTape(client);
-  wireTapeTestToggle();
 
   // The app card doubles as the selector: choosing one here prefills the tools
   // that need an id, which is the point of having a selection at all.

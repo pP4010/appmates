@@ -149,45 +149,6 @@ export function buildTapeTrack(apps, slotHref) {
   return `<div class="tape-track"><div class="tape-half">${single}</div><div class="tape-half">${single}</div></div>`;
 }
 
-const MOCK_COLOR_HEX = {
-  blue: '#2f5fa8', green: '#1f7a4d', violet: '#6d3aa8', orange: '#b5502a',
-  pink: '#8a2f4a', teal: '#2c6470', red: '#a8342f', amber: '#a87e1f',
-};
-const MOCK_NAMES = [
-  'Focusly', 'Streakloop', 'TabKeeper', 'Pingback',
-  'Routinely', 'Ledgerbird', 'Snapcheck', 'Driftless',
-];
-
-/** A flat-color rounded square, inlined as a data URI — no network request,
- * so the test toggle works offline and never depends on a third-party
- * favicon or placeholder-image service staying up. Distinct colours per
- * mock app so the icon column reads as real logos rather than one grey
- * tile repeated ten times, the same failure mode the empty-artwork
- * fallback (`.tape-icon--blank`) is deliberately built to look like. */
-function mockIcon(color) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">` +
-    `<rect width="40" height="40" rx="9" fill="${MOCK_COLOR_HEX[color] || '#4a5568'}"/></svg>`;
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-}
-
-/**
- * `count` placeholder sponsors for visually testing the tape's density —
- * real icon, real name, real hover/click affordance, but no network lookup
- * behind any of it. Used by the dashboard's "Test tape" switch (see
- * `renderDashTape` in app.js) alongside the two real configured apps, to
- * check the marquee at a realistic 10-item width without waiting on actual
- * sponsors to sign up.
- */
-export function mockSponsorApps(count = 8) {
-  const colors = Object.keys(MOCK_COLOR_HEX);
-  return Array.from({ length: count }, (_, i) => ({
-    name: MOCK_NAMES[i % MOCK_NAMES.length],
-    artwork: mockIcon(colors[i % colors.length]),
-    storeUrl: 'https://apps.apple.com/',
-    color: colors[i % colors.length],
-  }));
-}
-
 /**
  * `translate(-50%)` slides a `.tape-half` across exactly its *own* width —
  * that's what makes the loop seamless — but a half narrower than the tape

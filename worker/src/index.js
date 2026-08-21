@@ -19,7 +19,7 @@
 
 const APP_PAGE_URL = (country, trackId) => `https://apps.apple.com/${country}/app/id${trackId}`;
 
-const USER_AGENT = 'launchpilot-screenshot-relay/1.0 (+https://github.com/pP4010/launchpilot)';
+const USER_AGENT = 'launchpilot-screenshot-relay/1.0 (+https://github.com/pP4010/appmates)';
 
 const SERVER_DATA_RE =
   /<script type="application\/json" id="serialized-server-data">([\s\S]*?)<\/script>/;

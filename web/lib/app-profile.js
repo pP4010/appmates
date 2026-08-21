@@ -157,7 +157,7 @@ export function checkAppHealth(profile, { today = new Date() } = {}) {
       'The catalogue did not return screenshot URLs for this app, so they cannot be ' +
         'checked here. This happens for roughly half of apps and says nothing about ' +
         'whether yours are correct.',
-      { fixHint: 'Check them directly with `launchpilot validate-screenshots`.', checkable: false },
+      { fixHint: 'Check them directly with `appmates validate-screenshots`.', checkable: false },
     );
   } else {
     const count = profile.iphoneScreenshots.length;

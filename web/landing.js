@@ -316,6 +316,8 @@ function renderLiveListings(listings) {
             name: l.app.name,
             genre: l.platform === 'android' ? 'Google Play' : l.platform === 'ios' ? 'App Store' : 'iOS + Android',
             note: l.tagline || 'Open for closed testers.',
+            icon: l.app.artworkUrl,
+            trackId: l.app.trackId,
             featured: isFeatured(l),
             boostTier: l.ownerBoostTier ?? 0,
             metrics: [
@@ -339,6 +341,8 @@ function renderLiveListings(listings) {
             name: l.app.name,
             genre: l.platform === 'android' ? 'Google Play' : l.platform === 'ios' ? 'App Store' : 'iOS + Android',
             note: l.tagline || 'Shipped and open to new users.',
+            icon: l.app.artworkUrl,
+            trackId: l.app.trackId,
             featured: isFeatured(l),
             boostTier: l.ownerBoostTier ?? 0,
             metrics: [
@@ -654,6 +658,13 @@ function wireRailResize() {
   });
 }
 
+function wireFooterBrand() {
+  document.getElementById('footerBrand')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+
 /** `#sponsor`/`#sponsor-left`/`#sponsor-right` are the only hashes that
  * open the sponsor view — exact match, not a prefix check, so this never
  * fires for `#slots` (the hero-nav's own in-page anchor) or any of the
@@ -683,6 +694,7 @@ async function boot() {
   wireHeroSearch();
   wireBoardControls();
   wireRailResize();
+  wireFooterBrand();
   wireSponsorView();
   // Not awaited: the rails are decoration, and a slow catalogue lookup for
   // them must not hold up the live community data below.

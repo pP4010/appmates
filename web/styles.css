@@ -1,5 +1,5 @@
 /* ==========================================================================
-   LaunchPilot design system
+   AppMates design system
 
    Two decisions shape everything below.
 
@@ -343,28 +343,6 @@ code, .mono, .num {
 .fav-pick.active { border-color: var(--accent); background: var(--accent-soft); }
 .fav-pick.active:hover { border-color: var(--accent); }
 .fav-pick .app-icon { border: none; display: block; }
-
-/* Dev-only control that fills the tape with 10 apps (the 2 real ones plus
-   8 generated examples) so the marquee's density can be checked visually
-   without waiting on real sponsors — see `renderDashTape` in app.js. */
-.tape-test-toggle {
-  display: flex; align-items: center; gap: .4rem;
-  font-size: .76rem; color: var(--muted); cursor: pointer; user-select: none;
-}
-.tape-test-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
-.tape-test-toggle .switch {
-  width: 32px; height: 18px; border-radius: 999px; flex: 0 0 auto;
-  background: var(--surface-2); border: 1px solid var(--border);
-  position: relative; transition: background .15s, border-color .15s;
-}
-.tape-test-toggle .switch::after {
-  content: ''; position: absolute; top: 2px; left: 2px;
-  width: 12px; height: 12px; border-radius: 50%;
-  background: var(--muted); transition: transform .15s, background .15s;
-}
-.tape-test-toggle input:checked + .switch { background: var(--accent-soft); border-color: var(--accent); }
-.tape-test-toggle input:checked + .switch::after { transform: translateX(14px); background: var(--accent); }
-.tape-test-toggle input:focus-visible + .switch { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .content { padding: 1.5rem; padding-bottom: calc(1.5rem + var(--tape-h)); max-width: 1400px; width: 100%; }
 .view { display: none; }

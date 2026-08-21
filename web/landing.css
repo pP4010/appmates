@@ -1432,6 +1432,15 @@ table.lb td.app-col { font-size: .82rem; }
   font-size: .84rem;
 }
 .landing-footer > div:first-child { display: flex; flex-direction: column; gap: .15rem; }
+.footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.footer-brand:hover { text-decoration: none; color: var(--text); }
+.footer-brand img { border-radius: 5px; display: block; }
 .landing-footer-links { display: flex; gap: 1.2rem; flex-wrap: wrap; }
 
 @media (max-width: 640px) {
