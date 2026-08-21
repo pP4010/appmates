@@ -249,7 +249,7 @@ function appCell(r) {
   const key = r.ratingsKey ? ` data-app="${escapeHtml(r.ratingsKey)}"` : '';
   return `
     <span class="lb-app-cell"${key}>
-      ${letterTile(r.appName, 'lb-app-icon')}
+      <span class="lb-app-icon-wrap">${letterTile(r.appName, 'lb-app-icon')}</span>
       <span style="min-width:0">
         <span class="lb-app">${escapeHtml(r.appName)}</span>
         <span class="lb-app-desc">${escapeHtml(r.appDesc ?? '')}</span>
@@ -420,6 +420,18 @@ async function fillAppFacts(apps) {
         img.alt = '';
         img.loading = 'lazy';
         tile.replaceWith(img);
+      }
+      // This row's app only ever resolves through `itunes.lookup` (Apple's
+      // own catalogue) — a hit here is a fact about the App Store
+      // specifically, so the badge is never a guess. Revealed on row hover
+      // by CSS, same corner-badge markup the dashboard's own test cards use
+      // (`.store-badge` in styles.css).
+      const wrap = cell.querySelector('.lb-app-icon-wrap');
+      if (wrap && !wrap.querySelector('.store-badge')) {
+        wrap.insertAdjacentHTML(
+          'beforeend',
+          '<span class="store-badge apple"><img src="./assets/app-store.png" alt="App Store" width="14" height="14"></span>',
+        );
       }
       const name = cell.querySelector('.lb-app');
       if (name && entry.trackName) name.textContent = entry.trackName;

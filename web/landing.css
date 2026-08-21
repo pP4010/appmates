@@ -1338,6 +1338,19 @@ table.lb td.app-col { font-size: .82rem; }
 table.lb tbody tr:hover .lb-app-icon,
 table.lb tbody tr:hover .lb-who .tile-icon { transform: scale(1.12) rotate(-3deg); }
 
+/* The little "which store" corner badge, marketplace-card style (`.store-
+   badge`, styles.css — position/size/border already defined there). Tucked
+   away until the row is hovered, same as the icon snap above, rather than
+   sitting on the board permanently and competing with the rank/name for
+   attention on every row at once. */
+.lb-app-icon-wrap { position: relative; flex: 0 0 auto; line-height: 0; }
+.lb-app-icon-wrap .store-badge {
+  opacity: 0;
+  transform: scale(.7);
+  transition: opacity .15s ease, transform .15s cubic-bezier(.2,.8,.3,1.4);
+}
+table.lb tbody tr:hover .lb-app-icon-wrap .store-badge { opacity: 1; transform: scale(1); }
+
 /* ============================ category dropdown ============================
    Shared by the leaderboard-style browse table below — one distinct app
    category (an App Store/Play genre, not a listing field) per option, built
@@ -1475,12 +1488,15 @@ table.lb tbody tr:hover .lb-who .tile-icon { transform: scale(1.12) rotate(-3deg
 }
 .browse-row:last-child { border-bottom: none; }
 .browse-row:hover { background: var(--surface-2); text-decoration: none; }
+/* Anchored inside the row's own padding box (not past its edge, which the
+   table wrap's `overflow-x: auto` was clipping) — always fully on-screen,
+   just slides in those last few px and fades on hover. */
 .browse-row::after {
   content: "→";
   position: absolute;
-  right: -6px;
+  right: .8rem;
   top: 50%;
-  transform: translate(-6px, -50%);
+  transform: translate(6px, -50%);
   color: var(--accent);
   opacity: 0;
   transition: opacity .15s ease, transform .2s ease;
@@ -1517,10 +1533,13 @@ table.lb tbody tr:hover .lb-who .tile-icon { transform: scale(1.12) rotate(-3deg
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  padding-right: .6rem;
 }
-/* Right-aligned but pulled in from the row's own edge, so the "→" that
-   fades in on hover (`.browse-row::after`, anchored to that same edge)
-   never sits under the last character of "Testers"/"Status". */
+.browse-c-platform { display: flex; justify-content: center; }
+/* Right-aligned but pulled well clear of the row's own edge, so the "→"
+   that fades in on hover (`.browse-row::after`, anchored to that same
+   edge) always has clean space to appear in, never under the last
+   character of "Testers"/"Status". */
 .browse-c-metric {
   font-size: .78rem;
   font-weight: 700;
@@ -1528,7 +1547,7 @@ table.lb tbody tr:hover .lb-who .tile-icon { transform: scale(1.12) rotate(-3deg
   text-transform: uppercase;
   font-variant-numeric: tabular-nums;
   text-align: right;
-  padding-right: 1.1rem;
+  padding-right: 1.9rem;
 }
 
 .browse-empty { padding: 2.5rem 1rem; text-align: center; color: var(--muted); font-size: .86rem; }
