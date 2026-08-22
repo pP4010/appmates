@@ -1373,18 +1373,30 @@ table.lb tbody tr:hover .lb-app-icon-wrap .store-badge { opacity: 1; transform: 
    sized and overlapped so the *pair* fills the same ~16px footprint the
    single-store badge does, rather than spilling past it. */
 .store-badge.both { background: none; border: none; overflow: visible; }
-.store-badge.both img {
+/* Same shape `.store-badge` itself is (styles.css): a flex-centered,
+   `overflow: hidden` tile with the mark filling it via `object-fit: cover`
+   — not the mark styled directly, which is how the Apple mark previously
+   ended up floating in whitespace instead of filling its tile. */
+.store-badge.both .store-badge-a,
+.store-badge.both .store-badge-b {
   position: absolute;
   width: 13px;
   height: 13px;
   border-radius: 3.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: #fff;
   border: 1.5px solid var(--surface);
-  object-fit: contain;
-  padding: 1px;
+  overflow: hidden;
 }
 .store-badge.both .store-badge-a { top: -.5px; left: -.5px; z-index: 2; }
 .store-badge.both .store-badge-b { bottom: -.5px; right: -.5px; z-index: 1; }
+.store-badge.both img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Play's own mark, at full tile size, reads as more zoomed-in/cropped than
+   Apple's — the single-store badge already corrects for this
+   (`.store-badge.google img` in styles.css); same 70% shrink here. */
+.store-badge.both .store-badge-b img { width: 70%; height: 70%; }
 
 /* ============================ category dropdown ============================
    Shared by the leaderboard-style browse table below — one distinct app

@@ -419,10 +419,15 @@ function storeBadgeHtml(platform) {
     return '<span class="store-badge google"><img src="./assets/google-play.png" alt="Google Play" width="14" height="14"></span>';
   }
   if (platform === 'both') {
+    // Each mark gets its own little tile — same flex-centered, `overflow:
+    // hidden` shape `.store-badge` itself uses (styles.css), not the mark
+    // styled directly — an `<img>` sized/cropped on its own is how the
+    // Apple mark previously ended up floating in whitespace instead of
+    // filling its tile the way the single-store badge does.
     return (
       '<span class="store-badge both" role="img" aria-label="App Store and Google Play">' +
-      '<img src="./assets/app-store.png" alt="" class="store-badge-a">' +
-      '<img src="./assets/google-play.png" alt="" class="store-badge-b">' +
+      '<span class="store-badge-a"><img src="./assets/app-store.png" alt=""></span>' +
+      '<span class="store-badge-b google"><img src="./assets/google-play.png" alt=""></span>' +
       '</span>'
     );
   }
