@@ -1366,23 +1366,25 @@ table.lb tbody tr:hover .lb-who .tile-icon { transform: scale(1.12) rotate(-3deg
 table.lb tbody tr:hover .lb-app-icon-wrap .store-badge { opacity: 1; transform: scale(1); }
 
 /* "Both" doesn't try to cram the App Store and Play marks into one 16px
-   badge — illegible at that size either way — it fans two full-size mini
-   badges out diagonally instead. The outer `.store-badge` box becomes just
-   a positioning anchor (no fill/border of its own); each mark gets its own
-   small white tile, same look as the single-store badge, just two of them. */
+   badge — illegible at that size either way — it fans two mini badges out
+   diagonally instead. The outer `.store-badge` box becomes just a
+   positioning anchor (no fill/border of its own); each mark gets its own
+   small white tile, same look as the single-store badge, just two of them,
+   sized and overlapped so the *pair* fills the same ~16px footprint the
+   single-store badge does, rather than spilling past it. */
 .store-badge.both { background: none; border: none; overflow: visible; }
 .store-badge.both img {
   position: absolute;
-  width: 12px;
-  height: 12px;
+  width: 13px;
+  height: 13px;
   border-radius: 3.5px;
   background: #fff;
   border: 1.5px solid var(--surface);
   object-fit: contain;
   padding: 1px;
 }
-.store-badge.both .store-badge-a { top: -2px; left: -2px; z-index: 2; }
-.store-badge.both .store-badge-b { bottom: -2px; right: -2px; z-index: 1; }
+.store-badge.both .store-badge-a { top: -.5px; left: -.5px; z-index: 2; }
+.store-badge.both .store-badge-b { bottom: -.5px; right: -.5px; z-index: 1; }
 
 /* ============================ category dropdown ============================
    Shared by the leaderboard-style browse table below — one distinct app
