@@ -17,6 +17,7 @@
 import { escapeHtml } from './views/shared.js';
 import { CommunityClient, itunesRelayOptions } from './lib/community.js';
 import { ITunesClient } from './lib/itunes.js';
+import { platformBadge } from './lib/platform-badge.js';
 import { DEMO_TESTING, DEMO_LAUNCHED } from './landing-demo.js';
 
 const community = new CommunityClient();
@@ -27,8 +28,6 @@ const itunes = new ITunesClient(itunesRelayOptions());
  * rows below the fold get their category once you'd actually scroll to
  * them, same trade-off `be-tester.js` makes with `MAX_ENRICHED_CARDS`. */
 const CATEGORY_LOOKUP_LIMIT = 30;
-
-const PLATFORM_LABEL = { ios: 'iOS', android: 'Android', both: 'Both' };
 
 /** One emoji per Apple/Google catalogue genre — the same "each option gets
  * an emoji" treatment Death List's own category list uses, applied to
@@ -76,12 +75,6 @@ let activePlatform = '';
 /** Category label -> how many currently-loaded listings resolved to it.
  * Rebuilt after every enrichment pass; drives the dropdown's option list. */
 let categoryCounts = new Map();
-
-function platformBadge(platform) {
-  const label = PLATFORM_LABEL[platform];
-  if (!label) return '';
-  return `<span class="pf-badge ${platform}">${label}</span>`;
-}
 
 function appStoreUrl(trackId) {
   return `https://apps.apple.com/app/id${encodeURIComponent(trackId)}`;

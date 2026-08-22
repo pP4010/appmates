@@ -210,6 +210,27 @@ async function hydrateDemoApps() {
 
 /* ============================ leaderboard ============================ */
 
+/** `trackId` (as a string) -> `'ios'|'android'|'both'`, for the board's
+ * "their app" cell. The leaderboard's own data (a tester's connected app)
+ * carries no platform of its own — only a *listing* does, chosen by hand
+ * in the "Post a listing" form (`web/views/community.js`'s `#commPlatform`
+ * select). This index is built from whatever listings are already in
+ * memory (the same fetch `boot()` makes for the rows above) and matched
+ * back onto board rows by `trackId`, so a real answer shows up without
+ * asking the board for a second network round trip — but it only covers
+ * apps with a currently-open listing, never a guess for the rest. Seeded
+ * with the two demo apps' real (App-Store-only, today) platform so local
+ * dev and a backend-less deployment still show a badge on them. */
+const platformByTrack = new Map(
+  [...DEMO_TESTING, ...DEMO_LAUNCHED].filter((a) => a.trackId).map((a) => [String(a.trackId), 'ios']),
+);
+
+function mergeListingPlatforms(listings) {
+  for (const l of listings) {
+    if (l.app?.trackId) platformByTrack.set(String(l.app.trackId), l.platform);
+  }
+}
+
 /** One row shape for both the sample board and the live one, so switching
  * between them can't quietly drop a column.
  *
@@ -220,6 +241,7 @@ async function hydrateDemoApps() {
  * the catalogue lookup for that row resolves. */
 function demoToRow(e) {
   const linked = e.ownApp && typeof e.ownApp === 'object';
+  const trackId = linked ? e.ownApp.trackId : null;
   return {
     rank: e.rank,
     name: e.name,
@@ -228,7 +250,8 @@ function demoToRow(e) {
     appDesc: e.ownAppDesc,
     tests: e.tests,
     ratings: e.ratings,
-    ratingsKey: linked ? e.ownApp.trackId : null,
+    ratingsKey: trackId,
+    platform: trackId ? platformByTrack.get(String(trackId)) : null,
   };
 }
 
@@ -247,8 +270,9 @@ const NONE = '—';
  */
 function appCell(r) {
   const key = r.ratingsKey ? ` data-app="${escapeHtml(r.ratingsKey)}"` : '';
+  const platformAttr = r.platform ? ` data-platform="${escapeHtml(r.platform)}"` : '';
   return `
-    <span class="lb-app-cell"${key}>
+    <span class="lb-app-cell"${key}${platformAttr}>
       <span class="lb-app-icon-wrap">${letterTile(r.appName, 'lb-app-icon')}</span>
       <span style="min-width:0">
         <span class="lb-app">${escapeHtml(r.appName)}</span>
@@ -373,10 +397,36 @@ function renderLiveLeaderboard(testers) {
       ratings: null,
       ratingsKey: e.ownApp?.trackId ?? null,
       tests: e.completedCount,
+      // `ownApp.platform` is the real, backend-known fact once the API
+      // sends it (see `platformByTrack`'s own comment) — the listings-based
+      // guess only ever fills in for a deployment still on the older API.
+      platform: e.ownApp?.platform ?? (e.ownApp?.trackId ? platformByTrack.get(String(e.ownApp.trackId)) : null),
     })),
   );
   clearDemoTag('leaderboard');
   fillAppFacts(testers.map((e) => e.ownApp).filter(Boolean));
+}
+
+/** The corner badge's icon(s): Apple/Google/both, from the row's known
+ * `platform` (via `data-platform`, set in `appCell()` from `platformByTrack`
+ * — see its own comment for where that fact actually comes from). Falls
+ * back to the Apple mark alone when platform isn't known but the row still
+ * resolved through `itunes.lookup` — a hit there is at minimum a fact about
+ * the App Store, never a guess. `both` stacks the two marks in a small
+ * diagonal fan rather than trying to cram both logos into one 16px badge. */
+function storeBadgeHtml(platform) {
+  if (platform === 'android') {
+    return '<span class="store-badge google"><img src="./assets/google-play.png" alt="Google Play" width="14" height="14"></span>';
+  }
+  if (platform === 'both') {
+    return (
+      '<span class="store-badge both" role="img" aria-label="App Store and Google Play">' +
+      '<img src="./assets/app-store.png" alt="" class="store-badge-a">' +
+      '<img src="./assets/google-play.png" alt="" class="store-badge-b">' +
+      '</span>'
+    );
+  }
+  return '<span class="store-badge apple"><img src="./assets/app-store.png" alt="App Store" width="14" height="14"></span>';
 }
 
 /**
@@ -387,6 +437,13 @@ function renderLiveLeaderboard(testers) {
  * through `demoToRow`/`renderBoard` and carry the same `data-app`/
  * `data-ratings` hooks. Per-row failures leave the letter tile, the label
  * this file was given, and a dash — never a spinner that never resolves.
+ *
+ * Apple's catalogue is the only live lookup this runs — an Android-only
+ * app's `trackId` is a Play package id, so `itunes.lookup` simply never
+ * matches it and `entry` stays null. That still leaves the *platform* badge
+ * (known independently, from `platformByTrack`) and, when the app object
+ * already carries one (`app.artworkUrl`, forward-compatible with a backend
+ * that starts sending it), a real icon instead of the letter tile forever.
  */
 async function fillAppFacts(apps) {
   const withApps = apps.filter((a) => a.trackId).slice(0, RATINGS_LOOKUP_LIMIT);
@@ -409,9 +466,8 @@ async function fillAppFacts(apps) {
       node.textContent = ratings;
     });
 
-    if (!entry) continue;
     document.querySelectorAll(`[data-app="${key}"]`).forEach((cell) => {
-      const artwork = entry.artworkUrl100 ?? entry.artworkUrl512;
+      const artwork = entry?.artworkUrl100 ?? entry?.artworkUrl512 ?? app.artworkUrl;
       const tile = cell.querySelector('.lb-app-icon');
       if (artwork && tile) {
         const img = document.createElement('img');
@@ -421,22 +477,19 @@ async function fillAppFacts(apps) {
         img.loading = 'lazy';
         tile.replaceWith(img);
       }
-      // This row's app only ever resolves through `itunes.lookup` (Apple's
-      // own catalogue) — a hit here is a fact about the App Store
-      // specifically, so the badge is never a guess. Revealed on row hover
-      // by CSS, same corner-badge markup the dashboard's own test cards use
-      // (`.store-badge` in styles.css).
+      // Revealed on row hover by CSS, same corner-badge markup the
+      // dashboard's own test cards use (`.store-badge` in styles.css).
+      const platform = cell.dataset.platform;
       const wrap = cell.querySelector('.lb-app-icon-wrap');
-      if (wrap && !wrap.querySelector('.store-badge')) {
-        wrap.insertAdjacentHTML(
-          'beforeend',
-          '<span class="store-badge apple"><img src="./assets/app-store.png" alt="App Store" width="14" height="14"></span>',
-        );
+      if (wrap && !wrap.querySelector('.store-badge') && (entry || platform)) {
+        wrap.insertAdjacentHTML('beforeend', storeBadgeHtml(platform));
       }
-      const name = cell.querySelector('.lb-app');
-      if (name && entry.trackName) name.textContent = entry.trackName;
-      const desc = cell.querySelector('.lb-app-desc');
-      if (desc) desc.textContent = entry.primaryGenreName ?? '';
+      if (entry) {
+        const name = cell.querySelector('.lb-app');
+        if (name && entry.trackName) name.textContent = entry.trackName;
+        const desc = cell.querySelector('.lb-app-desc');
+        if (desc) desc.textContent = entry.primaryGenreName ?? '';
+      }
     });
   }
 }
@@ -739,7 +792,10 @@ async function boot() {
     client.leaderboard({ windowDays: board.windowDays, sort: board.sort, limit: board.limit }),
   ]);
 
-  if (listings.status === 'fulfilled') renderLiveListings(listings.value);
+  if (listings.status === 'fulfilled') {
+    mergeListingPlatforms(listings.value);
+    renderLiveListings(listings.value);
+  }
 
   if (boardResult.status === 'fulfilled' && boardResult.value.testers.length) {
     // Adopted only once it has actually answered with rows, so the toggles
