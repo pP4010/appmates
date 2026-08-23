@@ -5,7 +5,7 @@ open source?" — it's the running answer, updated as items get done. Don't
 re-derive this from scratch; update this file instead when something on it
 changes.
 
-Last updated: 2026-08-23.
+Last updated: 2026-08-23 — repo is now public.
 
 ## Public accessibility
 
@@ -66,14 +66,14 @@ Last updated: 2026-08-23.
   get there: the workflow needed `actions: read` (codeql-action's own
   telemetry call was failing without it, and GitHub marks a step failed on
   that error annotation alone even though the process catches it and
-  continues) — read the actual failure log rather than assumed. **Known,
-  accepted limitation**: the upload-sarif step (`continue-on-error: true`)
-  fails every run with "Code scanning is not enabled for this repository" —
-  confirmed exact cause: that needs GitHub Advanced Security, which a
-  *private* repo doesn't have without paying for it. Analysis itself always
-  runs and always succeeds; only the Security-tab upload is blocked. Once
-  this repo is public (free) or GHAS is purchased, that step starts
-  succeeding on its own — nothing to flip back by hand.
+  continues) — read the actual failure log rather than assumed.
+  **SARIF upload confirmed working** (2026-08-23, post-public): re-ran
+  run `32650023584` after flipping the repo public — both `Analyze
+  (python)` and `Analyze (javascript-typescript)` jobs completed
+  `success`, including the `Upload SARIF` step that used to fail with
+  "Code scanning is not enabled for this repository" while private. No
+  config change needed, it just started working the moment the repo went
+  public — matches what was predicted below before this was verified.
 - [x] `SECURITY.md` — vulnerability disclosure policy, contact
   `appmates.contact@gmail.com`.
 - [x] Full git-history secret scan run this session (`git log --all -p`
@@ -99,25 +99,45 @@ Last updated: 2026-08-23.
   Worker secrets are unaffected (`wrangler secret` is tied to the Worker
   name, not the repo) — no re-provisioning needed, deploy from a fresh
   clone of the new repo.
-- [ ] **Secret scanning / push protection**: confirmed unavailable via API
-  (`422 Secret scanning is not available for this repository`) — needs the
-  repo to go public (free then) or GitHub Advanced Security (paid) while
-  private. Nothing to configure until one of those changes.
+- [x] **Secret scanning / push protection**: enabled 2026-08-23 via
+  `PATCH /repos/pP4010/appmates` (`security_and_analysis.secret_scanning`
+  and `.secret_scanning_push_protection`, both `status: enabled`) —
+  confirmed live via the same endpoint read back. `secret_scanning_
+  validity_checks` stayed `disabled` after the same request (GitHub didn't
+  turn it on); not investigated further since it's an enhancement over
+  the base scan, not a gap versus the plan before this.
 - [x] **Branch protection on `main`**: decided this session — **keep
   disabled**. Every deploy this whole project has used is `git push`
   straight to `main` followed by an immediate `wrangler deploy` — turning
   on "require a PR before merging" would block that exact workflow.
   Deliberate choice, not an oversight. Revisit if outside contributors
   start merging directly.
-- [ ] Repo is currently **private** — deliberately, this session:
-  everything below is ready for it (no secrets in history, `community/`
-  split out, docs in place), but the actual GitHub visibility toggle is
-  left for a manual decision, not flipped automatically. Secret scanning
-  and free CodeQL upload both unlock the moment it's flipped — no separate
-  action needed for either.
+- [x] **Repo is public** (flipped 2026-08-23, on explicit request — `gh repo
+  edit pP4010/appmates --visibility public
+  --accept-visibility-change-consequences`, confirmed via
+  `GET /repos/pP4010/appmates` → `"private": false`). Secret scanning, push
+  protection, and CodeQL SARIF upload all came on automatically as
+  predicted, no separate action needed for any of them.
 - [ ] No CAPTCHA/bot-check on the anonymous `listings.request` flow beyond
   the new per-IP rate limit — acceptable for now, worth revisiting if abuse
-  shows up in practice once there's real traffic.
+  shows up in practice once there's real traffic. This route lives in
+  `appmates-community`, not this repo.
+- [x] **`appmates-community` had zero CI** — added this session:
+  `.github/workflows/ci.yml` (`node --test`, `wrangler deploy --dry-run`)
+  and `.github/workflows/codeql.yml` (javascript-typescript, same
+  private-repo `upload: false` + `continue-on-error` shape as this repo
+  used before going public — that repo is staying private, so its SARIF
+  upload will keep no-oping the same way this repo's did pre-flip).
+  Verified locally before commit: 37/37 tests pass, dry-run resolves every
+  binding cleanly. Pushed and deployed to production
+  (`launchpilot-community`, version `b609963c`) the same session as a
+  batch of real fixes: CSRF guard added to 7 routes that were missing it
+  (`testSessions.accept/decline/complete`, `listings.close`,
+  `messages.mute/unmute`, `auth.logout`), a TOCTOU race in `spendTokens`
+  closed with a guarded atomic UPDATE, and a rate limiter added to
+  `/auth/verify`. Smoke-tested against production post-deploy (forged
+  cross-site `Origin` on `/auth/logout` → `403`, confirming the new guard
+  is live, not just committed).
 
 ## Open source hygiene
 
@@ -155,25 +175,22 @@ Last updated: 2026-08-23.
   recreate `.venv` after (`uv sync`) since some of its scripts hardcode the
   old absolute path.
 
-## What to check before flipping "public"
+## Status: public, live, structurally done
 
-Everything structural is done. What's left:
+Repo went public 2026-08-23. What's left is genuinely optional, nothing
+blocking:
 
-1. Done — every branch on `origin` checked and clean. `main` and
-   `claude/cartes-annonces-landing-e9lp4a` (the one real WIP branch, work
-   preserved, just rewritten to drop `community/` from its history) both
-   force-pushed with zero commits touching `community/`. The 6 stale
-   `dependabot/*` branches were deleted (bot recreates them fresh off the
-   clean `main`). `refs/pull/*` on GitHub are read-only mirrors of PR
-   heads — they'll reflect whatever their source branch is; the two PRs
-   built on now-deleted dependabot branches will show as closed/stale,
-   nothing to act on.
-2. Done (2026-08-23) — preview gate removed, see Public accessibility above.
-3. A real automated a11y run (Lighthouse/axe) is still recommended, not
-   just the manual pass done this session (see above).
-4. Flip the repo to public on GitHub → secret scanning and CodeQL upload
-   both start working automatically, nothing else to configure.
-5. Optional cleanup, not blocking: the Worker in the new `appmates-community`
-   repo is still internally named `launchpilot-community`
-   (`wrangler.jsonc`'s `name` field) — a leftover from the project rename,
-   cosmetic only.
+1. A real automated a11y run (Lighthouse/axe) is still recommended, not
+   just the manual pass done earlier this session (see Public
+   accessibility above) — no such tool was available in-session to run it.
+2. No CAPTCHA/bot-check on `appmates-community`'s anonymous
+   `listings.request` flow — acceptable until real abuse shows up.
+3. Not published to PyPI — roadmap item, not a security or hygiene gap.
+4. English only — fine unless multi-language becomes an actual goal.
+5. Optional cleanup, not blocking: the Worker in `appmates-community` is
+   still internally named `launchpilot-community` (`wrangler.jsonc`'s
+   `name` field) — a leftover from the project rename, cosmetic only.
+6. Both repos' CodeQL workflows pin `codeql-action@v3`, which GitHub has
+   flagged for deprecation in December 2026 — noticed via a build
+   annotation while verifying the post-public SARIF upload, not yet acted
+   on. Bump to `v4` sometime before then.
