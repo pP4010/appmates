@@ -15,3 +15,9 @@
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
+  # No `preload`: that submits this domain to browsers' hardcoded preload
+  # list, which is effectively permanent (removal takes months and a
+  # browser release cycle). `includeSubDomains` alone is enough to satisfy
+  # a scanner's missing-HSTS finding and is trivially reversible if it
+  # ever needs to change.
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
