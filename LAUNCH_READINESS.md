@@ -5,16 +5,20 @@ open source?" — it's the running answer, updated as items get done. Don't
 re-derive this from scratch; update this file instead when something on it
 changes.
 
-Last updated: 2026-08-21.
+Last updated: 2026-08-23.
 
 ## Public accessibility
 
-- [x] Deploy path for the gate fixed: `scripts/deploy-web.sh` is now the one
-  supported way to deploy the site (`cd web && wrangler pages deploy .`),
-  so `functions/` (the gate) can no longer be silently skipped by deploying
-  from the repo root. **Decision made this session: keep the gate**, not
-  ready for public traffic yet — use this script, not a bare `wrangler
-  pages deploy web` from root, or the gate silently turns off again.
+- [x] **Private-preview gate removed** (2026-08-23) — `web/functions/
+  _middleware.js` deleted outright, not just bypassed. The site is now
+  public: no password, no cookie, first request in serves the app directly.
+  Any `SITE_PASSWORD`/`GATE_KEY` values still sitting in the Cloudflare
+  Pages project's env vars are now inert leftovers — safe to remove from
+  the dashboard whenever, not required.
+- [x] Deploy path: `scripts/deploy-web.sh` (`cd web && wrangler pages
+  deploy .`) is still the one supported way to deploy — running from the
+  repo root with `web` as the project arg silently skips `web/functions/`,
+  which matters again the moment any other Pages Function gets added.
 - [x] Real accessibility pass done this session (`read_page` accessibility
   tree + manual review of landing, forms, tables, light/dark). Found and
   fixed two real WCAG issues:
@@ -164,10 +168,7 @@ Everything structural is done. What's left:
    heads — they'll reflect whatever their source branch is; the two PRs
    built on now-deleted dependabot branches will show as closed/stale,
    nothing to act on.
-2. Decide whether to turn the preview gate off (`SITE_PASSWORD`/`GATE_KEY`
-   in Cloudflare Pages) — it's currently being kept on deliberately (see
-   Public accessibility above). Public + gated is a contradiction; resolve
-   one way or the other before announcing anything.
+2. Done (2026-08-23) — preview gate removed, see Public accessibility above.
 3. A real automated a11y run (Lighthouse/axe) is still recommended, not
    just the manual pass done this session (see above).
 4. Flip the repo to public on GitHub → secret scanning and CodeQL upload
