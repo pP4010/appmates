@@ -317,9 +317,18 @@ export class CommunityClient {
   }
 
   /** Every conversation report, for manual review — same 403-if-not-admin
-   * shape as `adminListPromoRequests`. */
+   * shape as `adminListPromoRequests`. A pure read; call `markReportsSeen`
+   * right after to get the old "opening this list marks it seen" behavior
+   * back, now as its own explicit step. */
   adminListReports() {
     return this._request('/reports').then((d) => d.reports);
+  }
+
+  /** Marks every pending report seen — split out from `adminListReports`
+   * so the mutation only ever happens via this same-origin POST, not a
+   * passive GET a cross-site page could trigger on its own. */
+  markReportsSeen() {
+    return this._request('/reports/mark-seen', { method: 'POST' });
   }
 
   /** Public: the approved promo requests a landing page can render as

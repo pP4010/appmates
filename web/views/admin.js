@@ -217,6 +217,11 @@ async function loadReports() {
     return;
   }
   host.innerHTML = reports.map(reportCard).join('');
+
+  // Marks them seen now that they're actually on screen — a separate call
+  // (not a side effect of the GET above) so nothing but this admin actually
+  // opening the tab can silence the 48h email escalation.
+  client.markReportsSeen().catch(() => {});
 }
 
 function reportCard(r) {
