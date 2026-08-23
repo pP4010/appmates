@@ -30,6 +30,7 @@ import {
 } from './shared.js';
 import { checkAppHealth, profileFromEntry } from '../lib/app-profile.js';
 import { messageThreadHtml, wireMessageThreads } from './community.js';
+import { storeBadgeHtml } from '../lib/platform-badge.js';
 
 // Mirrors MIN_REQUEST_MESSAGE_LENGTH in community/src/lib/config.js — the
 // server is the real limit, this just keeps the on-page counter honest.
@@ -79,6 +80,11 @@ let itunes = null;
 let getCurrentApp = null;
 let user = null;
 let activeTab = 'browse';
+// '' (all), 'ios', 'android', or 'both' — the Marketplace tab's platform
+// filter (renderBrowseTab/renderBrowse). Client-side only, same as
+// browse-view.js's own `activePlatform`: `GET /listings` has no platform
+// query param, so this narrows the already-fetched list.
+let activePlatform = '';
 
 /** Bumped on every tab switch or re-render. The progressive enrichment loop
  * carries the value it started with and stops the moment it no longer
@@ -183,6 +189,15 @@ function renderBrowseTab() {
           <option value="emptiest">Needs testers most</option>
         </select>
       </div>
+      <div class="field">
+        <label>Platform</label>
+        <span class="vchip-group" id="testerBrowsePlatform" role="group" aria-label="Filter by platform">
+          <button type="button" class="vchip all${activePlatform ? '' : ' active'}" data-platform="">all</button>
+          <button type="button" class="vchip ios${activePlatform === 'ios' ? ' active' : ''}" data-platform="ios">iOS</button>
+          <button type="button" class="vchip android${activePlatform === 'android' ? ' active' : ''}" data-platform="android">Android</button>
+          <button type="button" class="vchip both${activePlatform === 'both' ? ' active' : ''}" data-platform="both">Both</button>
+        </span>
+      </div>
       <button id="testerBrowseRefresh">Refresh</button>
     </div>
     <p class="verified-note">
@@ -202,6 +217,14 @@ function renderBrowseTab() {
   el('testerBrowseRefresh').addEventListener('click', refreshList);
   el('testerBrowseKind').addEventListener('change', refreshList);
   el('testerBrowseSort').addEventListener('change', refreshList);
+  el('testerBrowsePlatform').querySelectorAll('.vchip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      el('testerBrowsePlatform').querySelectorAll('.vchip').forEach((c) => c.classList.remove('active'));
+      chip.classList.add('active');
+      activePlatform = chip.dataset.platform || '';
+      refreshList();
+    });
+  });
 
   renderMarketplaceHighlights();
   renderBrowse();
@@ -309,8 +332,9 @@ async function renderBrowse() {
     if (generation !== renderGeneration) return;
 
     const requestedIds = new Set(mine.map((s) => s.listing.id));
-    results.innerHTML = listings.length
-      ? listings
+    const filtered = activePlatform ? listings.filter((l) => l.platform === activePlatform) : listings;
+    results.innerHTML = filtered.length
+      ? filtered
           .map((l) =>
             listingCard(l, {
               canRequest: l.kind === 'testing',
@@ -320,8 +344,8 @@ async function renderBrowse() {
           .join('')
       : empty('◍', 'Nothing here yet', 'Be the first to post a listing.');
 
-    wireRequestButtons(results, listings);
-    enrichListings(listings, generation);
+    wireRequestButtons(results, filtered);
+    enrichListings(filtered, generation);
   } catch (err) {
     if (generation === renderGeneration) {
       results.innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
@@ -362,10 +386,29 @@ function listingCard(l, { canRequest = false, alreadyRequested = false } = {}) {
       ? metricCell('Testers', null, `${l.slotsFilled}/${l.slotsWanted || '∞'}`, '')
       : '';
 
+  // A `testing` listing's link never rides on this public, unauthenticated
+  // response (community/routes/listings.js `serializeListing`) — only an
+  // accepted-and-added tester sees it, through their own session. `l.link`
+  // is only ever present here for a `launch` listing, so this must not
+  // assume it exists.
+  const linkCell = l.link
+    ? `<div class="card-metric">
+         <span class="metric-label">Link</span>
+         <span class="metric-value" style="font-size:.85rem;font-weight:500">
+           <a href="${escapeHtml(l.link)}" target="_blank" rel="noopener">Open ↗</a>
+         </span>
+       </div>`
+    : l.kind === 'testing'
+      ? `<div class="card-metric">
+           <span class="metric-label">Link</span>
+           <span class="metric-value" style="font-size:.85rem">🔒 Unlocks once accepted</span>
+         </div>`
+      : '';
+
   return `
     <div class="panel listing-card${boostClass(l.ownerBoostTier)}" data-card="${l.id}">
       <div class="listing-head">
-        ${appIcon(l.app.artworkUrl, l.app.name)}
+        <span class="card-icon-wrap">${appIcon(l.app.artworkUrl, l.app.name)}${storeBadgeHtml(l.platform, 'bl')}</span>
         <div style="flex:1;min-width:0">
           <div class="listing-title">
             <strong>${escapeHtml(l.app.name)}</strong>
@@ -385,12 +428,7 @@ function listingCard(l, { canRequest = false, alreadyRequested = false } = {}) {
         ${metricCell('Listing health', `health-${l.id}`)}
         ${metricCell('Rating', `rating-${l.id}`)}
         ${metricCell('Last shipped', `shipped-${l.id}`)}
-        <div class="card-metric">
-          <span class="metric-label">Link</span>
-          <span class="metric-value" style="font-size:.85rem;font-weight:500">
-            <a href="${escapeHtml(l.link)}" target="_blank" rel="noopener">Open ↗</a>
-          </span>
-        </div>
+        ${linkCell}
       </div>
     </div>`;
 }
@@ -418,7 +456,7 @@ function marketplaceGridCard(l, { canRequest = false, alreadyRequested = false }
   return `
     <div class="panel marketplace-card${boostClass(l.ownerBoostTier)}" data-card="${l.id}">
       <div class="marketplace-card-head">
-        ${appIcon(l.app.artworkUrl, l.app.name)}
+        <span class="card-icon-wrap">${appIcon(l.app.artworkUrl, l.app.name)}${storeBadgeHtml(l.platform, 'bl')}</span>
         <div style="min-width:0;flex:1">
           <strong class="marketplace-card-name">${escapeHtml(l.app.name)}</strong>
           <div class="marketplace-card-badges">
@@ -647,7 +685,7 @@ function contributorListingRow(l) {
   const filled = l.slotsWanted ? Math.round((l.slotsFilled / l.slotsWanted) * 100) : 0;
   return `
     <div class="contributor-listing" data-card="${l.id}">
-      ${appIcon(l.app.artworkUrl, l.app.name)}
+      <span class="card-icon-wrap">${appIcon(l.app.artworkUrl, l.app.name)}${storeBadgeHtml(l.platform, 'bl')}</span>
       <div class="contributor-listing-body">
         <div class="contributor-listing-name">${escapeHtml(l.app.name)}</div>
         <div class="board-sub">
@@ -836,7 +874,15 @@ async function sessionCard(s) {
     body = `<div class="muted" style="font-size:.82rem;margin-top:.3rem">"${escapeHtml(s.requestMessage)}"</div>`;
   } else if (s.status === 'accepted') {
     const checkins = await client.sessionCheckins(s.id).catch(() => []);
+    // `s.listing.link` only rides along once `linkUnlocked` is true server-
+    // side (community/routes/testSessions.js) — for a `testing` listing,
+    // that means the developer has confirmed adding this tester on every
+    // platform the listing targets (TestFlight and/or Play Console).
+    const linkHtml = s.listing.link
+      ? `<div style="margin-bottom:.5rem"><a class="ghost-link" href="${escapeHtml(s.listing.link)}" target="_blank" rel="noopener">Open build link →</a></div>`
+      : `<p class="muted" style="font-size:.82rem">Waiting for the developer to add you on TestFlight/Play Console before the link unlocks.</p>`;
     body = `
+      ${linkHtml}
       <div class="checkin-widget" data-session="${s.id}">
         ${checkinStripHtml(s.id, checkins, s.respondedAt)}
       </div>

@@ -24,6 +24,7 @@ import {
 } from './shared.js';
 import { checkAppHealth, profileFromEntry } from '../lib/app-profile.js';
 import { refreshOnboard } from './onboard.js';
+import { storeBadgeHtml } from '../lib/platform-badge.js';
 
 // Mirrors MAX_BIO_LENGTH in community/src/lib/config.js — the server is the
 // real limit (it truncates), this just keeps the on-page counter honest.
@@ -426,6 +427,11 @@ function renderCreatePanel() {
         placeholder="TestFlight/Play testing link, or the store listing once it's out">
       <label for="commSlots">Testers wanted</label>
       <input id="commSlots" type="number" min="0" max="100" value="10" style="width:6rem">
+      <label for="commEndsAt">Test end date (optional)</label>
+      <input id="commEndsAt" type="date">
+      <p class="muted" style="grid-column:2;font-size:.78rem;margin:-.4rem 0 0">
+        The listing is automatically removed on this date. Leave blank to keep it up until you close it yourself.
+      </p>
       <label for="commTagline">Card tagline</label>
       <input id="commTagline" type="text" maxlength="140"
         placeholder="One line for your card — shown on the marketplace, max 2 lines">
@@ -452,6 +458,7 @@ async function createListing(app) {
     });
 
     say('Posting listing');
+    const endsAtDate = el('commEndsAt').value;
     await client.createListing({
       appId: connected.id,
       kind: el('commKind').value,
@@ -460,11 +467,16 @@ async function createListing(app) {
       tagline: el('commTagline').value.trim(),
       description: el('commDescription').value.trim(),
       slotsWanted: Number(el('commSlots').value) || 0,
+      // End-of-day in the browser's own timezone — a bare `YYYY-MM-DD` sent
+      // as-is would parse as UTC midnight server-side, expiring the listing
+      // up to a day earlier than the date the owner actually picked.
+      endsAt: endsAtDate ? new Date(`${endsAtDate}T23:59:59`).toISOString() : null,
     });
 
     el('commLink').value = '';
     el('commTagline').value = '';
     el('commDescription').value = '';
+    el('commEndsAt').value = '';
     await renderMyListings();
     refreshOnboard();
   });
@@ -493,7 +505,7 @@ async function myListingCard(l) {
   const active = sessions.filter((s) => s.status !== 'requested');
 
   const activeHtml = active.length
-    ? active.map(sessionRow).join('')
+    ? active.map((s) => sessionRow(s, l)).join('')
     : pending.length
       ? ''
       : '<p class="muted" style="font-size:.82rem">No testers have joined yet.</p>';
@@ -521,6 +533,7 @@ async function myListingCard(l) {
                <button class="ghost comm-close" data-listing="${l.id}">Close listing</button>`
             : '<span class="pill neutral">Closed</span>'
         }
+        <button class="ghost danger comm-delete" data-listing="${l.id}">Delete listing</button>
       </div>
       <div class="comm-listing-status status" data-listing="${l.id}"></div>
     </div>`;
@@ -544,7 +557,39 @@ function requestCard(s) {
     </div>`;
 }
 
-function sessionRow(s) {
+/**
+ * The tester's build link only unlocks once every platform this `testing`
+ * listing targets has been confirmed added on the owner's side (App Store
+ * Connect/TestFlight, Play Console) — there's no ASC/Play Developer API
+ * here to automate that, so it's a manual checkbox per platform, calling
+ * `markAddedToPlatform` (community/routes/testSessions.js `markAdded`).
+ * `both` needs both checked before the tester sees anything.
+ */
+function platformAddedControls(l, s) {
+  if (l.kind !== 'testing') return '';
+  const rows = [];
+  if (l.platform === 'ios' || l.platform === 'both') {
+    rows.push({ platform: 'ios', label: 'Added on TestFlight', checked: Boolean(s.addedIosAt) });
+  }
+  if (l.platform === 'android' || l.platform === 'both') {
+    rows.push({ platform: 'android', label: 'Added on Google Play', checked: Boolean(s.addedAndroidAt) });
+  }
+  return `
+    <div class="platform-added-controls" style="margin-top:.35rem;display:flex;gap:.9rem;flex-wrap:wrap">
+      ${rows
+        .map(
+          (r) => `
+        <label style="font-size:.8rem;display:flex;align-items:center;gap:.3rem">
+          <input type="checkbox" class="comm-mark-added" data-session="${s.id}" data-platform="${r.platform}"
+            ${r.checked ? 'checked disabled' : ''}>
+          ${escapeHtml(r.label)}
+        </label>`,
+        )
+        .join('')}
+    </div>`;
+}
+
+function sessionRow(s, l) {
   const evalBadges = [];
   if (s.bugFound !== null) {
     evalBadges.push(
@@ -554,6 +599,9 @@ function sessionRow(s) {
   if (s.wouldUseAgain) {
     evalBadges.push(`<span class="pill neutral">Would use again: ${escapeHtml(s.wouldUseAgain)}</span>`);
   }
+  const addedControls = ['accepted', 'submitted', 'completed'].includes(s.status)
+    ? platformAddedControls(l, s)
+    : '';
   return `
     <div style="padding:.4rem 0;border-top:1px solid var(--border)">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem">
@@ -562,6 +610,7 @@ function sessionRow(s) {
           <span class="pill neutral" style="margin-left:.4rem">${s.status}</span>
           ${evalBadges.length ? `<div class="eval-summary">${evalBadges.join('')}</div>` : ''}
           ${s.feedback ? `<div class="muted" style="font-size:.82rem;margin-top:.2rem">"${escapeHtml(s.feedback)}"</div>` : ''}
+          ${addedControls}
         </div>
         ${
           s.status === 'submitted'
@@ -578,7 +627,7 @@ function listingCardHeader(l) {
   const kindLabel = l.kind === 'testing' ? 'Closed testing' : 'Live on stores';
   return `
     <div style="display:flex;gap:.7rem;align-items:flex-start">
-      ${appIcon(l.app.artworkUrl, l.app.name)}
+      <span class="card-icon-wrap">${appIcon(l.app.artworkUrl, l.app.name)}${storeBadgeHtml(l.platform, 'bl')}</span>
       <div>
         <strong>${escapeHtml(l.app.name)}</strong>
         <span class="pill ${l.kind === 'testing' ? 'warn' : 'ok'}" style="margin-left:.4rem">${kindLabel}</span>
@@ -623,6 +672,41 @@ function wireMyListingActions(container) {
   wireSessionAction(container, '.comm-close', (btn) => client.closeListing(btn.dataset.listing));
   wireMessageThreads(container);
   wireCheckinsToggles(container);
+
+  // Not routed through `wireSessionAction` — that helper always calls
+  // through, and a cancelled confirm should abort silently rather than
+  // surface as an error banner.
+  container.querySelectorAll('.comm-delete').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Delete this listing? It disappears from your dashboard and the marketplace. Testers already accepted keep their session and its link.')) {
+        return;
+      }
+      btn.disabled = true;
+      try {
+        await client.deleteListing(btn.dataset.listing);
+        await renderMyListings();
+      } catch (err) {
+        btn.disabled = false;
+        showListingError(container, btn.dataset.listing, err.message);
+      }
+    });
+  });
+
+  container.querySelectorAll('.comm-mark-added').forEach((checkbox) => {
+    checkbox.addEventListener('change', async () => {
+      const { session, platform } = checkbox.dataset;
+      checkbox.disabled = true;
+      try {
+        await client.markAddedToPlatform(session, platform);
+        await renderMyListings();
+      } catch (err) {
+        checkbox.disabled = false;
+        checkbox.checked = false;
+        const listingId = checkbox.closest('.panel')?.querySelector('.comm-listing-status')?.dataset.listing;
+        showListingError(container, listingId, err.message);
+      }
+    });
+  });
 
   container.querySelectorAll('.comm-feature').forEach((btn) => {
     btn.addEventListener('click', async () => {

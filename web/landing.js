@@ -12,6 +12,7 @@
  */
 
 import { escapeHtml } from './views/shared.js';
+import { storeBadgeHtml } from './lib/platform-badge.js';
 import { CommunityClient, itunesRelayOptions } from './lib/community.js';
 import { ITunesClient } from './lib/itunes.js';
 import { fetchSponsorSlots, mountTape } from './lib/sponsor-tape.js';
@@ -405,33 +406,6 @@ function renderLiveLeaderboard(testers) {
   );
   clearDemoTag('leaderboard');
   fillAppFacts(testers.map((e) => e.ownApp).filter(Boolean));
-}
-
-/** The corner badge's icon(s): Apple/Google/both, from the row's known
- * `platform` (via `data-platform`, set in `appCell()` from `platformByTrack`
- * — see its own comment for where that fact actually comes from). Falls
- * back to the Apple mark alone when platform isn't known but the row still
- * resolved through `itunes.lookup` — a hit there is at minimum a fact about
- * the App Store, never a guess. `both` stacks the two marks in a small
- * diagonal fan rather than trying to cram both logos into one 16px badge. */
-function storeBadgeHtml(platform) {
-  if (platform === 'android') {
-    return '<span class="store-badge google"><img src="./assets/google-play.png" alt="Google Play" width="14" height="14"></span>';
-  }
-  if (platform === 'both') {
-    // Each mark gets its own little tile — same flex-centered, `overflow:
-    // hidden` shape `.store-badge` itself uses (styles.css), not the mark
-    // styled directly — an `<img>` sized/cropped on its own is how the
-    // Apple mark previously ended up floating in whitespace instead of
-    // filling its tile the way the single-store badge does.
-    return (
-      '<span class="store-badge both" role="img" aria-label="App Store and Google Play">' +
-      '<span class="store-badge-a"><img src="./assets/app-store.png" alt=""></span>' +
-      '<span class="store-badge-b google"><img src="./assets/google-play.png" alt=""></span>' +
-      '</span>'
-    );
-  }
-  return '<span class="store-badge apple"><img src="./assets/app-store.png" alt="App Store" width="14" height="14"></span>';
 }
 
 /**

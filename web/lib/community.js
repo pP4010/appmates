@@ -161,6 +161,13 @@ export class CommunityClient {
     return this._request(`/listings/${id}/close`, { method: 'POST' });
   }
 
+  /** Soft-deletes the listing (owner only) — gone from the marketplace and
+   * your own dashboard, but a tester already accepted on it keeps their own
+   * session and its link. See community/migrations/0016_listing_lifecycle. */
+  deleteListing(id) {
+    return this._request(`/listings/${id}`, { method: 'DELETE' });
+  }
+
   featureListing(id, days) {
     return this._request(`/listings/${id}/feature`, { method: 'POST', body: { days } });
   }
@@ -187,6 +194,13 @@ export class CommunityClient {
 
   declineSession(id) {
     return this._request(`/test-sessions/${id}/decline`, { method: 'POST' });
+  }
+
+  /** Owner confirms they've added this tester on their side — TestFlight or
+   * Play Console, whichever `platform` names. Once every platform the
+   * listing targets is confirmed, the tester's build link unlocks. */
+  markAddedToPlatform(id, platform) {
+    return this._request(`/test-sessions/${id}/mark-added`, { method: 'POST', body: { platform } });
   }
 
   mySessions() {

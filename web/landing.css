@@ -1454,29 +1454,9 @@ table.lb tbody tr:hover .lb-app-icon-wrap .store-badge { opacity: 1; transform: 
 .cat-opt.active { background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
 .co-count { color: var(--muted); font-variant-numeric: tabular-nums; font-size: .74rem; }
 
-/* ============================ platform chips / badges ============================
-   Verdict-chip styling, borrowed for a fact this app actually has: which
-   store(s) a listing lives on. */
-.vchip-group { display: inline-flex; gap: .4rem; flex-wrap: wrap; }
-.vchip {
-  font: inherit;
-  font-size: .74rem;
-  font-weight: 700;
-  letter-spacing: .02em;
-  padding: .4rem .75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  color: var(--muted);
-  cursor: pointer;
-  transition: color .12s, border-color .12s, background-color .12s, transform .1s;
-}
-.vchip:hover { color: var(--text); border-color: var(--border-strong); transform: translateY(-1px); }
-.vchip:active { transform: scale(.94); }
-.vchip.all.active { background: var(--text); border-color: var(--text); color: var(--bg); }
-.vchip.ios.active { background: var(--ios); border-color: var(--ios); color: #fff; }
-.vchip.android.active { background: var(--ok); border-color: var(--ok); color: #062b16; }
-.vchip.both.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+/* `.vchip`/`.vchip-group` (platform filter chips) moved to styles.css —
+   the dashboard (app.html, be-tester.js's Marketplace tab) reuses them for
+   its own platform filter but only loads styles.css, not this file. */
 
 /* Solid fills, not soft tints — a platform badge is the one fact in this
    row a visitor filters and scans by, so it reads at a glance the way
