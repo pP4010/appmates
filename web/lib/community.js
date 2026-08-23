@@ -331,6 +331,24 @@ export class CommunityClient {
     return this._request('/reports/mark-seen', { method: 'POST' });
   }
 
+  /** The moderation lever behind a report — bans/unbans by user id, admin
+   * only. `views/admin.js` calls this from a report card, since a report
+   * carries no structured "who's at fault," just the two session parties'
+   * ids for an admin to act on after reading the reason. */
+  adminBanUser(userId) {
+    return this._request(`/admin/users/${userId}/ban`, { method: 'POST' });
+  }
+
+  adminUnbanUser(userId) {
+    return this._request(`/admin/users/${userId}/unban`, { method: 'POST' });
+  }
+
+  /** Admin override of `deleteListing` — removes a listing that isn't the
+   * caller's own, reached only from a report an admin is acting on. */
+  adminRemoveListing(listingId) {
+    return this._request(`/admin/listings/${listingId}/remove`, { method: 'POST' });
+  }
+
   /** Public: the approved promo requests a landing page can render as
    * promoted rail cards, shaped exactly like `RAIL_LEFT`/`RAIL_RIGHT` in
    * `landing-demo.js` so `renderRails` can merge these in directly.

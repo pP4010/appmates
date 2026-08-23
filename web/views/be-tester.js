@@ -31,6 +31,7 @@ import {
 import { checkAppHealth, profileFromEntry } from '../lib/app-profile.js';
 import { messageThreadHtml, wireMessageThreads } from './community.js';
 import { storeBadgeHtml } from '../lib/platform-badge.js';
+import { enablePush, needsPushEnable } from '../lib/push.js';
 
 // Mirrors MIN_REQUEST_MESSAGE_LENGTH in community/src/lib/config.js — the
 // server is the real limit, this just keeps the on-page counter honest.
@@ -830,13 +831,18 @@ async function submitRequest(listing) {
 
   await withStatus(statusEl, el('commReqSubmit'), null, async () => {
     const result = await client.requestToJoin(listing.id, body);
-    showRequestSuccess(result);
+    await showRequestSuccess(result);
   });
 }
 
-function showRequestSuccess(result) {
+async function showRequestSuccess(result) {
   const modal = document.querySelector('#commRequestModal .modal');
   if (!modal) return;
+  // Only offered to an already-signed-in requester — `subscribePush`
+  // requires a session, and the anonymous path here (`magicLinkSent`) has
+  // no session cookie yet until the emailed link is clicked, so there's no
+  // account to attach a subscription to at this point.
+  const offerPush = Boolean(user) && (await needsPushEnable());
   modal.innerHTML = `
     <div class="modal-head">
       <h3>Request sent</h3>
@@ -849,6 +855,14 @@ function showRequestSuccess(result) {
           : 'The builder has your request — you\'ll see it under "My testing" once they respond.'
       }
     </p>
+    ${
+      offerPush
+        ? `<div class="callout" style="margin-bottom:1rem">
+             <span>Get notified the moment you're accepted, instead of checking back.</span>
+             <button class="primary" id="commReqEnablePush" type="button">Enable notifications</button>
+           </div>`
+        : ''
+    }
     <button id="commReqDone" class="primary" style="width:100%">Done</button>`;
 
   const done = () => {
@@ -857,6 +871,17 @@ function showRequestSuccess(result) {
   };
   modal.querySelector('.modal-close').addEventListener('click', done);
   el('commReqDone').addEventListener('click', done);
+  el('commReqEnablePush')?.addEventListener('click', async (event) => {
+    const btn = event.currentTarget;
+    btn.disabled = true;
+    try {
+      await enablePush(client);
+      btn.closest('.callout')?.remove();
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = err.message;
+    }
+  });
 }
 
 /* ============================ my testing tab ============================ */
@@ -900,6 +925,26 @@ async function renderSessions() {
   }
 }
 
+/** Which platform(s) the developer still needs to add this tester on,
+ * spelled out rather than a one-size-fits-all "waiting" line — a `both`
+ * listing needs both TestFlight and Play Console confirmed before the link
+ * unlocks (`isLinkUnlocked` in community/routes/testSessions.js), so
+ * someone added on one but not the other should see exactly which is left. */
+function lockedLinkReason(s) {
+  const platform = s.listing.platform;
+  if (platform === 'both') {
+    const missingIos = !s.addedIosAt;
+    const missingAndroid = !s.addedAndroidAt;
+    if (missingIos && missingAndroid) {
+      return 'Waiting for the developer to add you on both TestFlight and Google Play before the link unlocks.';
+    }
+    if (missingIos) return 'Added on Google Play — waiting for TestFlight before the link unlocks.';
+    if (missingAndroid) return 'Added on TestFlight — waiting for Google Play before the link unlocks.';
+  }
+  const store = platform === 'android' ? 'Google Play' : 'TestFlight';
+  return `Waiting for the developer to add you on ${store} before the link unlocks.`;
+}
+
 async function sessionCard(s) {
   const tone = STATUS_TONE[s.status] || 'neutral';
   const label = STATUS_LABEL[s.status] || s.status;
@@ -912,10 +957,13 @@ async function sessionCard(s) {
     // `s.listing.link` only rides along once `linkUnlocked` is true server-
     // side (community/routes/testSessions.js) — for a `testing` listing,
     // that means the developer has confirmed adding this tester on every
-    // platform the listing targets (TestFlight and/or Play Console).
+    // platform the listing targets (TestFlight and/or Play Console). For a
+    // `both` listing specifically, say which one is still missing rather
+    // than a generic "waiting" line for every combination — `addedIosAt`/
+    // `addedAndroidAt` already ride along on the session for exactly this.
     const linkHtml = s.listing.link
       ? `<div style="margin-bottom:.5rem"><a class="ghost-link" href="${escapeHtml(s.listing.link)}" target="_blank" rel="noopener">Open build link →</a></div>`
-      : `<p class="muted" style="font-size:.82rem">Waiting for the developer to add you on TestFlight/Play Console before the link unlocks.</p>`;
+      : `<p class="muted" style="font-size:.82rem">${escapeHtml(lockedLinkReason(s))}</p>`;
     body = `
       ${linkHtml}
       <div class="checkin-widget" data-session="${s.id}">

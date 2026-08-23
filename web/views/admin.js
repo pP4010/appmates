@@ -217,6 +217,7 @@ async function loadReports() {
     return;
   }
   host.innerHTML = reports.map(reportCard).join('');
+  wireReportActions(host);
 
   // Marks them seen now that they're actually on screen — a separate call
   // (not a side effect of the GET above) so nothing but this admin actually
@@ -231,8 +232,28 @@ function reportCard(r) {
       : `${escapeHtml(r.targetType)} ${escapeHtml(r.targetId)}`;
   const causeLabel = REPORT_CAUSE_LABELS[r.cause] || r.cause;
 
+  // A report carries no structured "who's at fault" — just the reason text
+  // and both session parties' ids — so this offers an action per party
+  // rather than guessing which one the reporter meant.
+  const actions = [];
+  if (r.testerUserId) {
+    actions.push(
+      `<button class="ghost danger admin-ban-user" data-user="${r.testerUserId}" data-label="tester">Ban tester</button>`,
+    );
+  }
+  if (r.ownerUserId) {
+    actions.push(
+      `<button class="ghost danger admin-ban-user" data-user="${r.ownerUserId}" data-label="owner">Ban owner</button>`,
+    );
+  }
+  if (r.listingId) {
+    actions.push(
+      `<button class="ghost danger admin-remove-listing" data-listing="${r.listingId}">Remove listing</button>`,
+    );
+  }
+
   return `
-    <div class="panel" style="margin-bottom:.9rem;padding:1rem">
+    <div class="panel" style="margin-bottom:.9rem;padding:1rem" data-report="${r.id}">
       <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start">
         <div>
           <strong style="font-size:.86rem">${who}</strong>
@@ -243,5 +264,49 @@ function reportCard(r) {
       </div>
       <div class="muted" style="font-size:.78rem;margin-top:.2rem">Reported by ${escapeHtml(r.reporterEmail)}</div>
       <p style="white-space:pre-wrap;font-size:.86rem;margin:.6rem 0 0">${escapeHtml(r.reason)}</p>
+      ${
+        actions.length
+          ? `<div style="margin-top:.7rem;display:flex;gap:.5rem;flex-wrap:wrap">${actions.join('')}</div>
+             <div class="admin-report-status status" data-report="${r.id}"></div>`
+          : ''
+      }
     </div>`;
+}
+
+function wireReportActions(host) {
+  host.querySelectorAll('.admin-ban-user').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm(`Ban this ${btn.dataset.label}? They lose access immediately across every device.`)) return;
+      btn.disabled = true;
+      try {
+        await client.adminBanUser(btn.dataset.user);
+        btn.textContent = 'Banned';
+      } catch (err) {
+        btn.disabled = false;
+        showReportError(btn, err.message);
+      }
+    });
+  });
+
+  host.querySelectorAll('.admin-remove-listing').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Remove this listing? It disappears from the marketplace and the owner\'s dashboard.')) return;
+      btn.disabled = true;
+      try {
+        await client.adminRemoveListing(btn.dataset.listing);
+        btn.textContent = 'Removed';
+      } catch (err) {
+        btn.disabled = false;
+        showReportError(btn, err.message);
+      }
+    });
+  });
+}
+
+function showReportError(btn, message) {
+  const statusEl = btn.closest('.panel')?.querySelector('.admin-report-status');
+  if (statusEl) {
+    statusEl.className = 'admin-report-status status error';
+    statusEl.textContent = message;
+  }
 }

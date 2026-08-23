@@ -25,6 +25,7 @@ import {
 import { checkAppHealth, profileFromEntry } from '../lib/app-profile.js';
 import { refreshOnboard } from './onboard.js';
 import { storeBadgeHtml } from '../lib/platform-badge.js';
+import { enablePush, needsPushEnable } from '../lib/push.js';
 
 // Mirrors MAX_BIO_LENGTH in community/src/lib/config.js — the server is the
 // real limit (it truncates), this just keeps the on-page counter honest.
@@ -103,6 +104,7 @@ function renderAuthBar() {
   }
 
   authBar.innerHTML = `
+    ${expiredLinkNoticeHtml()}
     <div class="toolbar" style="margin-bottom:1.2rem">
       <div class="field" style="flex:1;min-width:14rem">
         <label for="commEmail">Already have an account?</label>
@@ -115,6 +117,25 @@ function renderAuthBar() {
   el('commEmail').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') sendLink();
   });
+}
+
+/** `routes/auth.js` `verify()` redirects here with `?authError=expired`
+ * instead of leaving a clicked/stale magic link on a dead-end text page —
+ * this is the inline version of that message, right above the same sign-in
+ * box the link was meant to skip. The query param is stripped from the URL
+ * right after reading it so a refresh or tab switch doesn't keep showing it. */
+function expiredLinkNoticeHtml() {
+  const params = new URLSearchParams(location.search);
+  if (params.get('authError') !== 'expired') return '';
+
+  params.delete('authError');
+  const query = params.toString();
+  history.replaceState(null, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
+
+  return `
+    <div class="status error" style="margin-bottom:.8rem">
+      That sign-in link expired or was already used. Request a new one below.
+    </div>`;
 }
 
 async function sendLink() {
@@ -310,12 +331,20 @@ function renderMyDashboardTab() {
   renderMyListings();
 }
 
-/** Two cheap numbers up top — the difference between a page that manages a
- * list and one that reads as a dashboard. Deliberately not "pending
- * requests": that count is already visible inline under each listing below,
- * and computing it here would mean one extra fetch per listing. Testing
- * activity has its own numbers on the Be a tester page now — this is the
- * owner side only. */
+/** Filled in by `renderMyListings` once it's totaled up every card's pending
+ * requests and accepted-but-not-yet-added testers — `null` until then, so
+ * the tile below reads "…" for the one render pass before that data exists,
+ * rather than a wrong zero. */
+let lastWaitingOnYou = null;
+
+/** Three cheap numbers up top — the difference between a page that manages a
+ * list and one that reads as a dashboard. "Waiting on you" is deliberately
+ * *not* refetched here — it's the one number that would cost an extra fetch
+ * per listing to compute independently, so it rides along on whatever
+ * `renderMyListings` already fetched for the cards themselves (each
+ * `myListingCard` already calls `client.listingSessions` to render its own
+ * pending-requests section) and this just displays the total once that
+ * finishes, re-rendering this bar rather than fetching a second time. */
 async function renderDashboardStats() {
   const host = el('commDashboardStats');
   if (!host) return;
@@ -332,6 +361,10 @@ async function renderDashboardStats() {
         <div class="dashboard-stat">
           <span class="metric-label">Active listings</span>
           <span class="dashboard-stat-value">${activeListings}</span>
+        </div>
+        <div class="dashboard-stat">
+          <span class="metric-label">Waiting on you</span>
+          <span class="dashboard-stat-value">${lastWaitingOnYou === null ? '…' : lastWaitingOnYou}</span>
         </div>
       </div>`;
   } catch {
@@ -440,7 +473,8 @@ function renderCreatePanel() {
         placeholder="What to focus feedback on, or what's new in this release"></textarea>
     </div>
     <div id="commCreateStatus" class="status"></div>
-    <button id="commCreateSubmit" class="primary">Post listing</button>`;
+    <button id="commCreateSubmit" class="primary">Post listing</button>
+    <div id="commPushNudge"></div>`;
 
   el('commCreateSubmit').addEventListener('click', () => createListing(app));
 }
@@ -479,6 +513,40 @@ async function createListing(app) {
     el('commEndsAt').value = '';
     await renderMyListings();
     refreshOnboard();
+    await renderPushNudge();
+  });
+}
+
+/** Nudges an owner to enable push right after their first listing goes
+ * live — this is the moment a request/accept notification actually starts
+ * being useful to them, and until now the only place this prompt ever
+ * appeared was the Inbox, which a brand-new owner has no reason to have
+ * opened yet. Renders into its own element (`#commPushNudge`), not
+ * `#commCreateStatus` — `withStatus` clears that one to `''` right after
+ * this job function returns, which would wipe anything put there. */
+async function renderPushNudge() {
+  const host = el('commPushNudge');
+  if (!host) return;
+  if (!user || !(await needsPushEnable())) {
+    host.innerHTML = '';
+    return;
+  }
+
+  host.innerHTML = `
+    <div class="callout" style="margin-top:.8rem">
+      <span>Get notified when someone requests to test this, or when feedback is ready to review.</span>
+      <button class="primary" id="commEnablePush" type="button">Enable notifications</button>
+    </div>`;
+  el('commEnablePush')?.addEventListener('click', async (event) => {
+    const btn = event.currentTarget;
+    btn.disabled = true;
+    try {
+      await enablePush(client);
+      host.innerHTML = '';
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = err.message;
+    }
   });
 }
 
@@ -490,19 +558,37 @@ async function renderMyListings() {
     const listings = await client.myListings();
     if (!listings.length) {
       container.innerHTML = empty('◍', 'No listings yet', 'Post one above.');
+      lastWaitingOnYou = 0;
+      renderDashboardStats();
       return;
     }
-    container.innerHTML = (await Promise.all(listings.map((l) => myListingCard(l)))).join('');
+    const cards = await Promise.all(listings.map((l) => myListingCard(l)));
+    container.innerHTML = cards.map((c) => c.html).join('');
     wireMyListingActions(container);
+    lastWaitingOnYou = cards.reduce((sum, c) => sum + c.waitingOnYou, 0);
+    renderDashboardStats();
   } catch (err) {
     container.innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
   }
+}
+
+/** A session still needs the owner's attention if it's accepted (or past
+ * it) on a `testing` listing but hasn't cleared every platform the listing
+ * targets yet — same condition `platformAddedControls` renders a checkbox
+ * for, just reduced to a boolean for the "waiting on you" total. */
+function needsPlatformConfirmation(l, s) {
+  if (l.kind !== 'testing') return false;
+  if (!['accepted', 'submitted', 'completed'].includes(s.status)) return false;
+  if (l.platform === 'ios') return !s.addedIosAt;
+  if (l.platform === 'android') return !s.addedAndroidAt;
+  return !s.addedIosAt || !s.addedAndroidAt;
 }
 
 async function myListingCard(l) {
   const sessions = l.status === 'open' ? await client.listingSessions(l.id) : [];
   const pending = sessions.filter((s) => s.status === 'requested');
   const active = sessions.filter((s) => s.status !== 'requested');
+  const waitingOnYou = pending.length + active.filter((s) => needsPlatformConfirmation(l, s)).length;
 
   const activeHtml = active.length
     ? active.map((s) => sessionRow(s, l)).join('')
@@ -510,7 +596,7 @@ async function myListingCard(l) {
       ? ''
       : '<p class="muted" style="font-size:.82rem">No testers have joined yet.</p>';
 
-  return `
+  const html = `
     <div class="panel" style="padding:.9rem 1rem;margin-bottom:.6rem">
       ${listingCardHeader(l)}
       ${
@@ -544,6 +630,7 @@ async function myListingCard(l) {
       </div>
       <div class="comm-listing-status status" data-listing="${l.id}"></div>
     </div>`;
+  return { html, waitingOnYou };
 }
 
 function requestCard(s) {
