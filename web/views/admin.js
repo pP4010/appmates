@@ -46,6 +46,7 @@ async function refresh() {
   renderNotifBanner();
   loadRequests();
   loadReports();
+  loadListings();
 }
 
 /** So a new report's push (lib/push.js `notifyAdminsOfReportPush`) has
@@ -309,4 +310,71 @@ function showReportError(btn, message) {
     statusEl.className = 'admin-report-status status error';
     statusEl.textContent = message;
   }
+}
+
+/* ------------------------------ all listings ------------------------------ */
+
+/** Every *open* listing, straight from the same public endpoint the
+ * marketplace itself uses (`client.browseListings`, no `kind` filter) —
+ * there's no admin-only "list everything including closed/deleted" route,
+ * and an already-closed or already-removed listing has nothing left here
+ * to act on anyway. This is the direct path to `adminRemoveListing`
+ * (`routes/listings.js` `adminRemove`) for a listing nobody's reported yet
+ * — the report-card actions (`wireReportActions` above) only ever surface
+ * a listing that's already been flagged. */
+async function loadListings() {
+  const host = el('adminListingsBody');
+  if (!host) return;
+  host.innerHTML = '<div class="status"><span class="spinner"></span> Loading…</div>';
+
+  let listings;
+  try {
+    listings = await client.browseListings();
+  } catch (err) {
+    host.innerHTML = err.status === 403 ? '' : `<div class="status error">${escapeHtml(err.message)}</div>`;
+    return;
+  }
+
+  if (!listings.length) {
+    host.innerHTML = empty('◍', 'Nothing open right now', 'Open listings will show up here.');
+    return;
+  }
+  host.innerHTML = listings.map(listingRow).join('');
+  wireListingActions(host);
+}
+
+function listingRow(l) {
+  const kindLabel = l.kind === 'testing' ? 'Closed testing' : 'Live on stores';
+  return `
+    <div class="panel" style="margin-bottom:.6rem;padding:.8rem 1rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap" data-listing="${l.id}">
+      <div>
+        <strong style="font-size:.86rem">${escapeHtml(l.app.name)}</strong>
+        <span class="pill ${l.kind === 'testing' ? 'warn' : 'ok'}" style="margin-left:.4rem">${kindLabel}</span>
+        ${l.tagline ? `<div class="muted" style="font-size:.78rem;margin-top:.2rem">${escapeHtml(l.tagline)}</div>` : ''}
+      </div>
+      <div style="display:flex;align-items:center;gap:.6rem">
+        <button class="ghost danger admin-remove-listing" data-listing="${l.id}">Remove</button>
+        <div class="admin-listing-status status" data-listing="${l.id}"></div>
+      </div>
+    </div>`;
+}
+
+function wireListingActions(host) {
+  host.querySelectorAll('.admin-remove-listing').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Remove this listing? It disappears from the marketplace and the owner\'s dashboard.')) return;
+      btn.disabled = true;
+      try {
+        await client.adminRemoveListing(btn.dataset.listing);
+        btn.closest('[data-listing]')?.remove();
+      } catch (err) {
+        btn.disabled = false;
+        const statusEl = btn.closest('.panel')?.querySelector('.admin-listing-status');
+        if (statusEl) {
+          statusEl.className = 'admin-listing-status status error';
+          statusEl.textContent = err.message;
+        }
+      }
+    });
+  });
 }

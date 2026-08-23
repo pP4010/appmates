@@ -211,7 +211,7 @@ function renderBrowseTab() {
           <button type="button" class="vchip both${activePlatform === 'both' ? ' active' : ''}" data-platform="both">Both</button>
         </span>
       </div>
-      <button id="testerBrowseRefresh">Refresh</button>
+      <button type="button" id="testerBrowseRefresh" class="vchip" style="margin-left:auto">Refresh</button>
     </div>
     <p class="verified-note">
       <span>◈</span>
