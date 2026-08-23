@@ -24,8 +24,16 @@ any public disclosure.
 
 - `src/appmates/` — the open-source CLI and its core engines
 - `web/` — the browser dashboard and landing page
-- `community/`, `worker/` — the Cloudflare Workers backing the community
-  features and the App Store screenshot relay
+- `worker/` — the App Store screenshot relay Worker
+
+The community/marketplace backend (listings, testing sessions, auth,
+tokens) has lived in a **separate, private repo**,
+[`appmates-community`](https://github.com/pP4010/appmates-community), since
+this repo's SaaS layer was split out — it has no `SECURITY.md` of its own,
+so **reports about it go here too**, to the same email below. Don't assume
+a path like `community/src/lib/auth.js` still exists in *this* repo when
+reading old references to it; the equivalent file now lives at
+`appmates-community/src/lib/auth.js`.
 
 Findings in third-party dependencies should go to the dependency's own
 maintainers, but feel free to also flag them here if this project is
@@ -33,12 +41,13 @@ exposed by the issue (e.g. via an outdated pin).
 
 ## What's in scope for reports
 
-- Authentication/session handling (`community/src/lib/auth.js`)
+- Authentication/session handling (`appmates-community/src/lib/auth.js`)
 - Anything that could read or write another user's data
-- Token-balance manipulation (`community/src/lib/tokens.js`) — earning or
-  spending outside the documented rules in that file
+- Token-balance manipulation (`appmates-community/src/lib/tokens.js`) —
+  earning or spending outside the documented rules in that file
+- CSRF or other request forgery against a signed-in session, in either repo
 - XSS, injection, or request forgery in the web app or Workers
-- Secrets or credentials exposed in the repo or a deployed response
+- Secrets or credentials exposed in either repo or a deployed response
 
 ## Out of scope
 
