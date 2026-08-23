@@ -601,6 +601,36 @@ generated from the same YAML the CLI reads, and the JavaScript engine is tested
 against the Python one on 925 cases plus a set of real images parsed by Pillow.
 CI fails if any generated file is stale. See [web/README.md](web/README.md).
 
+## Community marketplace (optional, needs a backend)
+
+Get real closed testers before you ship, and real users for a launch or
+update once you have — the "Get testers" / "Be a tester" pages in the web
+app (`web/views/community.js`, `web/views/be-tester.js`). Two-sided: a
+developer posts a listing, real people request to join, and completing a
+test earns the tester a High Five they can spend getting their own app
+tested. Nothing here ever touches App Store or Play reviews — see
+[SECURITY.md](SECURITY.md) for why that boundary is load-bearing, not
+incidental.
+
+This is the one part of AppMates that needs an account (magic-link email,
+no password) and a backend — a separate Cloudflare Worker + D1 database in
+its own private repo,
+[`appmates-community`](https://github.com/pP4010/appmates-community), kept
+out of this one because its anti-abuse thresholds and rate limits are a
+real target for gaming the token economy once this repo is public.
+`COMMUNITY_API_URL` in `web/lib/community.js` points at it; `null` disables
+the whole feature (the nav items stay hidden and nothing here is ever
+called).
+
+What's shipped today: listing creation with an optional auto-expiry date,
+owner-side deletion, a platform filter on the marketplace, a leaderboard,
+push notifications (new request, accepted, build link unlocked, feedback
+ready, declined), and admin moderation (ban a user, remove a listing) off
+the back of a report queue. A closed-test listing's TestFlight/Play link
+stays hidden from everyone until the owner accepts a tester *and* confirms
+adding them on the actual store console — there's no App Store Connect/Play
+Developer API integration here to do that step automatically.
+
 ## Architecture
 
 ```
