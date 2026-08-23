@@ -1,7 +1,6 @@
 # Cloudflare Pages header rules — https://developers.cloudflare.com/pages/configuration/headers/
 # Applies to every static asset response (app.html, index.html, the JS/CSS
-# under it). Does NOT cover functions/_middleware.js's own gate page, which
-# Cloudflare builds as a Function response rather than serving this file.
+# under it).
 #
 # No 'unsafe-inline' on script-src: grep confirms nothing in web/ uses an
 # inline <script> or an inline event-handler attribute (onclick= etc.) —
