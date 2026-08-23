@@ -720,6 +720,10 @@ td.tight { padding-top: .35rem; padding-bottom: .35rem; }
   margin: .6rem 0; max-width: 78ch;
   padding-left: .75rem; border-left: 2px solid var(--border);
 }
+/* A link inline in a text block needs a non-color cue too — axe's
+   link-in-text-block rule (WCAG 1.4.1): color alone isn't enough to tell
+   it apart from the surrounding prose. */
+.note a, .hero-sub a { text-decoration: underline; text-underline-offset: .15em; }
 
 /* ============================ dropzone ============================ */
 
