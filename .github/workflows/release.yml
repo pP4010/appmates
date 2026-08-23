@@ -1,0 +1,44 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: Build distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Build sdist + wheel
+        run: uv build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    # Matches the GitHub Actions environment named on PyPI's trusted-publisher
+    # form — not required for OIDC to work, but scopes the id-token
+    # permission below to only run under this environment's protection
+    # rules, if any get added later.
+    environment: pypi
+    permissions:
+      # Trusted publishing (OIDC) needs this — it's how the job proves its
+      # identity to PyPI instead of a stored API token.
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
