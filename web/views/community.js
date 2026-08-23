@@ -535,6 +535,13 @@ async function myListingCard(l) {
         }
         <button class="ghost danger comm-delete" data-listing="${l.id}">Delete listing</button>
       </div>
+      <div style="margin-top:.4rem;display:flex;gap:.3rem;align-items:center">
+        <span class="muted" style="font-size:.78rem">End date</span>
+        <input type="date" class="comm-endsat-input" data-listing="${l.id}"
+          value="${l.endsAt ? escapeHtml(new Date(l.endsAt).toISOString().slice(0, 10)) : ''}" style="width:9rem">
+        <button class="ghost comm-save-endsat" data-listing="${l.id}">Save</button>
+        ${l.endsAt ? `<button class="ghost comm-clear-endsat" data-listing="${l.id}">Remove</button>` : ''}
+      </div>
       <div class="comm-listing-status status" data-listing="${l.id}"></div>
     </div>`;
 }
@@ -625,12 +632,16 @@ function sessionRow(s, l) {
 
 function listingCardHeader(l) {
   const kindLabel = l.kind === 'testing' ? 'Closed testing' : 'Live on stores';
+  const endsAtPill = l.endsAt
+    ? `<span class="pill neutral" style="margin-left:.4rem">Ends ${escapeHtml(new Date(l.endsAt).toLocaleDateString())}</span>`
+    : '';
   return `
     <div style="display:flex;gap:.7rem;align-items:flex-start">
       <span class="card-icon-wrap">${appIcon(l.app.artworkUrl, l.app.name)}${storeBadgeHtml(l.platform, 'bl')}</span>
       <div>
         <strong>${escapeHtml(l.app.name)}</strong>
         <span class="pill ${l.kind === 'testing' ? 'warn' : 'ok'}" style="margin-left:.4rem">${kindLabel}</span>
+        ${endsAtPill}
         <div class="muted" style="font-size:.82rem">${escapeHtml(l.description || '')}</div>
       </div>
     </div>`;
@@ -729,6 +740,29 @@ function wireMyListingActions(container) {
       }
     });
   });
+
+  container.querySelectorAll('.comm-save-endsat').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const listingId = btn.dataset.listing;
+      const dateInput = container.querySelector(`.comm-endsat-input[data-listing="${listingId}"]`);
+      const dateValue = dateInput?.value;
+      if (!dateValue) {
+        showListingError(container, listingId, 'Pick a date first.');
+        return;
+      }
+      btn.disabled = true;
+      try {
+        // End-of-day in the browser's own timezone — same reasoning as the
+        // create form's own `endsAt` conversion (createListing above).
+        await client.updateListingEndsAt(listingId, new Date(`${dateValue}T23:59:59`).toISOString());
+        await renderMyListings();
+      } catch (err) {
+        btn.disabled = false;
+        showListingError(container, listingId, err.message);
+      }
+    });
+  });
+  wireSessionAction(container, '.comm-clear-endsat', (btn) => client.updateListingEndsAt(btn.dataset.listing, null));
 }
 
 /* ---------------------------- message threads ---------------------------- */

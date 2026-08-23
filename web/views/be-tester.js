@@ -86,6 +86,18 @@ let activeTab = 'browse';
 // query param, so this narrows the already-fetched list.
 let activePlatform = '';
 
+// The last successful `renderBrowse` fetch — `null` until the first load.
+// A platform-chip click re-filters these in memory (`renderFilteredResults`)
+// instead of re-fetching, the same way browse-view.js's own platform chips
+// never touch the network. Kind/sort genuinely change what the server
+// returns, so those still trigger a real fetch, tracked here so a
+// mid-flight one only actually replaces `#testerBrowseResults` (collapsing
+// it to a spinner first) on the very first load — once real cards are on
+// screen, a refresh keeps them in place instead of collapsing the page's
+// height out from under the reader's scroll position.
+let lastListings = null;
+let lastMine = [];
+
 /** Bumped on every tab switch or re-render. The progressive enrichment loop
  * carries the value it started with and stops the moment it no longer
  * matches, so a stale pass can never write into a page it no longer owns. */
@@ -222,7 +234,10 @@ function renderBrowseTab() {
       el('testerBrowsePlatform').querySelectorAll('.vchip').forEach((c) => c.classList.remove('active'));
       chip.classList.add('active');
       activePlatform = chip.dataset.platform || '';
-      refreshList();
+      // Purely a client-side re-filter over the last fetch — no network
+      // call, no spinner collapse, no layout jump (see `lastListings`'s
+      // own comment).
+      renderFilteredResults();
     });
   });
 
@@ -314,6 +329,29 @@ function leaderboardTeaser(entries, windowDays) {
     </div>`;
 }
 
+/** Renders `#testerBrowseResults` from `lastListings`/`lastMine` (the last
+ * successful fetch), applying `activePlatform` client-side — no network
+ * call. Shared by the end of a real fetch (`renderBrowse`) and by a
+ * platform-chip click, so both end up with identical markup/wiring. */
+function renderFilteredResults() {
+  const results = el('testerBrowseResults');
+  const requestedIds = new Set(lastMine.map((s) => s.listing.id));
+  const filtered = activePlatform ? lastListings.filter((l) => l.platform === activePlatform) : lastListings;
+  results.innerHTML = filtered.length
+    ? filtered
+        .map((l) =>
+          listingCard(l, {
+            canRequest: l.kind === 'testing',
+            alreadyRequested: requestedIds.has(l.id),
+          }),
+        )
+        .join('')
+    : empty('◍', 'Nothing here yet', 'Be the first to post a listing.');
+
+  wireRequestButtons(results, filtered);
+  enrichListings(filtered, renderGeneration);
+}
+
 async function renderBrowse() {
   // Captured, never bumped, here — `renderGeneration` is incremented exactly
   // where a new independent pass begins (a tab switch, or one of the toolbar
@@ -321,31 +359,28 @@ async function renderBrowse() {
   // the same tab switch share one generation instead of invalidating each
   // other.
   const generation = renderGeneration;
+  const kind = el('testerBrowseKind').value || undefined;
+  const sort = el('testerBrowseSort').value;
   const results = el('testerBrowseResults');
-  results.innerHTML = '<div class="status"><span class="spinner"></span> Loading</div>';
+
+  // Only the very first load collapses the results to a spinner — once real
+  // cards are on screen, a kind/sort refetch keeps them in place instead of
+  // shrinking the page's height out from under the reader's scroll position
+  // for the round trip.
+  if (lastListings === null) {
+    results.innerHTML = '<div class="status"><span class="spinner"></span> Loading</div>';
+  }
 
   try {
     const [listings, mine] = await Promise.all([
-      client.browseListings(el('testerBrowseKind').value || undefined, el('testerBrowseSort').value),
+      client.browseListings(kind, sort),
       user ? client.mySessions() : Promise.resolve([]),
     ]);
     if (generation !== renderGeneration) return;
 
-    const requestedIds = new Set(mine.map((s) => s.listing.id));
-    const filtered = activePlatform ? listings.filter((l) => l.platform === activePlatform) : listings;
-    results.innerHTML = filtered.length
-      ? filtered
-          .map((l) =>
-            listingCard(l, {
-              canRequest: l.kind === 'testing',
-              alreadyRequested: requestedIds.has(l.id),
-            }),
-          )
-          .join('')
-      : empty('◍', 'Nothing here yet', 'Be the first to post a listing.');
-
-    wireRequestButtons(results, filtered);
-    enrichListings(filtered, generation);
+    lastListings = listings;
+    lastMine = mine;
+    renderFilteredResults();
   } catch (err) {
     if (generation === renderGeneration) {
       results.innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;

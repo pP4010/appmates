@@ -172,6 +172,12 @@ export class CommunityClient {
     return this._request(`/listings/${id}/feature`, { method: 'POST', body: { days } });
   }
 
+  /** Sets, changes, or clears (`endsAt: null`) a listing's optional
+   * auto-expiry date after the fact. */
+  updateListingEndsAt(id, endsAt) {
+    return this._request(`/listings/${id}/ends-at`, { method: 'POST', body: { endsAt } });
+  }
+
   /** Asks to join a `testing` listing — a short pitch, not an instant join.
    * `email`/`name` are only needed when nobody is signed in yet; the
    * response says whether a sign-in link was sent so the caller can prompt
