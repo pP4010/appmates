@@ -198,6 +198,13 @@ code, .mono, .num {
 .brand.sidebar-back { margin-bottom: 0; font-size: .84rem; font-weight: 600; }
 .sidebar-back-arrow { font-size: 1rem; line-height: 1; }
 
+/* The badge's own intrinsic size (250x54) is wider than the sidebar's
+   content box (--sidebar-w minus this container's padding) — scaling to
+   the available width keeps it from overflowing rather than fixing it at
+   a size the sidebar can't actually fit. */
+.sidebar-badge { display: block; }
+.sidebar-badge img { display: block; width: 100%; height: auto; }
+
 .sidebar-legal-links {
   display: flex;
   gap: .7rem;
