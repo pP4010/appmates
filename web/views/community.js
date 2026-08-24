@@ -23,6 +23,7 @@ import {
   reliabilityBadge, contributionBadge,
 } from './shared.js';
 import { checkAppHealth, profileFromEntry } from '../lib/app-profile.js';
+import { favorites } from '../lib/favorites.js';
 import { refreshOnboard } from './onboard.js';
 import { storeBadgeHtml } from '../lib/platform-badge.js';
 import { enablePush, needsPushEnable } from '../lib/push.js';
@@ -426,23 +427,57 @@ async function renderAsoBridge() {
   }
 }
 
+/** The current app plus every favorite, deduped by trackId — the pool a
+ * listing can be posted for. Favorites are the app's existing "apps I care
+ * about" list (starred from Overview); reusing it here means a developer
+ * with more than one app switches which one they're posting for right in
+ * this panel, instead of the old behaviour of always posting for whatever
+ * happened to be loaded on Overview at the time. */
+function myPostableApps() {
+  const current = getCurrentApp();
+  const seen = new Set();
+  const apps = [];
+  for (const a of [current, ...favorites.list()]) {
+    if (!a || seen.has(String(a.trackId))) continue;
+    seen.add(String(a.trackId));
+    apps.push(a);
+  }
+  return apps;
+}
+
 function renderCreatePanel() {
-  const app = getCurrentApp();
-  if (!app) {
+  const apps = myPostableApps();
+  if (!apps.length) {
     el('commCreatePanel').innerHTML =
       '<p class="note">Load an app on the Overview page first — a listing reuses its name, ' +
       'icon and store link rather than asking you to retype them.</p>';
     return;
   }
 
-  el('commCreatePanel').innerHTML = `
-    <div class="app-header" style="margin-bottom:.8rem">
-      ${appIcon(app.artwork, app.name)}
+  // Not module state: this panel is torn down and rebuilt by
+  // renderMyDashboardTab on every tab switch, so a plain closure variable
+  // here can't go stale the way one living outside this function could.
+  let selected = apps[0];
+
+  const appHeaderHtml = (a) => `
+      ${appIcon(a.artwork, a.name)}
       <div class="app-header-body">
-        <strong>${escapeHtml(app.name)}</strong>
-        <div class="muted">${escapeHtml(app.seller || '')}</div>
-      </div>
-    </div>
+        <strong>${escapeHtml(a.name)}</strong>
+        <div class="muted">${escapeHtml(a.seller || '')}</div>
+      </div>`;
+
+  el('commCreatePanel').innerHTML = `
+    ${
+      apps.length > 1
+        ? `<div class="form-grid" style="margin-bottom:.6rem">
+             <label for="commAppPicker">Posting for</label>
+             <select id="commAppPicker">
+               ${apps.map((a) => `<option value="${escapeHtml(String(a.trackId))}">${escapeHtml(a.name)}</option>`).join('')}
+             </select>
+           </div>`
+        : ''
+    }
+    <div class="app-header" id="commCreateAppHeader" style="margin-bottom:.8rem">${appHeaderHtml(selected)}</div>
     <div class="form-grid">
       <label for="commKind">This listing is</label>
       <select id="commKind">
@@ -472,11 +507,22 @@ function renderCreatePanel() {
       <textarea id="commDescription" rows="3"
         placeholder="What to focus feedback on, or what's new in this release"></textarea>
     </div>
+    ${
+      apps.length === 1
+        ? '<p class="note">Testing another app too? Star it on Overview (☆ next to the app) and it’ll show up ' +
+          'here to pick from.</p>'
+        : ''
+    }
     <div id="commCreateStatus" class="status"></div>
     <button id="commCreateSubmit" class="primary">Post listing</button>
     <div id="commPushNudge"></div>`;
 
-  el('commCreateSubmit').addEventListener('click', () => createListing(app));
+  el('commAppPicker')?.addEventListener('change', (e) => {
+    selected = apps.find((a) => String(a.trackId) === e.target.value) ?? selected;
+    el('commCreateAppHeader').innerHTML = appHeaderHtml(selected);
+  });
+
+  el('commCreateSubmit').addEventListener('click', () => createListing(selected));
 }
 
 async function createListing(app) {
@@ -553,7 +599,17 @@ async function renderPushNudge() {
 async function renderMyListings() {
   const container = el('commMyListings');
   if (!container) return;
-  container.innerHTML = '<div class="status"><span class="spinner"></span> Loading</div>';
+  // Only on the very first render, when the container is genuinely empty —
+  // a refresh after an action (delete, close, feature...) already has real
+  // cards on screen, and replacing them with this much-shorter placeholder
+  // for the length of one fetch is exactly what collapses the panel then
+  // snaps it back, the visible "shift" a fast action produces. Leaving the
+  // old content up during the fetch means the layout only resizes once,
+  // when the real new content lands — which it has to, correctly, if a
+  // card was actually removed.
+  if (!container.children.length) {
+    container.innerHTML = '<div class="status"><span class="spinner"></span> Loading</div>';
+  }
   try {
     const listings = await client.myListings();
     if (!listings.length) {
