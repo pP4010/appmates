@@ -198,11 +198,11 @@ code, .mono, .num {
 .brand.sidebar-back { margin-bottom: 0; font-size: .84rem; font-weight: 600; }
 .sidebar-back-arrow { font-size: 1rem; line-height: 1; }
 
-/* The badge's own intrinsic size (250x54) is wider than the sidebar's
-   content box (--sidebar-w minus this container's padding) — scaling to
-   the available width keeps it from overflowing rather than fixing it at
-   a size the sidebar can't actually fit. */
-.sidebar-badge { display: block; }
+/* Fixed at a deliberately modest size — the badge's own intrinsic 250x54
+   would still overflow the sidebar if scaled to the full content width,
+   and even that width reads as oversized next to the compact nav items
+   around it. 110px keeps it proportionate to "Back to home" above it. */
+.sidebar-badge { display: block; width: 110px; }
 .sidebar-badge img { display: block; width: 100%; height: auto; }
 
 .sidebar-legal-links {
