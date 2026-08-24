@@ -198,11 +198,12 @@ code, .mono, .num {
 .brand.sidebar-back { margin-bottom: 0; font-size: .84rem; font-weight: 600; }
 .sidebar-back-arrow { font-size: 1rem; line-height: 1; }
 
-/* Fixed at a deliberately modest size — the badge's own intrinsic 250x54
-   would still overflow the sidebar if scaled to the full content width,
-   and even that width reads as oversized next to the compact nav items
-   around it. 110px keeps it proportionate to "Back to home" above it. */
-.sidebar-badge { display: block; width: 110px; }
+/* No width set here on purpose: `.sidebar-back` right above it has none
+   either, and stretches to the grid column's full width because that's
+   `.sidebar-foot`'s (display: grid) default `justify-items: stretch` —
+   matching that width means matching the same absence of a rule, not
+   guessing a pixel value that happens to look similar today. */
+.sidebar-badge { display: block; }
 .sidebar-badge img { display: block; width: 100%; height: auto; }
 
 .sidebar-legal-links {

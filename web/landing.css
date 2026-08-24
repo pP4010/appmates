@@ -1712,7 +1712,7 @@ table.lb tbody tr:hover .lb-app-icon-wrap .store-badge { opacity: 1; transform: 
    250x54 — consistent with the sidebar's copy of this badge, and it keeps
    the footer's height from being dictated by an embed neither this file
    nor the badge's own markup controls. */
-.footer-badge { display: block; flex-shrink: 0; width: 110px; }
+.footer-badge { display: block; flex-shrink: 0; width: 130px; }
 .footer-badge img { display: block; width: 100%; height: auto; }
 
 @media (max-width: 640px) {
