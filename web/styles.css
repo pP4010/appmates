@@ -203,7 +203,10 @@ code, .mono, .num {
    `.sidebar-foot`'s (display: grid) default `justify-items: stretch` —
    matching that width means matching the same absence of a rule, not
    guessing a pixel value that happens to look similar today. */
-.sidebar-badge { display: block; }
+/* On top of .sidebar-foot's own .4rem grid gap — a little more breathing
+   room specifically above the badge, not between every item in the
+   footer. */
+.sidebar-badge { display: block; margin-top: .3rem; }
 .sidebar-badge img { display: block; width: 100%; height: auto; }
 
 .sidebar-legal-links {
